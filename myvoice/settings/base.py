@@ -135,6 +135,7 @@ INSTALLED_APPS = (
     "selectable",
     'groups',
     'broadcast',
+    'decisiontree',
     'pagination',
     'sorter',
     # RapidSMS

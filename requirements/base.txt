@@ -12,4 +12,4 @@ BeautifulSoup4==4.3.2
 
 -e git+https://github.com/caktus/rapidsms-groups.git@rapidsms-upgrade#egg=rapidsms-groups
 -e git+https://github.com/caktus/rapidsms-broadcast.git@rapidsms-upgrade#egg=rapidsms-broadcast
-
+-e git+https://github.com/caktus/rapidsms-decisiontree-app.git@rapidsms-upgrade#egg=rapidsms-decisiontree-app
