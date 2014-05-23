@@ -1,0 +1,15 @@
+psycopg2==2.5.2
+Pillow==2.3.1
+Django==1.6.5
+South==0.8.4
+django_compressor==1.3
+# Required by django-compressor
+django-appconf==0.6
+six==1.6.1
+rapidsms==0.17.0
+
+BeautifulSoup4==4.3.2
+
+-e git+https://github.com/caktus/rapidsms-groups.git@eda6f30cdc60cf57833f1d37ba08e59454da8987#egg=rapidsms-groups
+-e git+https://github.com/caktus/rapidsms-broadcast.git@cbab3beacce508ec5a11e1cfc56480b6930be000#egg=rapidsms-broadcast
+
