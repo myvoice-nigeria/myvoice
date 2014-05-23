@@ -10,6 +10,6 @@ rapidsms==0.17.0
 
 BeautifulSoup4==4.3.2
 
--e git+https://github.com/caktus/rapidsms-groups.git@eda6f30cdc60cf57833f1d37ba08e59454da8987#egg=rapidsms-groups
--e git+https://github.com/caktus/rapidsms-broadcast.git@cbab3beacce508ec5a11e1cfc56480b6930be000#egg=rapidsms-broadcast
+-e git+https://github.com/caktus/rapidsms-groups.git@rapidsms-upgrade#egg=rapidsms-groups
+-e git+https://github.com/caktus/rapidsms-broadcast.git@rapidsms-upgrade#egg=rapidsms-broadcast
 
