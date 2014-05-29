@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static from staticfiles %}
 
 {% block title %}NSHIP PBF Dashboard{% endblock title %}
 
@@ -24,12 +25,12 @@
       <div class="panel-body">
         <div class="media">
           <div class="pull-left">
-            <img class="media-object" src="http://placekitten.com/300/300" alt="Wayo Matti PHC" />
+            <img class="media-object" src="{% static 'img/wayo-matti.png' %}" alt="Wayo Matti PHC" />
           </div>
           <div class="media-body">
             <div>
               <h4>Location</h4>
-              <p>Tow, Ward, LGA</p>
+              <p>Town, Ward, LGA</p>
             </div>
             <div>
               <h4>PBF Category</h4>
@@ -128,7 +129,7 @@
       <div class="panel-body">
         <div class="media">
           <div class="pull-left">
-            <img class="media-object" src="http://placekitten.com/100/100" alt="Mrs. Lydia Tanze" />
+            <img class="media-object" src="{% static 'img/lydia.png' %}" alt="Mrs. Lydia Tanze" />
           </div>
           <div class="media-body">
             <h4 class="media-heading">Mrs. Lydia Tanze</h4>

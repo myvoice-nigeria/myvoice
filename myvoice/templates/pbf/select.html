@@ -2,18 +2,21 @@
 
 {% block title %}PBF{% endblock title %}
 
+{% block body-class %}fancy{% endblock body-class %}
+{% block body-id %}pbf-select-clinic{% endblock body-id %}
+
 {% block content %}
 <div class="row">
   <div class="col-md-12">
     <div class="page-header">
-      <h1>LGA Facilities</h1>
+      <h1>LGA FACILITIES <small>SELECT ONE</small></h1>
     </div>
-    <p>Select one.</p>
-    <form role="form" method="post" action="{% url 'pbf_dashboard_select' %}">
+    <form role="form" class="form-inline"
+          method="post" action="{% url 'pbf_dashboard_select' %}">
       {% csrf_token %}
       <div class="form-group">
-        <label for="clinic">Clinic</label>
-        <select class="form-control">
+        <label class="sr-only" for="clinic">Clinic</label>
+        <select class="form-control" id="clinic" name="clinic">
           <option>Arum Chugbu</option>
           <option>Gwagi</option>
           <option>Kwabe</option>
@@ -25,7 +28,7 @@
         </select>
       </div>
       <div class="form-group">
-        <button type="submit" class="btn btn-primary">Submit</button>
+        <button type="submit" class="btn btn-default">VIEW CLINIC</button>
       </div>
     </form>
   </div>

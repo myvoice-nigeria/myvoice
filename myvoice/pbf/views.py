@@ -6,7 +6,7 @@ class PBFDashboardSelect(TemplateView):
     template_name = 'pbf/select.html'
 
     def post(self, request, *args, **kwargs):
-        return redirect('pbf_dashboard', 'wayo_matti')
+        return redirect('pbf_dashboard', 'wayo-matti')
 
 
 class PBFDashboard(TemplateView):

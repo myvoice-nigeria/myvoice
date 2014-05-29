@@ -1,2 +1,43 @@
 // Myvoice-specific styles.
 
+body.fancy {
+    background-image: url("../img/myvoice.png");
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: 100% auto;
+    color: #fff;
+    .page-header {
+        margin-top: 200px;
+        text-align: center;
+        border-bottom: none;
+        h1 {
+            font-weight: bold;
+            small {
+                color: #fff;
+                font-weight: normal;
+                vertical-align: middle;
+                margin-left: 10px;
+            }
+        }
+    }
+}
+
+body#home {
+    .page-header h1 {
+        font-size: 108px;
+    }
+    .sponsors {
+        margin-top: 30px;
+        font-size: 18px;
+        span {
+            padding: 0 10px;
+        }
+    }
+}
+
+body#pbf-select-clinic {
+    form {
+        text-align: center;
+    }
+}
