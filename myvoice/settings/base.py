@@ -151,7 +151,7 @@ INSTALLED_APPS = (
 
     # Internal apps
     "myvoice.core",
-    "myvoice.dashboard",
+    "myvoice.pbf",
 
     "rapidsms.contrib.default",  # Must be last
 )
