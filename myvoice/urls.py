@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 
@@ -7,11 +7,11 @@ from django.contrib import admin
 admin.autodiscover()
 
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^', include('myvoice.core.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^broadcast/', include('broadcast.urls')),
     url(r'^groups/', include('groups.urls')),
     url(r'^decisiontree/', include('decisiontree.urls')),
     url(r'^pbf/', include('myvoice.pbf.urls')),
-) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
