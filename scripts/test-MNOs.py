@@ -2,7 +2,6 @@
 
 import urllib2
 import urllib
-import sys
 import datetime
 import pytz
 
@@ -19,7 +18,7 @@ for via_operator, _ in test_phones:
         now = datetime.datetime.now(wat).strftime('%H:%M:%S on %d/%m/%Y')
         params = {
             'username': 'rapidsms',
-            'password': '', # XXX add password here
+            'password': '',  # XXX add password here
             'to': phone,
             'from': '55999',
             'smsc': 'starfish-%s' % via_operator.lower(),

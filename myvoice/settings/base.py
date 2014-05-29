@@ -76,7 +76,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -131,7 +131,7 @@ INSTALLED_APPS = (
     'south',
     'compressor',
     "django_nose",
-    #"djtables",  # required by rapidsms.contrib.locations
+    # "djtables",  # required by rapidsms.contrib.locations
     "django_tables2",
     "selectable",
     'groups',
@@ -189,13 +189,15 @@ LOGGING = {
 SKIP_SOUTH_TESTS = True
 
 COMPRESS_PRECOMPILERS = (
-   ('text/less', 'lessc {infile} {outfile}'),
+    ('text/less', 'lessc {infile} {outfile}'),
 )
 
 SORTER_ALLOWED_CRITERIA = {
-    'sort_rules': ['id', 'keyword', 'source', 'dest', 'message', 'rule_type', 'label'],
+    'sort_rules': ['id', 'keyword', 'source', 'dest', 'message', 'rule_type',
+                   'label'],
     'sort_broadcasts': ['id', 'date', 'schedule_frequency', 'body'],
-    'sort_messages': ['broadcast__id', 'broadcast__body', 'date_created', 'status', 'recipient', 'date_sent'],
+    'sort_messages': ['broadcast__id', 'broadcast__body', 'date_created',
+                      'status', 'recipient', 'date_sent'],
 }
 
 INSTALLED_BACKENDS = {
