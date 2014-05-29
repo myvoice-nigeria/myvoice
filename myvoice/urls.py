@@ -8,6 +8,7 @@ admin.autodiscover()
 
 
 urlpatterns = patterns('',
+    url(r'^', include('myvoice.core.urls')),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^broadcast/', include('broadcast.urls')),
     url(r'^groups/', include('groups.urls')),

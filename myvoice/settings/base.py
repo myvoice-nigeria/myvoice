@@ -150,6 +150,7 @@ INSTALLED_APPS = (
     "rapidsms.contrib.echo",
 
     # Internal apps
+    "myvoice.core",
     "myvoice.dashboard",
 
     "rapidsms.contrib.default",  # Must be last
