@@ -125,6 +125,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.humanize',
     'django.contrib.sitemaps',
+
     # External apps
     "rapidsms",
     'south',
@@ -138,6 +139,7 @@ INSTALLED_APPS = (
     'decisiontree',
     'pagination',
     'sorter',
+
     # RapidSMS
     "rapidsms.backends.database",
     "rapidsms.contrib.handlers",
@@ -146,6 +148,10 @@ INSTALLED_APPS = (
     "rapidsms.contrib.messaging",
     "rapidsms.contrib.registration",
     "rapidsms.contrib.echo",
+
+    # Internal apps
+    "myvoice.dashboard",
+
     "rapidsms.contrib.default",  # Must be last
 )
 

@@ -12,4 +12,5 @@ urlpatterns = patterns('',
     url(r'^broadcast/', include('broadcast.urls')),
     url(r'^groups/', include('groups.urls')),
     url(r'^decisiontree/', include('decisiontree.urls')),
+    url(r'^dashboard/', include('myvoice.dashboard.urls')),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
