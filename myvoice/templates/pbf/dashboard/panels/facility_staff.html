@@ -1,0 +1,37 @@
+<div class="panel panel-primary">
+  <div class="panel-heading">
+    <h2 class="panel-title">FACILITY STAFF</h2>
+  </div>
+  <div class="panel-body">
+    <ul>
+      {% for i in "123456789" %}
+      <li>FirstName LastName</li>
+      {% endfor %}
+    </ul>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Positions</th>
+          <th>Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in "12345" %}
+        <tr>
+          <td>{% cycle "SCHEW" "JCHEW" "Lab Tech" "Attendants" "Security" %}</td>
+          <td>{% cycle "4" "2" "1" "1" "1" %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div>
+      <h4>LGA Rank</h4>
+      <p><strong>6th</strong> of 11</p>
+    </div>
+    <div>
+      <h4>PBF Rank</h4>
+      <p><strong>35th</strong> of xx</p>
+    </div>
+  </div>
+</div>

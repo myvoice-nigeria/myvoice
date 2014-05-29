@@ -1,0 +1,61 @@
+<div class="panel panel-primary">
+  <div class="panel-heading">
+    <h2 class="panel-title">QUARTER PERFORMANCE</h2>
+  </div>
+  <div class="panel-body">
+    <div class="panel-group">
+      {% for i in "1234" %}
+      <div class="panel panel-info" style="margin-bottom: 30px;">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            {% cycle "Performance Summary" "Patients" "Services" "Feedback" %}
+          </h4>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>MEASUREMENT</th>
+              <th>RESULT</th>
+              <th>RANK</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>INCOME</td>
+              <td>722,652</td>
+              <td>4th out of 11</td>
+            </tr>
+            <tr>
+              <td>QUALITY SCORE</td>
+              <td>96.6%</td>
+              <td>1st out of 11</td>
+            </tr>
+            <tr>
+              <td>PATIENT SATISFACTION</td>
+              <td>87%</td>
+              <td>1st out of 11</td>
+          </tbody>
+        </table>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="panel-footer" style="text-align: center;">
+    <a class="btn btn-primary" href="#">
+      <span class="glyphicon glyphicon-eye-open"></span>
+      View Charts
+    </a>
+    <a class="btn btn-primary" href="#">
+      <span class="glyphicon glyphicon-download-alt"></span>
+      Download Data
+    </a>
+    <a class="btn btn-primary" href="#">
+      <span class="glyphicon glyphicon-send"></span>
+      Send Email
+    </a>
+    <a class="btn btn-primary" href="#">
+      <span class="glyphicon glyphicon-print"></span>
+      Print
+    </a>
+  </div>
+</div>

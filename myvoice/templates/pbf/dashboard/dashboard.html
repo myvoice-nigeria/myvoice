@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Wayo Matti- NSHIP PBF Dashboard{% endblock title %}
+
+{% block body-id %}pbf-dashboard{% endblock body-id %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="page-header">
+      <h1>NSHIP PBF DASHBOARD</h1>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    {% include "pbf/dashboard/panels/basic_info.html" %}
+    {% include "pbf/dashboard/panels/quarter_performance.html" %}
+  </div>
+  <div class="col-md-4">
+    {% include "pbf/dashboard/panels/in_charge.html" %}
+    {% include "pbf/dashboard/panels/facility_staff.html" %}
+    {% include "pbf/dashboard/panels/feedback.html" %}
+  </div>
+</div>
+{% endblock content %}

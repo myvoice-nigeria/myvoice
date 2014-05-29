@@ -10,4 +10,4 @@ class PBFDashboardSelect(TemplateView):
 
 
 class PBFDashboard(TemplateView):
-    template_name = 'pbf/dashboard.html'
+    template_name = 'pbf/dashboard/dashboard.html'
