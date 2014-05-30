@@ -1,37 +1,49 @@
-<div class="panel panel-primary">
+<div class="panel panel-info">
   <div class="panel-heading">
-    <h2 class="panel-title">FACILITY STAFF</h2>
+    <h2 class="panel-title">
+      FACILITY STAFF
+      <small>12 members</small>
+    </h2>
   </div>
   <div class="panel-body">
-    <ul>
+    <ul id="employee-list" style="padding-bottom: 25px; margin: 0;">
       {% for i in "123456789" %}
       <li>FirstName LastName</li>
       {% endfor %}
     </ul>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Positions</th>
-          <th>Quantity</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for i in "12345" %}
-        <tr>
-          <td>{% cycle "SCHEW" "JCHEW" "Lab Tech" "Attendants" "Security" %}</td>
-          <td>{% cycle "4" "2" "1" "1" "1" %}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
 
-    <div>
-      <h4>LGA Rank</h4>
-      <p><strong>6th</strong> of 11</p>
+    <div class="panel panel-default">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>POSITIONS</th>
+            <th>QUANTITY</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in "12345" %}
+          <tr>
+            <td>{% cycle "SCHEW" "JCHEW" "Lab Tech" "Attendants" "Security" %}</td>
+            <td>{% cycle "4" "2" "1" "1" "1" %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div>
-      <h4>PBF Rank</h4>
-      <p><strong>35th</strong> of xx</p>
+
+    <div class="row" style="text-align: center;">
+      <div class="col-md-6">
+        <div class="statistic">
+          <h4>LGA Rank</h4>
+          <p><span class="good-rank">6th</span> of 11</p>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="statistic">
+          <h4>PBF Rank</h4>
+          <p><span class="bad-rank">35th</span> of xx</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>

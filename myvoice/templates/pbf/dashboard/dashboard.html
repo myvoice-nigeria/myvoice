@@ -1,8 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Wayo Matti- NSHIP PBF Dashboard{% endblock title %}
+{% block title %}Wayo Matti - NSHIP PBF Dashboard{% endblock title %}
 
 {% block body-id %}pbf-dashboard{% endblock body-id %}
+
+{% block extra-js %}
+  <script>
+    $(function() {
+      $('.panel-info table.collapse').on('show.bs.collapse', function(event) {
+        var span = $(this).closest('.panel').find('.panel-title a span')
+        span.removeClass('glyphicon-plus');
+        span.addClass('glyphicon-minus');
+      });
+      $('.panel-info table.collapse').on('hidden.bs.collapse', function(event) {
+        var span = $(this).closest('.panel').find('.panel-title a span')
+        span.removeClass('glyphicon-minus');
+        span.addClass('glyphicon-plus');
+      });
+    });
+  </script>
+{% endblock extra-js %}
 
 {% block content %}
 <div class="row">

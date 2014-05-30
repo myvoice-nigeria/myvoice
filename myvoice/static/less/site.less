@@ -1,11 +1,28 @@
 // Myvoice-specific styles.
 
+@primaryPanelBackground: #ddd;
+@primaryPanelHeaderBackground: #ccc;
+@primaryPanelText: #333;
+@primaryPanelBorder: @primaryPanelBackground;
+
+@infoPanelBackground: @primaryPanelBackground;
+@infoPanelHeaderBackground: @infoPanelBackground;
+@infoPanelFooterBackground: #ccc;
+@infoPanelBorder: @infoPanelBackground;
+@infoPanelText: @primaryPanelText;
+
+@defaultPanelBackground: #fff;
+@defaultPanelHeaderBackground: #eee;
+@defaultPanelBorder: @infoPanelBackground;
+@defaultPanelText: black;
+
 body.fancy {
     background-image: url("../img/myvoice.png");
     background-position: center;
     background-attachment: fixed;
     background-repeat: no-repeat;
-    background-size: 100% auto;
+    background-size: 100%;
+    background-color: #bbb;
     color: #fff;
     .page-header {
         margin-top: 200px;
@@ -39,5 +56,112 @@ body#home {
 body#pbf-select-clinic {
     form {
         text-align: center;
+    }
+}
+
+body#pbf-dashboard {
+    .statistic {
+        margin: 10px 0 20px;
+        h4 {
+            font-weight: bold;
+            font-size: 14px;
+            margin: 0;
+        }
+    }
+    .good-rank, .comments {
+        color: #59ac87;
+    }
+    .bad-rank, .complaints {
+        color: #ac5959;
+    }
+    .panel {
+        font-size: 18px;
+        .panel-title {
+            font-weight: bold;
+        }
+        > .table {
+            text-align: center;
+            th {
+                text-align: center;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            &.collapse.in {
+                display: table;
+            }
+        }
+    }
+
+    .panel-primary {
+        background-color: @primaryPanelBackground;
+        border-color: @primaryPanelBorder;
+        color: @primaryPanelText;
+        > .panel-heading {
+            background-color: @primaryPanelHeaderBackground;
+            color: @primaryPanelText;
+            border-color: @primaryPanelBorder;
+        }
+    }
+    .panel-info {
+        background-color: @infoPanelBackground;
+        border-color: @infoPanelBorder;
+        color: @infoPanelText;
+        > .panel-heading {
+            background-color: @infoPanelBackground;
+        }
+        > .panel-footer {
+            background-color: @infoPanelFooterBackground;
+        }
+        > .panel-heading, > .panel-footer {
+            color: @infoPanelText;
+            border-color: @infoPanelBorder;
+            .panel-title small {
+                font-size: 16px;
+                font-style: italic;
+                padding-left: 10px;
+                color: #555;
+            }
+        }
+    }
+    .panel-default {
+        background-color: @defaultPanelBackground;
+        border-color: @defaultPanelBorder;
+        color: @defaultPanelText;
+        > .panel-heading, > .panel-footer {
+            background-color: @defaultPanelHeaderBackground;
+            color: @defaultPanelText;
+            border-color: @defaultPanelBorder;
+            a:hover {
+                cursor: pointer;
+            }
+        }
+    }
+   .panel#basic-info {
+        .text-img-wrapper {
+            position: relative;
+            p {
+                position: absolute;
+                top: 270px;
+                left: 10px;
+                width: 100%;
+                color: #fff;
+                font-weight: bold;
+            }
+        }
+    }
+    .panel#feedback-panel {
+        background-color: #CAFFDD;
+        border-color: #CAFFDD;
+        > .panel-heading {
+            background-color: #CAFFDD;
+            border-color: #CAFFDD;
+        }
+        > .panel-footer {
+            background-color: #7AC7A8;
+            border-color: #7AC7A8;
+        }
+        .statistic p, .statistic blockquote {
+            text-align: center;
+        }
     }
 }

@@ -1,39 +1,47 @@
-<div class="panel panel-primary">
+<div class="panel panel-info">
   <div class="panel-heading">
-    <h2 class="panel-title">QUARTER PERFORMANCE</h2>
+    <h2 class="panel-title">
+      QUARTER PERFORMANCE
+      <small>Q3 - January 2014 to March 2014</small>
+    </h2>
   </div>
   <div class="panel-body">
     <div class="panel-group">
       {% for i in "1234" %}
-      <div class="panel panel-info" style="margin-bottom: 30px;">
+      <div class="panel panel-default" style="margin-bottom: 30px;"
+           id="{% cycle 'performance-summary' 'patients' 'services' 'feedback' as id %}">
         <div class="panel-heading">
           <h4 class="panel-title">
             {% cycle "Performance Summary" "Patients" "Services" "Feedback" %}
+            <a class="pull-right" data-toggle="collapse"
+               data-target="#{{ id }} table">
+              <span class="glyphicon glyphicon-minus"></span>
+            </a>
           </h4>
         </div>
-        <table class="table">
+        <table class="table collapse in">
           <thead>
             <tr>
-              <th>MEASUREMENT</th>
+              <th></th>
               <th>RESULT</th>
               <th>RANK</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>INCOME</td>
+              <th>INCOME</th>
               <td>722,652</td>
-              <td>4th out of 11</td>
+              <td><span class="good-rank">4th</span> out of 11</td>
             </tr>
             <tr>
-              <td>QUALITY SCORE</td>
+              <th>QUALITY SCORE</th>
               <td>96.6%</td>
-              <td>1st out of 11</td>
+              <td><span class="good-rank">1st</span> out of 11</td>
             </tr>
             <tr>
-              <td>PATIENT SATISFACTION</td>
+              <th>PATIENT SATISFACTION</th>
               <td>87%</td>
-              <td>1st out of 11</td>
+              <td><span class="good-rank">1st</span> out of 11</td>
           </tbody>
         </table>
       </div>
@@ -42,7 +50,7 @@
   </div>
   <div class="panel-footer" style="text-align: center;">
     <a class="btn btn-primary" href="#">
-      <span class="glyphicon glyphicon-eye-open"></span>
+      <span class="glyphicon glyphicon-stats"></span>
       View Charts
     </a>
     <a class="btn btn-primary" href="#">
