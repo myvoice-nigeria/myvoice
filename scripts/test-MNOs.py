@@ -23,7 +23,7 @@ for via_operator, _ in test_phones:
             'to': phone,
             'from': '55999',
             'smsc': 'starfish-%s' % via_operator.lower(),
-            'text': 'Test message to %s via %s. Sent at %s' % (phone_operator, via_operator, now),
+            'text': 'Test message to %s via %s. Sent at %s WAT.' % (phone_operator, via_operator, now),
         }
         data = urllib.urlencode(params)
         url = 'https://myvoice-testing.caktusgroup.com/sendsms?%s' % data
