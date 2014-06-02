@@ -131,6 +131,7 @@ INSTALLED_APPS = (
     'south',
     'compressor',
     "django_nose",
+    "widget_tweaks",
     # "djtables",  # required by rapidsms.contrib.locations
     "django_tables2",
     "selectable",
