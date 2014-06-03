@@ -1,4 +1,5 @@
 {% load humanize %}
+{% load pbf_tags %}
 {% if clinic.progress %}
 <div class="panel panel-info">
   <div class="panel-heading">
@@ -35,7 +36,9 @@
                 <td>{% ifnotequal value None %}{{ value }}{% else %}-{% endifnotequal %}</td>
                 <td>
                   {% ifnotequal rank None %}
-                    <span class="good-rank">{{ rank|ordinal }}</span> out of {{ total_clinics }}</td>
+                    <span class="{% get_rank_class rank total_clinics %}">
+                      {{ rank|ordinal }}
+                    </span>
                   {% else %}
                     -
                   {% endifnotequal %}
