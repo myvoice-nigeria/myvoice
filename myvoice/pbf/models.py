@@ -40,11 +40,11 @@ CLINIC_DATA = {
             'years_at_clinic': '5',
             'contact_numbers': '0814 339 9384\n 0808 711 2929',
         },
-        'progress': [
+        'progress': [  # Q4 2013
             ('Performance Summary', [
-                ('Income', '722,652', 4),
-                ('Quality Score', '96.6%', 1),
-                ('Patient Satisfaction', '87%', 1),
+                ('Income', '59,959', 3),
+                ('Quality Score', '96.8', 1),
+                ('Patient Satisfaction', None, None),
             ]),
             ('Patients', [
                 ('Total Patients seen', None, 4),
@@ -53,14 +53,14 @@ CLINIC_DATA = {
                 ('Indigents', 35, 3),
             ]),
             ('Services', [
-                ('New Out Patient', None, None),
-                ('Normal Delivery', None, None),
-                ('Child Immunization / Vaccination', None, None),
-                ('Immunization or vaccination', None, None),
-                ('Tests', None, None),
-                ('Other\n(Including Antenatal Care)', None, None),
+                ('Normal Delivery', '24.5%', None),
+                ('New Outpatient Consultation', '18.2%', None),
+                ('Family Planning', '13.8%', None),
+                ('Completely Vaccinated Child', '7.7%', None),
+                ('VCT/PMTCT/PIT tests', '7.6%', None),
+                ('Other Services', '28.2%', None),
             ]),
-            ('Feedback', [
+            ('Feedback', [  # to be collected from TextIt
                 ('Staff Treatment', '74%', 2),
                 ('Affordable Drugs', '89%', 3),
                 ('Avg. Wait Time', '1 hr.', 3),
@@ -87,9 +87,9 @@ CLINIC_DATA = {
         'show_feedback': True,
         'progress': [
             ('Performance Summary', [
-                ('income', '938,238', 2),
-                ('Quality Score', '94.0%', 2),
-                ('Patient Satisfaction', '87%', 1),
+                ('Income', '79,387', 2),
+                ('Quality Score', '94.4%', 2),
+                ('Patient Satisfaction', None, None),
             ]),
             ('Patients', [
                 ('Total Patients seen', None, 4),
@@ -98,12 +98,12 @@ CLINIC_DATA = {
                 ('Indigents', 35, 3),
             ]),
             ('Services', [
-                ('New Out Patient', None, None),
-                ('Normal Delivery', None, None),
-                ('Child Immunization / Vaccination', None, None),
-                ('Immunization or vaccination', None, None),
-                ('Tests', None, None),
-                ('Other\n(Including Antenatal Care)', None, None),
+                ('Normal Delivery', '21.7%', None),
+                ('New Outpatient Consultation', '14.7%', None),
+                ('Family Planning', '13.6%', None),
+                ('VCT/PMTCT/PIT Tests', '9.4%', None),
+                ('STD Treatment', '8.3%', None),
+                ('Other Services', '32.3%', None),
             ]),
             ('Feedback', [
                 ('Staff Treatment', '74%', 2),
