@@ -53,12 +53,12 @@ CLINIC_DATA = {
                 ('Indigents', 35, 3),
             ]),
             ('Services', [
-                ('New Out Patient', 'x', 1),
-                ('Normal Delivery', 'x', 1),
-                ('Child Immunization / Vaccination', 'x', 1),
-                ('Immunization or vaccination', 'x', 1),
-                ('Tests', 'x', 1),
-                ('Other\n(Including Antenatal Care)', 'x', 1),
+                ('New Out Patient', None, None),
+                ('Normal Delivery', None, None),
+                ('Child Immunization / Vaccination', None, None),
+                ('Immunization or vaccination', None, None),
+                ('Tests', None, None),
+                ('Other\n(Including Antenatal Care)', None, None),
             ]),
             ('Feedback', [
                 ('Staff Treatment', '74%', 2),
