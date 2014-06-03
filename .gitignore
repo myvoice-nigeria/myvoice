@@ -6,6 +6,8 @@
 *.db
 *.orig
 *.DS_Store
+*.bak
+*.remote
 .coverage
 .vagrant
 */settings/local.py
