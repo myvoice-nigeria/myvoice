@@ -8,6 +8,11 @@ include:
   - postfix
   - ufw
 
+/etc/nginx/nginx.conf:
+  file.sed:
+    - before: "(# )?server_names_hash_bucket_size .+;"
+    - after: "server_names_hash_bucket_size 64;"
+
 gunicorn_conf:
   file.managed:
     - name: /etc/supervisor/conf.d/{{ pillar['project_name'] }}-gunicorn.conf

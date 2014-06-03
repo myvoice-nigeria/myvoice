@@ -31,3 +31,6 @@ base:
   'roles:cache':
     - match: grain
     - project.cache
+  'roles:sms-gateway':
+    - match: grain
+    - project.kannel
