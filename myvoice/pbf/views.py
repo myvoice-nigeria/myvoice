@@ -16,13 +16,12 @@ class PBFDashboardSelect(FormView):
 class PBFDashboard(TemplateView):
     template_name = 'pbf/dashboard/dashboard.html'
 
-    def get(self, request, clinic_slug, *args, **kwargs):
+    def get_context_data(self, **kwargs):
         from .models import CLINIC_DATA
+        clinic_slug = kwargs.pop('clinic_slug')
         if clinic_slug not in CLINIC_DATA:
             raise Http404("Clinic with slug '{0}' not found".format(clinic_slug))
         self.clinic = CLINIC_DATA.get(clinic_slug)
-        return super(PBFDashboard, self).get(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        kwargs['clinic'] = self.clinic
+        kwargs['clinic'] = CLINIC_DATA.get(clinic_slug)
+        kwargs['total_clinics'] = len(CLINIC_DATA)
         return super(PBFDashboard, self).get_context_data(**kwargs)

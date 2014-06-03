@@ -1,0 +1,31 @@
+{% load humanize %}
+{% if clinic.performance_summary %}
+<div class="panel panel-default" style="margin-bottom: 30px;" id="services">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      Performance Summary
+      <a class="pull-right" data-toggle="collapse" data-target="#services table">
+        <span class="flyphicon glyphicon-minus"></span>
+      </a>
+    </h4>
+  </div>
+  <table class="table collapse in">
+    <thead>
+      <tr>
+        <th class="measurement"></th>
+        <th class="result">RESULT</th>
+        <th class="rank">RANK</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for metric_name, value, rank in clinic.performance_summary %}
+      <tr>
+        <th>{{ metric_name|upper|linebreaksbr }}</th>
+        <td>{{ value }}</td>
+        <td><span class="good-rank">{{ rank|ordinal }}</span> out of {{ total_clinics }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
