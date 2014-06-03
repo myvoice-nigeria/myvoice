@@ -10,16 +10,41 @@
 @lightRed: #d69e91;
 
 
+.navbar-inverse {
+    background-color: #b1b3b5;
+    border-color: #b1b3b5;
+    color: @white;
+    .navbar-brand {
+        color: @white;
+    }
+    .navbar-nav > li > a {
+        color: @white;
+        text-transform: uppercase;
+        &:hover, &:focus {
+            color: @darkGray;
+        }
+    }
+    .navbar-toggle {
+        border-color: @white;
+        &:hover, &:focus {
+            background-color: @darkGray;
+        }
+    }
+    .navbar-search .btn {
+        color: @darkGray;
+    }
+}
+
 body.fancy {
     background-image: url("../img/myvoice.png");
     background-position: center;
+    background-position-y: 100px;
     background-attachment: fixed;
     background-repeat: no-repeat;
     background-size: 100%;
-    background-color: #bbb;
     color: @white;
     .page-header {
-        margin-top: 200px;
+        margin-top: 250px;
         text-align: center;
         border-bottom: none;
         h1 {
@@ -36,24 +61,27 @@ body.fancy {
 
 body#home {
     .page-header h1 {
-        font-size: 108px;
+        font-size: 100pt;
     }
     .sponsors {
         margin-top: 30px;
-        font-size: 18px;
+        font-size: 18pt;
         .sponsor {
             padding: 0 10px;
             a {
                 color: @white;
             }
             a:hover {
-                color: #87f0ab;
+                color: @darkGreen;
             }
         }
     }
 }
 
 body#pbf-select-clinic {
+    h1 {
+        font-size: 40pt;
+    }
     form {
         text-align: center;
     }

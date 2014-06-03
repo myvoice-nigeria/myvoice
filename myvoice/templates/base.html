@@ -39,7 +39,7 @@
   <body class="{% block body-class %}{% endblock body-class %}" id="{% block body-id %}{% endblock body-id %}">
   {% block body %}
     {% block navbar %}
-    <nav class="navbar navbar-default" rol="navigation">
+    <nav class="navbar navbar-inverse" rol="navigation">
       <div class="container">
         <div class="navbar-header">
           <button type="button" data-toggle="collapse" data-target=".navbar-collapse" class="navbar-toggle">
@@ -51,7 +51,7 @@
           <a class="navbar-brand" href="{% url 'home' %}">NSHIP PBF DASHBOARD</a>
         </div>
         <div class="navbar-collapse collapse">
-          <form class="navbar-form navbar-right pull-right" role="search">
+          <form class="navbar-form navbar-right pull-right navbar-search" role="search">
             <div class="form-group">
               <input type="text" class="form-control" placeholder="SEARCH">
             </div>
