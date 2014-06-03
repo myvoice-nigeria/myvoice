@@ -17,7 +17,7 @@
             <h4 class="panel-title">
               {{ title }}
               <a class="pull-right" data-toggle="collapse" data-target="#performance-progress-{{ forloop.counter }} table">
-                <span class="glyphicon glyphicon-minus"></span>
+                <span class="glyphicon glyphicon-white glyphicon-minus"></span>
               </a>
             </h4>
           </div>
@@ -32,13 +32,13 @@
             <tbody>
               {% for metric_name, value, rank in rows %}
               <tr>
-                <th>{{ metric_name|upper|linebreaksbr }}</th>
+                <th>{{ metric_name|linebreaksbr }}</th>
                 <td>{% ifnotequal value None %}{{ value }}{% else %}-{% endifnotequal %}</td>
                 <td>
                   {% ifnotequal rank None %}
                     <span class="{% get_rank_class rank total_clinics %}">
                       {{ rank|ordinal }}
-                    </span>
+                    </span> out of {{ total_clinics }}
                   {% else %}
                     -
                   {% endifnotequal %}
@@ -52,20 +52,20 @@
     </div>
   </div>
   <div class="panel-footer" style="text-align: center;">
-    <a class="btn btn-primary" href="#">
-      <span class="glyphicon glyphicon-stats"></span>
+    <a class="btn btn-dashboard" href="#">
+      <span class="glyphicon glyphicon-white glyphicon-stats"></span>
       View Charts
     </a>
-    <a class="btn btn-primary" href="#">
-      <span class="glyphicon glyphicon-download-alt"></span>
+    <a class="btn btn-dashboard" href="#">
+      <span class="glyphicon glyphicon-white glyphicon-download-alt"></span>
       Download Data
     </a>
-    <a class="btn btn-primary" href="#">
-      <span class="glyphicon glyphicon-send"></span>
+    <a class="btn btn-dashboard" href="#">
+      <span class="glyphicon glyphicon-white glyphicon-send"></span>
       Send Email
     </a>
-    <a class="btn btn-primary" href="#">
-      <span class="glyphicon glyphicon-print"></span>
+    <a class="btn btn-dashboard" href="#">
+      <span class="glyphicon glyphicon-white glyphicon-print"></span>
       Print
     </a>
   </div>

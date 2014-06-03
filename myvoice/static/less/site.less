@@ -1,20 +1,14 @@
 // Myvoice-specific styles.
 
-@primaryPanelBackground: #ddd;
-@primaryPanelHeaderBackground: #ccc;
-@primaryPanelText: #333;
-@primaryPanelBorder: @primaryPanelBackground;
+@white: #fff;
+@darkGray: #404040;
+@lightGray: #e8e8e8;
+@veryLightGray: #f5f5f5;
+@darkGreen: #88c3b4;
+@lightGreen: #c2ddd5;
+@darkRed: #b44832;
+@lightRed: #d69e91;
 
-@infoPanelBackground: @primaryPanelBackground;
-@infoPanelHeaderBackground: @infoPanelBackground;
-@infoPanelFooterBackground: #ccc;
-@infoPanelBorder: @infoPanelBackground;
-@infoPanelText: @primaryPanelText;
-
-@defaultPanelBackground: #fff;
-@defaultPanelHeaderBackground: #eee;
-@defaultPanelBorder: @infoPanelBackground;
-@defaultPanelText: black;
 
 body.fancy {
     background-image: url("../img/myvoice.png");
@@ -23,7 +17,7 @@ body.fancy {
     background-repeat: no-repeat;
     background-size: 100%;
     background-color: #bbb;
-    color: #fff;
+    color: @white;
     .page-header {
         margin-top: 200px;
         text-align: center;
@@ -31,7 +25,7 @@ body.fancy {
         h1 {
             font-weight: bold;
             small {
-                color: #fff;
+                color: @white;
                 font-weight: normal;
                 vertical-align: middle;
                 margin-left: 10px;
@@ -50,7 +44,7 @@ body#home {
         .sponsor {
             padding: 0 10px;
             a {
-                color: #fff;
+                color: @white;
             }
             a:hover {
                 color: #87f0ab;
@@ -76,10 +70,10 @@ body#pbf-dashboard {
         }
     }
     .good-rank, .comments {
-        color: #59ac87;
+        color: @darkGreen;
     }
     .bad-rank, .complaints {
-        color: #ac5959;
+        color: @darkRed;
     }
     .panel {
         .panel-title {
@@ -93,8 +87,20 @@ body#pbf-dashboard {
                 font-size: 10pt;
                 font-weight: bold;
             }
-            tbody th {
-                text-align: right;
+            tbody {
+                th {
+                    text-align: right;
+                    text-transform: uppercase;
+                }
+                tr, td, th {
+                    border: none;
+                }
+            }
+            thead {
+                tr, th {
+                    border-color: @darkGray;
+                    border-width: 1px;
+                }
             }
             &.collapse.in {
                 display: table;
@@ -103,28 +109,31 @@ body#pbf-dashboard {
     }
 
     .panel-primary {
-        background-color: @primaryPanelBackground;
-        border-color: @primaryPanelBorder;
-        color: @primaryPanelText;
+        background-color: @lightGray;
+        border-color: @lightGray;
+        color: @darkGray;
         > .panel-heading {
-            background-color: @primaryPanelHeaderBackground;
-            color: @primaryPanelText;
-            border-color: @primaryPanelBorder;
+            background-color: @lightGray;
+            color: @darkGray;
+            border-color: @lightGray;
+            .panel-title {
+                text-transform: uppercase;
+            }
         }
     }
     .panel-info {
-        background-color: @infoPanelBackground;
-        border-color: @infoPanelBorder;
-        color: @infoPanelText;
+        background-color: @lightGray;
+        border-color: @lightGray;
+        color: @darkGray;
         > .panel-heading {
-            background-color: @infoPanelBackground;
+            background-color: @lightGray;
         }
         > .panel-footer {
-            background-color: @infoPanelFooterBackground;
+            background-color: @darkGray;
         }
         > .panel-heading, > .panel-footer {
-            color: @infoPanelText;
-            border-color: @infoPanelBorder;
+            color: @darkGray;
+            border-color: @lightGray;
             .panel-title small {
                 font-size: 10pt;
                 font-style: italic;
@@ -134,13 +143,13 @@ body#pbf-dashboard {
         }
     }
     .panel-default {
-        background-color: @defaultPanelBackground;
-        border-color: @defaultPanelBorder;
-        color: @defaultPanelText;
+        background-color: @white;
+        border-color: @lightGray;;
+        color: @darkGray;
         > .panel-heading, > .panel-footer {
-            background-color: @defaultPanelHeaderBackground;
-            color: @defaultPanelText;
-            border-color: @defaultPanelBorder;
+            background-color: @veryLightGray;
+            color: @darkGray;
+            border-color: @lightGray;;
             a:hover {
                 cursor: pointer;
             }
@@ -163,24 +172,40 @@ body#pbf-dashboard {
                 top: 270px;
                 left: 10px;
                 width: 100%;
-                color: #fff;
+                color: @white;
                 font-weight: bold;
             }
         }
     }
     .panel#feedback-panel {
-        background-color: #CAFFDD;
-        border-color: #CAFFDD;
+        background-color: @lightGreen;
+        border-color: @lightGreen;
         > .panel-heading {
-            background-color: #CAFFDD;
-            border-color: #CAFFDD;
+            background-color: @lightGreen;
+            border-color: @lightGreen;
         }
         > .panel-footer {
-            background-color: #7AC7A8;
-            border-color: #7AC7A8;
+            background-color: @darkGreen;
+            border-color: @darkGreen;
         }
         .statistic p, .statistic blockquote {
             text-align: center;
+        }
+    }
+    .btn-dashboard {
+        background-color: transparent;
+        color: @white;
+        text-transform: uppercase;
+        &:hover {
+            color: @darkGreen;
+        }
+    }
+    .btn-dashboard-inverse {
+        background-color: transparent;
+        text-transform: uppercase;
+        color: @white;
+        &:hover {
+            color: @darkGray;
         }
     }
 }
