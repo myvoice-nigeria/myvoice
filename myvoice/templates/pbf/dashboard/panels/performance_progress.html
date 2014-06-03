@@ -11,11 +11,11 @@
     <div class="panel-group">
       {% for title, rows in clinic.progress %}
         {% if rows %}
-        <div class="panel panel-default" style="margin-bottom: 30px;" id="patients">
+        <div class="panel panel-default" style="margin-bottom: 30px;" id="performance-progress-{{ forloop.counter }}">
           <div class="panel-heading">
             <h4 class="panel-title">
               {{ title }}
-              <a class="pull-right" data-toggle="collapse" data-target="#patients table">
+              <a class="pull-right" data-toggle="collapse" data-target="#performance-progress-{{ forloop.counter }} table">
                 <span class="glyphicon glyphicon-minus"></span>
               </a>
             </h4>
