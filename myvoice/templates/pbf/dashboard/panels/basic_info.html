@@ -1,7 +1,7 @@
 {% load static from staticfiles %}
 <div class="panel panel-primary" id="basic-info">
   <div class="panel-heading">
-    <h2 class="panel-title">WAYO MATTI PHC</h2>
+    <h2 class="panel-title">{{ clinic.name|upper }}</h2>
   </div>
   <div class="panel-body">
     <div class="media">
@@ -9,13 +9,13 @@
         <div class="text-img-wrapper">
           <img class="media-object" src="{% static 'img/wayo-matti.png' %}"
                alt="Wayo Matti PHC" width="300" height="300" />
-          <p>FOUNDED 2011</p>
+          <p>FOUNDED {{ clinic.year_founded }}</p>
         </div>
       </div>
       <div class="media-body">
         <div class="statistic">
           <h4>Location</h4>
-          <p>Town, Ward, LGA</p>
+          <p>Town, Ward, Wamba</p>
         </div>
         <div class="statistic">
           <h4>PBF Category</h4>

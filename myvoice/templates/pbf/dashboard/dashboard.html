@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Wayo Matti - NSHIP PBF Dashboard{% endblock title %}
+{% block title %}{{ clinic.name }} - NSHIP PBF Dashboard{% endblock title %}
 
 {% block body-id %}pbf-dashboard{% endblock body-id %}
 
@@ -31,14 +31,21 @@
 </div>
 
 <div class="row">
+  {% if clinic.slug != 'wamba-matti-phc' and clinic.slug != 'wamba-phc-model-clinic' %}
+  <div class="col-md-12">
+    <p>We do not yet have data for this clinic.</p>
+    <p><a href="{% url 'pbf_dashboard_select' %}">Back to dashboard select &rarr;</a></p>
+  </div>
+  {% else %}
   <div class="col-md-8">
     {% include "pbf/dashboard/panels/basic_info.html" %}
-    {% include "pbf/dashboard/panels/quarter_performance.html" %}
+    {% include "pbf/dashboard/panels/performance_progress.html" %}
   </div>
   <div class="col-md-4">
     {% include "pbf/dashboard/panels/in_charge.html" %}
     {% include "pbf/dashboard/panels/facility_staff.html" %}
     {% include "pbf/dashboard/panels/feedback.html" %}
   </div>
+  {% endif %}
 </div>
 {% endblock content %}

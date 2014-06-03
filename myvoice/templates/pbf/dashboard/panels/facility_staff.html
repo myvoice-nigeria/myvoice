@@ -1,8 +1,11 @@
+{% if clinic.facility_staff %}
 <div class="panel panel-info">
   <div class="panel-heading">
     <h2 class="panel-title">
       FACILITY STAFF
-      <small>12 members</small>
+      {% if clinic.total_positions %}
+        <small>{{ clinic.total_positions }} members</small>
+      {% endif %}
     </h2>
   </div>
   <div class="panel-body">
@@ -21,10 +24,10 @@
           </tr>
         </thead>
         <tbody>
-          {% for i in "12345" %}
+          {% for position_type, count in clinic.facility_staff %}
           <tr>
-            <td>{% cycle "SCHEW" "JCHEW" "Lab Tech" "Attendants" "Security" %}</td>
-            <td>{% cycle "4" "2" "1" "1" "1" %}</td>
+            <td>{{ position_type }}</td>
+            <td>{{ count }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -35,15 +38,16 @@
       <div class="col-md-6">
         <div class="statistic">
           <h4>LGA Rank</h4>
-          <p><span class="good-rank">6th</span> of 11</p>
+          <p><span class="good-rank">6th</span> out of {{ total_clinics }}</p>
         </div>
       </div>
       <div class="col-md-6">
         <div class="statistic">
           <h4>PBF Rank</h4>
-          <p><span class="bad-rank">35th</span> of xx</p>
+          <p><span class="bad-rank">35th</span> out of xx</p>
         </div>
       </div>
     </div>
   </div>
 </div>
+{% endif %}

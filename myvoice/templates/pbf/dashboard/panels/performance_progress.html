@@ -1,0 +1,34 @@
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h2 class="panel-title">
+      PERFORMANCE PROGRESS
+      <small>Q3 - January 2014 to March 2014</small>
+    </h2>
+  </div>
+  <div class="panel-body">
+    <div class="panel-group">
+      {% include "pbf/dashboard/panels/performance_progress/summary.html" %}
+      {% include "pbf/dashboard/panels/performance_progress/patients.html" %}
+      {% include "pbf/dashboard/panels/performance_progress/services.html" %}
+      {% include "pbf/dashboard/panels/performance_progress/feedback.html" %}
+    </div>
+  </div>
+  <div class="panel-footer" style="text-align: center;">
+    <a class="btn btn-primary" href="#">
+      <span class="glyphicon glyphicon-stats"></span>
+      View Charts
+    </a>
+    <a class="btn btn-primary" href="#">
+      <span class="glyphicon glyphicon-download-alt"></span>
+      Download Data
+    </a>
+    <a class="btn btn-primary" href="#">
+      <span class="glyphicon glyphicon-send"></span>
+      Send Email
+    </a>
+    <a class="btn btn-primary" href="#">
+      <span class="glyphicon glyphicon-print"></span>
+      Print
+    </a>
+  </div>
+</div>

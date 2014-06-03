@@ -7,17 +7,17 @@
     <div class="media">
       <div class="pull-left">
         <img class="media-object" src="{% static 'img/lydia.png' %}"
-             alt="Mrs. Lydia Tanze" width="125" />
+             alt="{{ clinic.incharge.name|default:"Mrs. Lydia Tanze" }}" width="125" />
       </div>
       <div class="media-body">
-        <p>Mrs. Lydia Tanze</p>
+        <p>{{ clinic.incharge.name|default:"Mrs. Lydia Tanze" }}</p>
         <div class="statistic">
           <h4>Years at Clinic</h4>
-          <p>5</p>
+          <p>{{ clinic.incharge.years_at_clinic|default:"5" }}</p>
         </div>
         <div class="statistic">
           <h4>Contact Number</h4>
-          <p>0814 339 9384<br />0808 711 2929</p>
+          <p>{{ clinic.incharge.contact_numbers|default:"0814 339 9384<br />0808 711 2929"|linebreaksbr }}</p>
         </div>
       </div>
     </div>

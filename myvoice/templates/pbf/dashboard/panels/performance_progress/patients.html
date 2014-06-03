@@ -1,0 +1,41 @@
+<div class="panel panel-default" style="margin-bottom: 30px;" id="patients">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      Patients
+      <a class="pull-right" data-toggle="collapse" data-target="#patients table">
+        <span class="flyphicon glyphicon-minus"></span>
+      </a>
+    </h4>
+  </div>
+  <table class="table collapse in">
+    <thead>
+      <tr>
+        <th class="measurement"></th>
+        <th class="result">RESULT</th>
+        <th class="rank">RANK</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>TOTAL PATIENTS SEEN</th>
+        <td>X</td>
+        <td><span class="good-rank">4th</span> out of {{ total_clinics }}</td>
+      </tr>
+      <tr>
+        <th>OUTREACH</th>
+        <td>320</td>
+        <td><span class="good-rank">1st</span> out of {{ total_clinics }}</td>
+      </tr>
+      <tr>
+        <th>IN FACILITY</th>
+        <td>X</td>
+        <td><span class="good-rank">3rd</span> out of {{ total_clinics }}</td>
+      </tr>
+      <tr>
+        <th>INDIGENTS</th>
+        <td>35</td>
+        <td><span class="good-rank">3rd</span> out of {{ total_clinics }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

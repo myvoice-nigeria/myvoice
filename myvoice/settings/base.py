@@ -119,6 +119,7 @@ FIXTURE_DIRS = (
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -131,6 +132,7 @@ INSTALLED_APPS = (
     'south',
     'compressor',
     "django_nose",
+    "widget_tweaks",
     # "djtables",  # required by rapidsms.contrib.locations
     "django_tables2",
     "selectable",
