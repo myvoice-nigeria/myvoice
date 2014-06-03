@@ -1,3 +1,5 @@
+{% load humanize %}
+{% if clinic.progress %}
 <div class="panel panel-info">
   <div class="panel-heading">
     <h2 class="panel-title">
@@ -7,10 +9,43 @@
   </div>
   <div class="panel-body">
     <div class="panel-group">
-      {% include "pbf/dashboard/panels/performance_progress/summary.html" %}
-      {% include "pbf/dashboard/panels/performance_progress/patients.html" %}
-      {% include "pbf/dashboard/panels/performance_progress/services.html" %}
-      {% include "pbf/dashboard/panels/performance_progress/feedback.html" %}
+      {% for title, rows in clinic.progress %}
+        {% if rows %}
+        <div class="panel panel-default" style="margin-bottom: 30px;" id="patients">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              {{ title }}
+              <a class="pull-right" data-toggle="collapse" data-target="#patients table">
+                <span class="glyphicon glyphicon-minus"></span>
+              </a>
+            </h4>
+          </div>
+          <table class="table collapse in">
+            <thead>
+              <tr>
+                <th class="measurement"></th>
+                <th class="result">RESULT</th>
+                <th class="rank">RANK</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for metric_name, value, rank in rows %}
+              <tr>
+                <th>{{ metric_name|upper|linebreaksbr }}</th>
+                <td>{% ifnotequal value None %}{{ value }}{% else %}-{% endifnotequal %}</td>
+                <td>
+                  {% ifnotequal rank None %}
+                    <span class="good-rank">{{ rank|ordinal }}</span> out of {{ total_clinics }}</td>
+                  {% else %}
+                    -
+                  {% endifnotequal %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+      {% endfor %}
     </div>
   </div>
   <div class="panel-footer" style="text-align: center;">
@@ -32,3 +67,4 @@
     </a>
   </div>
 </div>
+{% endif %}
