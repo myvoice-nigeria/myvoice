@@ -20,6 +20,7 @@ VALID_ROLES = (
     'db-master',
     'queue',
     'cache',
+    'sms-gateway',
 )
 
 # FIXME: Once the master has been setup this should be set to IP of the master
