@@ -21,6 +21,7 @@ class ClinicStatisticInline(admin.TabularInline):
 class ClinicAdmin(admin.ModelAdmin):
     inlines = [ClinicStaffInline, ClinicStatisticInline]
     list_display = ['name', 'lga']
+    prepopulated_fields = {'slug': ['name']}
     readonly_fields = ['lga_rank', 'pbf_rank']
 
 
