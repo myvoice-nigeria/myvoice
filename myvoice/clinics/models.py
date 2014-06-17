@@ -127,7 +127,7 @@ class ClinicStatistic(models.Model):
 
     def __unicode__(self):
         return '{statistic} for {clinic} for {month}'.format(
-            statistic=self.statistic, clinic=self.clinic.name,
+            statistic=self.get_statistic_display(), clinic=self.clinic.name,
             month=self.get_month_display())
 
     def _get_value(self):
