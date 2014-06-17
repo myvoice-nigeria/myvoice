@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from . import models
-from .forms import ClinicStatisticForm
+from .forms import ClinicStatisticAdminForm
 
 
 class ClinicStaffInline(admin.TabularInline):
@@ -15,7 +15,7 @@ class ClinicStaffInline(admin.TabularInline):
 class ClinicStatisticInline(admin.TabularInline):
     model = models.ClinicStatistic
     extra = 0
-    form = ClinicStatisticForm
+    form = ClinicStatisticAdminForm
 
 
 class ClinicAdmin(admin.ModelAdmin):
@@ -25,7 +25,7 @@ class ClinicAdmin(admin.ModelAdmin):
 
 
 class ClinicStatisticAdmin(admin.ModelAdmin):
-    form = ClinicStatisticForm
+    form = ClinicStatisticAdminForm
     list_display = ['statistic', 'month', 'clinic', 'value', 'rank']
     readonly_fields = ['rank']
 

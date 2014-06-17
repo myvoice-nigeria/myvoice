@@ -176,7 +176,7 @@ class ClinicStatistic(models.Model):
         to avoid storing values that are inappropriate for the statistic type.
         It is not called by default during save(). For an example of how to
         incorporate this into a model form, see
-        myvoice.clinics.forms.ClinicStatisticForm.
+        myvoice.clinics.forms.ClinicStatisticAdminForm.
         """
         statistic_type = self.get_statistic_type()
         if statistic_type in (statistics.FLOAT, statistics.PERCENTAGE):
