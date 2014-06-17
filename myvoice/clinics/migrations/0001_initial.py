@@ -17,7 +17,7 @@ class Migration(SchemaMigration):
             ('ward', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('lga', self.gf('django.db.models.fields.CharField')(max_length=100)),
             ('category', self.gf('django.db.models.fields.CharField')(max_length=32, blank=True)),
-            ('contact', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['rapidsms.Contact'])),
+            ('contact', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['rapidsms.Contact'], null=True, blank=True)),
             ('year_opened', self.gf('django.db.models.fields.CharField')(max_length=4, blank=True)),
             ('last_renovated', self.gf('django.db.models.fields.CharField')(max_length=4, blank=True)),
             ('lga_rank', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
@@ -44,7 +44,9 @@ class Migration(SchemaMigration):
             ('clinic', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'])),
             ('month', self.gf('django.db.models.fields.DateField')()),
             ('statistic', self.gf('django.db.models.fields.CharField')(max_length=8)),
-            ('value', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
+            ('float_value', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
+            ('int_value', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
+            ('text_value', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
             ('rank', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
         ))
         db.send_create_signal(u'clinics', ['ClinicStatistic'])
@@ -100,7 +102,7 @@ class Migration(SchemaMigration):
         u'clinics.clinic': {
             'Meta': {'object_name': 'Clinic'},
             'category': ('django.db.models.fields.CharField', [], {'max_length': '32', 'blank': 'True'}),
-            'contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['rapidsms.Contact']"}),
+            'contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['rapidsms.Contact']", 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_renovated': ('django.db.models.fields.CharField', [], {'max_length': '4', 'blank': 'True'}),
             'lga': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
@@ -126,11 +128,13 @@ class Migration(SchemaMigration):
         u'clinics.clinicstatistic': {
             'Meta': {'unique_together': "[('clinic', 'statistic', 'month')]", 'object_name': 'ClinicStatistic'},
             'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']"}),
+            'float_value': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'int_value': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'month': ('django.db.models.fields.DateField', [], {}),
             'rank': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'statistic': ('django.db.models.fields.CharField', [], {'max_length': '8'}),
-            'value': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
+            'text_value': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'})
         },
         u'contenttypes.contenttype': {
             'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},

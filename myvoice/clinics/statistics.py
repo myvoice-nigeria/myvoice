@@ -38,6 +38,8 @@ OTHER = 'other'
 # This map keeps all statistic metadata compact and together, since the
 # number of statistics will grow with time. Prefer the utility methods below
 # to using this map directly.
+# NOTE: Take care when changing the type of a statistic - the stored value
+# associated with ClinicStatistic instances will have to be updated.
 _STATISTICS_MAP = OrderedDict([
     (INCOME, {'type': INTEGER, 'desc': 'Income'}),
     (QUALITY, {'type': PERCENTAGE, 'desc': 'Quality Score'}),
