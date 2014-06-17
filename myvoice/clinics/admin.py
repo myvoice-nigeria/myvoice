@@ -12,7 +12,7 @@ class ClinicStaffInline(admin.TabularInline):
 # there will be many more statistics for a clinic than a simple inline can
 # handle.
 class ClinicStatisticInline(admin.TabularInline):
-    model = models.ClinicInline
+    model = models.ClinicStatistic
     extra = 0
 
 
