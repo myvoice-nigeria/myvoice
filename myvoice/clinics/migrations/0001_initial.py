@@ -47,7 +47,7 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('clinic', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'])),
             ('month', self.gf('django.db.models.fields.DateField')()),
-            ('statistic', self.gf('django.db.models.fields.CharField')(max_length=8)),
+            ('statistic', self.gf('django.db.models.fields.CharField')(max_length=32)),
             ('float_value', self.gf('django.db.models.fields.FloatField')(null=True, blank=True)),
             ('int_value', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
             ('text_value', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
@@ -144,7 +144,7 @@ class Migration(SchemaMigration):
             'int_value': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'month': ('django.db.models.fields.DateField', [], {}),
             'rank': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'statistic': ('django.db.models.fields.CharField', [], {'max_length': '8'}),
+            'statistic': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'text_value': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },

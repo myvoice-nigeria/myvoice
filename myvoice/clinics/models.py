@@ -99,7 +99,7 @@ class ClinicStatistic(models.Model):
     # associated with this instance will have to be updated if the type
     # changes.
     statistic = models.CharField(
-        max_length=8, choices=statistics.get_statistic_choices(),
+        max_length=32, choices=statistics.get_statistic_choices(),
         help_text="Statistic choices are hard-coded. If you do not see the "
         "statistic you want, it must be added programatically. Each statistic "
         "is associated with a data type (integer, float, percentage, or text) "
@@ -113,7 +113,10 @@ class ClinicStatistic(models.Model):
         max_length=255, null=True, blank=True, editable=False)
 
     # In general, this will be calculated programatically.
-    rank = models.IntegerField(blank=True, null=True, editable=False)
+    rank = models.IntegerField(
+        blank=True, null=True, editable=False,
+        help_text="The rank of this clinic against others for the same "
+        "statistic and month.")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -215,7 +218,9 @@ class ClinicStatistic(models.Model):
     def get_value_display(self):
         statistic_type = self.get_statistic_type()
         if statistic_type == statistics.PERCENTAGE:
-            return '{0}%'.format(self.value)
+            return '{0}%'.format(round(self.value, 1))
+        elif statistic_type == statistics.FLOAT:
+            return '{0}'.format(round(self.value, 1))
         return self.value
 
     def get_statistic_type(self):

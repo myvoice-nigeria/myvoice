@@ -4,6 +4,11 @@ from . import models
 
 
 class ClinicStatisticAdminForm(forms.ModelForm):
+    """
+    ClinicStatistic add/edit form which chooses the underlying field
+    (text_value, int_value, or float_value) that will hold the statistic's
+    value.
+    """
     value = forms.CharField(label='Value', required=True, max_length=255)
 
     class Meta:
