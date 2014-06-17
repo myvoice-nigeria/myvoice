@@ -34,6 +34,9 @@ class Clinic(models.Model):
     pbf_rank = models.IntegerField(
         blank=True, null=True, verbose_name='PBF rank', editable=False)
 
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
     def __unicode__(self):
         return self.name
 
@@ -69,6 +72,9 @@ class ClinicStaff(models.Model):
     is_manager = models.BooleanField(
         default=False,
         help_text="Whether this person is considered in charge of the clinic.")
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return self.get_name_display()
@@ -108,6 +114,9 @@ class ClinicStatistic(models.Model):
 
     # In general, this will be calculated programatically.
     rank = models.IntegerField(blank=True, null=True, editable=False)
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = [('clinic', 'statistic', 'month')]
