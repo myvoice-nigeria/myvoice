@@ -153,6 +153,7 @@ INSTALLED_APPS = (
 
     # Internal apps
     "myvoice.core",
+    "myvoice.clinics",
     "myvoice.pbf",
 
     "rapidsms.contrib.default",  # Must be last

@@ -1,6 +1,7 @@
 
 
 # Reference for clinic data until we set up a model structure.
+# Model structure will be located in myvoice.clinics.models.
 CLINIC_DATA = {
     'arum-chugbu-phc': {
         'name': 'Arum Chugbu PHC',
