@@ -83,7 +83,7 @@ class TestClinicStatistic(TestCase):
             self.assertEqual(obj.float_value, None)
             self.assertEqual(obj.text_value, None)
             self.assertEqual(obj.value, None)
-            self.assertRaises(ValidationError, obj.validate_value)
+            self.assertRaises(ValidationError, obj.clean_value)
 
     @mock.patch.object(models.ClinicStatistic, 'get_statistic_type')
     def test_statistic_int(self, get_statistic_type):
@@ -94,22 +94,22 @@ class TestClinicStatistic(TestCase):
         # Value in float_value should not validate.
         obj.float_value = 1
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Value in text_value should not validate.
         obj.text_value = '1'
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Non-integer value should not validate.
         obj.int_value = 'non-integer'
         self.assertEqual(obj.value, 'non-integer')
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Manually set value.
         obj.int_value = 1
         self.assertEqual(obj.value, 1)
-        obj.validate_value()
+        obj.clean_value()
         obj.int_value = None  # reset
 
         # Use property to set value.
@@ -118,7 +118,7 @@ class TestClinicStatistic(TestCase):
         self.assertEqual(obj.float_value, None)
         self.assertEqual(obj.text_value, None)
         self.assertEqual(obj.value, 1)
-        obj.validate_value()
+        obj.clean_value()
 
         # Should be able to retrieve value after storing in database.
         obj.save()
@@ -134,22 +134,22 @@ class TestClinicStatistic(TestCase):
         # Value in int_value should not validate.
         obj.int_value = 1
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Value in text_value should not validate.
         obj.text_value = '1.5'
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Non-float value should not validate.
         obj.float_value = 'non-float'
         self.assertEqual(obj.value, 'non-float')
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Manually set value.
         obj.float_value = 1.5
         self.assertEqual(obj.value, 1.5)
-        obj.validate_value()
+        obj.clean_value()
         obj.float_value = None  # reset
 
         # Use property to set value.
@@ -158,7 +158,7 @@ class TestClinicStatistic(TestCase):
         self.assertEqual(obj.int_value, None)
         self.assertEqual(obj.text_value, None)
         self.assertEqual(obj.value, 1.5)
-        obj.validate_value()
+        obj.clean_value()
 
         # Should be able to retrieve value after storing in database.
         obj.save()
@@ -174,22 +174,22 @@ class TestClinicStatistic(TestCase):
         # Value in int_value should not validate.
         obj.int_value = 1
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Value in text_value should not validate.
         obj.text_value = '1.5'
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Non-float value should not validate.
         obj.float_value = 'non-float'
         self.assertEqual(obj.value, 'non-float')
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Manually set value.
         obj.float_value = 1.5
         self.assertEqual(obj.value, 1.5)
-        obj.validate_value()
+        obj.clean_value()
         obj.float_value = None  # reset
 
         # Use property to set value.
@@ -198,7 +198,7 @@ class TestClinicStatistic(TestCase):
         self.assertEqual(obj.int_value, None)
         self.assertEqual(obj.text_value, None)
         self.assertEqual(obj.value, 1.5)
-        obj.validate_value()
+        obj.clean_value()
 
         # Should be able to retrieve value after storing in database.
         obj.save()
@@ -214,22 +214,22 @@ class TestClinicStatistic(TestCase):
         # Value in int_value should not validate.
         obj.int_value = 1
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Value in float_value should not validate.
         obj.float_value = 1.5
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Null value should not validate.
         obj.text_value = None
         self.assertEqual(obj.value, None)
-        self.assertRaises(ValidationError, obj.validate_value)
+        self.assertRaises(ValidationError, obj.clean_value)
 
         # Manually set value.
         obj.text_value = 'hello'
         self.assertEqual(obj.value, 'hello')
-        obj.validate_value()
+        obj.clean_value()
         obj.text_value = None  # reset
 
         # Use property to set value.
@@ -238,7 +238,7 @@ class TestClinicStatistic(TestCase):
         self.assertEqual(obj.int_value, None)
         self.assertEqual(obj.text_value, 'hello')
         self.assertEqual(obj.value, 'hello')
-        obj.validate_value()
+        obj.clean_value()
 
         # Should be able to retrieve value after storing in database.
         obj.save()

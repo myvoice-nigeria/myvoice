@@ -170,7 +170,7 @@ class ClinicStatistic(models.Model):
     value = property(_get_value, _set_value,
                      doc="The value of this statistic.")
 
-    def validate_value(self):
+    def clean_value(self):
         """
         Ensures that an appropriate value is being used for the statistic's
         type.
@@ -184,7 +184,7 @@ class ClinicStatistic(models.Model):
         statistic_type = self.get_statistic_type()
         if statistic_type in (statistics.FLOAT, statistics.PERCENTAGE):
             try:
-                float(self.float_value)
+                self.float_value = float(self.float_value)
             except (ValueError, TypeError):
                 error_msg = '{0} requires a non-null float value.'
                 raise ValidationError({
@@ -192,7 +192,7 @@ class ClinicStatistic(models.Model):
                 })
         elif statistic_type in (statistics.INTEGER,):
             try:
-                int(self.int_value)
+                self.int_value = int(self.int_value)
             except (ValueError, TypeError):
                 error_msg = '{0} requires a non-null integer value.'
                 raise ValidationError({
@@ -204,6 +204,7 @@ class ClinicStatistic(models.Model):
                 raise ValidationError({
                     'value': [error_msg.format(self.get_statistic_display())],
                 })
+            self.text_value = str(self.text_value)
         else:
             # Either the statistic field has not been set, is invalid, or
             # we have forgotten to include the correct information in the

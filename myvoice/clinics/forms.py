@@ -16,19 +16,19 @@ class ClinicStatisticAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ClinicStatisticAdminForm, self).__init__(*args, **kwargs)
-        if self.instance.pk:  # We are editing an instance.
+        if self.instance.pk:
+            # We are editing an instance; show its value in initial data.
             self.fields['value'].initial = self.instance.value
 
     def _post_clean(self):
-        """
-        Set the ClinicStatistic value and validate it after full_clean()
-        has been called.
-        """
+        """Set the instance value and validate it."""
+        # Must call super first, to update the other fields of the form's
+        # instance.
         super(ClinicStatisticAdminForm, self)._post_clean()
         if 'value' in self.cleaned_data:
             self.instance.value = self.cleaned_data['value']
             try:
-                self.instance.validate_value()
+                self.instance.clean_value()
             except forms.ValidationError as e:
                 self._update_errors(e)
         else:
