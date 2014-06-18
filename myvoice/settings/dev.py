@@ -1,6 +1,7 @@
 import sys
 
-from myvoice.settings.base import *
+from myvoice.settings.base import *  # noqa
+
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG

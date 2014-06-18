@@ -76,7 +76,7 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    # 'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -119,18 +119,21 @@ FIXTURE_DIRS = (
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'django.contrib.humanize',
     'django.contrib.sitemaps',
+
     # External apps
     "rapidsms",
     'south',
     'compressor',
     "django_nose",
-    #"djtables",  # required by rapidsms.contrib.locations
+    "widget_tweaks",
+    # "djtables",  # required by rapidsms.contrib.locations
     "django_tables2",
     "selectable",
     'groups',
@@ -138,6 +141,7 @@ INSTALLED_APPS = (
     'decisiontree',
     'pagination',
     'sorter',
+
     # RapidSMS
     "rapidsms.backends.database",
     "rapidsms.contrib.handlers",
@@ -146,6 +150,12 @@ INSTALLED_APPS = (
     "rapidsms.contrib.messaging",
     "rapidsms.contrib.registration",
     "rapidsms.contrib.echo",
+
+    # Internal apps
+    "myvoice.core",
+    "myvoice.clinics",
+    "myvoice.pbf",
+
     "rapidsms.contrib.default",  # Must be last
 )
 
@@ -182,13 +192,15 @@ LOGGING = {
 SKIP_SOUTH_TESTS = True
 
 COMPRESS_PRECOMPILERS = (
-   ('text/less', 'lessc {infile} {outfile}'),
+    ('text/less', 'lessc {infile} {outfile}'),
 )
 
 SORTER_ALLOWED_CRITERIA = {
-    'sort_rules': ['id', 'keyword', 'source', 'dest', 'message', 'rule_type', 'label'],
+    'sort_rules': ['id', 'keyword', 'source', 'dest', 'message', 'rule_type',
+                   'label'],
     'sort_broadcasts': ['id', 'date', 'schedule_frequency', 'body'],
-    'sort_messages': ['broadcast__id', 'broadcast__body', 'date_created', 'status', 'recipient', 'date_sent'],
+    'sort_messages': ['broadcast__id', 'broadcast__body', 'date_created',
+                      'status', 'recipient', 'date_sent'],
 }
 
 INSTALLED_BACKENDS = {

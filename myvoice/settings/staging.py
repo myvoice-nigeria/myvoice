@@ -1,4 +1,5 @@
-from myvoice.settings.base import *
+from myvoice.settings.base import *  # noqa
+
 
 os.environ.setdefault('CACHE_HOST', '127.0.0.1:11211')
 os.environ.setdefault('BROKER_HOST', '127.0.0.1:5672')
@@ -36,4 +37,5 @@ SESSION_COOKIE_HTTPONLY = True
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(';')
 
 # Uncomment if using celery worker configuration
-# BROKER_URL = 'amqp://myvoice_staging:%(BROKER_PASSWORD)s@%(BROKER_HOST)s/myvoice_staging' % os.environ
+# BROKER_URL = ('amqp://myvoice_staging:'
+#               '%(BROKER_PASSWORD)s@%(BROKER_HOST)s/myvoice_staging' % os.environ)

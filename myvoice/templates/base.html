@@ -2,33 +2,95 @@
 {% load static from staticfiles %}
 <!DOCTYPE html>
 <html lang="en" class="no-js">
-<head>
-    <meta charset="utf-8">
-    <title>{% block title %}{% endblock %}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{% block meta-description %}{% endblock %}">
-    <meta name="author" content="{% block meta-author %}{% endblock %}">
-    <meta name="keywords" content="{% block meta-keywords %}{% endblock %}">
+  <head>
+  {% block head %}
+    {% block meta %}
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="description" content="{% block meta-description %}{% endblock %}">
+      <meta name="author" content="{% block meta-author %}{% endblock %}">
+      <meta name="keywords" content="{% block meta-keywords %}{% endblock %}">
+    {% endblock meta %}
     {% block extra-meta %}{% endblock %}
-    {% if debug %}
-    <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'less/site.less' %}">
-    <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/1.5.1/less.min.js"></script>
-    {% else %}
-    {% compress css %}
-    <link rel="stylesheet" type="text/less" media="all" href="{% static 'less/site.less' %}">
-    {% endcompress %}
-    {% endif %}
+
+    <title>{% block title %}{% endblock %}</title>
+
+    {% block css %}
+      <link rel="stylesheet" href="{% static 'lib/bootstrap-3.1.1/css/bootstrap.min.css' %}">
+      {% if debug %}
+        <link rel="stylesheet/less" type="text/css" media="all" href="{% static 'less/site.less' %}">
+        <script src="{% static 'lib/less-1.5.1/less.min.js' %}"></script>
+      {% else %}
+        {% compress css %}
+          <link rel="stylesheet" type="text/less" media="all" href="{% static 'less/site.less' %}">
+        {% endcompress %}
+      {% endif %}
+    {% endblock css %}
     {% block extra-css %}{% endblock %}
-    <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.7.1/modernizr.dev.js"></script>
-</head>
-<body>
+
+    {% block header-js %}
+      <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.7.1/modernizr.dev.js"></script>
+    {% endblock header-js %}
+    {% block extra-header-js %}{% endblock extra-header-js %}
+  {% endblock head %}
+
+  {% block extra-head %}{% endblock extra-head %}
+  </head>
+  <body class="{% block body-class %}{% endblock body-class %}" id="{% block body-id %}{% endblock body-id %}">
+  {% block body %}
+    {% block navbar %}
+    <nav class="navbar navbar-inverse" rol="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" data-toggle="collapse" data-target=".navbar-collapse" class="navbar-toggle">
+            <span class="sr-only">Toggle Navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{% url 'home' %}">NSHIP PBF DASHBOARD</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <form class="navbar-form navbar-right pull-right navbar-search" role="search">
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="SEARCH">
+            </div>
+            <button type="submit" class="btn btn-default">
+              <span class="glyphicon glyphicon-search"></span>
+            </button>
+          </form>
+
+          <ul class="nav navbar-nav pull-right">
+            <li>
+              <a href="{% url 'home' %}">
+                Home
+                <span class="glyphicon glyphicon-home"></span>
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                Log In
+                <span class="glyphicon glyphicon-user"></span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    {% endblock navbar %}
+
     <div class="container">
-        {% block content %}{% endblock %}
+      {% block content %}{% endblock %}
     </div>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    {% compress js %}
-    <script src="{% static 'js/site.js' %}"></script>
-    {% endcompress %}
+
+    {% block js %}
+      <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
+      <script src="{% static 'lib/bootstrap-3.1.1/js/bootstrap.min.js' %}"></script>
+      {% compress js %}
+        <script src="{% static 'js/site.js' %}"></script>
+      {% endcompress %}
+    {% endblock js %}
     {% block extra-js %}{% endblock %}
-</body>
+  {% endblock body %}
+  </body>
 </html>

@@ -1,0 +1,53 @@
+{% if clinic.show_feedback %}
+<div class="panel panel-info" id="feedback-panel">
+  <div class="panel-heading">
+    <h2 class="panel-title">
+      FEEDBACK
+      <small>587 Responses</small>
+    </h2>
+  </div>
+  <div class="panel-body">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Trending Feedback</h3>
+      </div>
+      <div class="panel-body">
+        <div class="statistic">
+          <h4 class="comments">Comments</h4>
+          <blockquote>"Drugs and services were inexpensive. Outreach was great"</blockquote>
+        </div>
+        <div class="statistic">
+          <h4 class="complaints">Complaints</h4>
+          <blockquote>"The staff was rude today. I was insulted when I arrived.</blockquote>
+        </div>
+        <div class="statistic">
+          <h4>Avg. Wait Time</h4>
+          <p>35 Minutes</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel-footer" style="text-align: center;">
+    <div style="padding-bottom: 5px;">
+      <a class="btn btn-dashboard-inverse" href="#">
+        <span class="glyphicon glyphicon-stats glyphicon-white"></span>
+        View Charts
+      </a>
+      <a class="btn btn-dashboard-inverse" href="#">
+        <span class="glyphicon glyphicon-download-alt"></span>
+        Download Data
+      </a>
+    </div>
+    <div style="padding-top: 5px;">
+      <a class="btn btn-dashboard-inverse" href="#">
+        <span class="glyphicon glyphicon-send"></span>
+        Send Email
+      </a>
+      <a class="btn btn-dashboard-inverse" href="#">
+        <span class="glyphicon glyphicon-print"></span>
+        Print
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}

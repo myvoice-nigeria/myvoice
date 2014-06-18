@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}{{ clinic.name }} - NSHIP PBF Dashboard{% endblock title %}
+
+{% block body-id %}pbf-dashboard{% endblock body-id %}
+
+{% block extra-js %}
+  <script>
+    $(function() {
+      $('.panel-info table.collapse').on('show.bs.collapse', function(event) {
+        var span = $(this).closest('.panel').find('.panel-title a span')
+        span.removeClass('glyphicon-plus');
+        span.addClass('glyphicon-minus');
+      });
+      $('.panel-info table.collapse').on('hidden.bs.collapse', function(event) {
+        var span = $(this).closest('.panel').find('.panel-title a span')
+        span.removeClass('glyphicon-minus');
+        span.addClass('glyphicon-plus');
+      });
+    });
+  </script>
+{% endblock extra-js %}
+
+{% block content %}
+<div class="row">
+  {% if clinic.slug != 'wayo-matti-phc' and clinic.slug != 'wamba-phc-model-clinic' %}
+  <div class="col-md-12">
+    <p>We do not yet have data for this clinic.</p>
+    <p><a href="{% url 'pbf_dashboard_select' %}">Back to dashboard select &rarr;</a></p>
+  </div>
+  {% else %}
+  <div class="col-md-8">
+    {% include "pbf/dashboard/panels/basic_info.html" %}
+    {% include "pbf/dashboard/panels/performance_progress.html" %}
+  </div>
+  <div class="col-md-4">
+    {% include "pbf/dashboard/panels/in_charge.html" %}
+    {% include "pbf/dashboard/panels/facility_staff.html" %}
+    {% include "pbf/dashboard/panels/feedback.html" %}
+  </div>
+  {% endif %}
+</div>
+{% endblock content %}

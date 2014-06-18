@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% load widget_tweaks %}
+
+{% block title %}PBF{% endblock title %}
+
+{% block body-class %}fancy{% endblock body-class %}
+{% block body-id %}pbf-select-clinic{% endblock body-id %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="page-header">
+      <h1>WAMBA LGA FACILITIES <small>SELECT ONE</small></h1>
+    </div>
+    <form role="form" class="form-inline"
+          method="post" action="{% url 'pbf_dashboard_select' %}">
+      {% csrf_token %}
+      {{ form.clinic.errors }}
+      {{ form.non_field_errors }}
+      <div class="form-group">
+        <label class="sr-only" for="{{ form.clinic.id_for_label }}">
+          {{ form.clinic.label }}
+        </label>
+        {% render_field form.clinic class="form-control" %}
+      </div>
+      <div class="form-group">
+        <button type="submit" class="btn btn-default">VIEW CLINIC</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock content %}

@@ -89,9 +89,10 @@ def sync():
                         local('touch secrets.sls.remote')
                     with settings(warn_only=True):
                         result = local('diff -u secrets.sls.remote secrets.sls')
-                        if result.failed and not confirm(red("Above changes will be made to secrets.sls. Continue?")):
-                            abort("Aborted. File have been copied to secrets.sls.remote. " +
-                              "Resolve conflicts, then retry.")
+                        msg = "Above changes will be made to secrets.sls. Continue?"
+                        if result.failed and not confirm(red(msg)):
+                            abort("Aborted. File have been copied to secrets.sls.remote. "
+                                  "Resolve conflicts, then retry.")
                         else:
                             local("rm secrets.sls.remote")
         salt_root = CONF_ROOT if CONF_ROOT.endswith('/') else CONF_ROOT + '/'
@@ -113,7 +114,7 @@ def have_secrets():
 @task
 def get_secrets():
     """Grab the latest secrets file from the master."""
-    with settings(host=env.master):
+    with settings(host=env.master, host_string=env.master):
         for environment in ['staging', 'production']:
             local_file = os.path.join(CONF_ROOT, 'pillar', environment, 'secrets.sls')
             if os.path.exists(local_file):
