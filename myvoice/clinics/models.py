@@ -15,10 +15,15 @@ class Region(gis.Model):
         ('lga', 'Local Government Area'),
     )
     name = models.CharField(max_length=255)
+    alternate_name = models.CharField(max_length=255, blank=True)
     type = models.CharField(max_length=16, choices=TYPE_CHIOCES, default='lga')
-    boundary = gis.PolygonField()
+    external_id = models.IntegerField("External ID")
+    boundary = gis.MultiPolygonField()
 
     objects = gis.GeoManager()
+
+    class Meta(object):
+        unique_together = ('external_id', 'type')
 
     def __unicode__(self):
         return self.name

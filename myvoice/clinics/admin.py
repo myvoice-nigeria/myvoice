@@ -33,7 +33,10 @@ class ClinicStatisticAdmin(admin.ModelAdmin):
 
 
 class RegionAdmin(LeafletGeoAdmin):
-    list_display = ['name', 'type']
+    search_fields = ['name', 'alternate_name', 'external_id']
+    list_display = ['name', 'alternate_name', 'type']
+    list_filter = ['type']
+    ordering = ['type', 'name']
 
 
 admin.site.register(models.Clinic, ClinicAdmin)

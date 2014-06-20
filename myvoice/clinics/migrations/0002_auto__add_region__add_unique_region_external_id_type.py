@@ -12,13 +12,21 @@ class Migration(SchemaMigration):
         db.create_table(u'clinics_region', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('alternate_name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('type', self.gf('django.db.models.fields.CharField')(default='lga', max_length=16)),
-            ('boundary', self.gf('django.contrib.gis.db.models.fields.PolygonField')()),
+            ('external_id', self.gf('django.db.models.fields.IntegerField')()),
+            ('boundary', self.gf('django.contrib.gis.db.models.fields.MultiPolygonField')()),
         ))
         db.send_create_signal(u'clinics', ['Region'])
 
+        # Adding unique constraint on 'Region', fields ['external_id', 'type']
+        db.create_unique(u'clinics_region', ['external_id', 'type'])
+
 
     def backwards(self, orm):
+        # Removing unique constraint on 'Region', fields ['external_id', 'type']
+        db.delete_unique(u'clinics_region', ['external_id', 'type'])
+
         # Deleting model 'Region'
         db.delete_table(u'clinics_region')
 
@@ -97,8 +105,10 @@ class Migration(SchemaMigration):
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
         u'clinics.region': {
-            'Meta': {'object_name': 'Region'},
-            'boundary': ('django.contrib.gis.db.models.fields.PolygonField', [], {}),
+            'Meta': {'unique_together': "(('external_id', 'type'),)", 'object_name': 'Region'},
+            'alternate_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'boundary': ('django.contrib.gis.db.models.fields.MultiPolygonField', [], {}),
+            'external_id': ('django.db.models.fields.IntegerField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'type': ('django.db.models.fields.CharField', [], {'default': "'lga'", 'max_length': '16'})
