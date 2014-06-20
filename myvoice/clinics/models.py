@@ -26,7 +26,7 @@ class Region(gis.Model):
         unique_together = ('external_id', 'type')
 
     def __unicode__(self):
-        return self.name
+        return "{} - {}".format(self.get_type_display(), self.name)
 
 
 class Clinic(models.Model):
@@ -40,6 +40,7 @@ class Clinic(models.Model):
     town = models.CharField(max_length=100)
     ward = models.CharField(max_length=100)
     lga = models.CharField(max_length=100, verbose_name='LGA')
+    location = gis.PointField(null=True, blank=True)
 
     category = models.CharField(max_length=32, blank=True)
     contact = models.ForeignKey(

@@ -19,11 +19,12 @@ class ClinicStatisticInline(admin.TabularInline):
     form = ClinicStatisticAdminForm
 
 
-class ClinicAdmin(admin.ModelAdmin):
+class ClinicAdmin(LeafletGeoAdmin):
     inlines = [ClinicStaffInline, ClinicStatisticInline]
     list_display = ['name', 'lga']
     prepopulated_fields = {'slug': ['name']}
     readonly_fields = ['lga_rank', 'pbf_rank']
+    display_raw = True
 
 
 class ClinicStatisticAdmin(admin.ModelAdmin):
