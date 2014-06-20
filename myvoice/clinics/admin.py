@@ -1,4 +1,5 @@
 from django.contrib import admin
+from leaflet.admin import LeafletGeoAdmin
 
 from . import models
 from .forms import ClinicStatisticAdminForm
@@ -31,5 +32,10 @@ class ClinicStatisticAdmin(admin.ModelAdmin):
     readonly_fields = ['rank']
 
 
+class RegionAdmin(LeafletGeoAdmin):
+    list_display = ['name', 'type']
+
+
 admin.site.register(models.Clinic, ClinicAdmin)
 admin.site.register(models.ClinicStatistic, ClinicStatisticAdmin)
+admin.site.register(models.Region, RegionAdmin)

@@ -1,9 +1,27 @@
 from django.db import models
+from django.contrib.gis.db import models as gis
 from django.core.exceptions import ValidationError
 
 from myvoice.core.validators import validate_year
 
 from . import statistics
+
+
+class Region(gis.Model):
+    """Geographical regions"""
+    TYPE_CHIOCES = (
+        ('country', 'Country'),
+        ('state', 'State'),
+        ('lga', 'Local Government Area'),
+    )
+    name = models.CharField(max_length=255)
+    type = models.CharField(max_length=16, choices=TYPE_CHIOCES, default='lga')
+    boundary = gis.PolygonField()
+
+    objects = gis.GeoManager()
+
+    def __unicode__(self):
+        return self.name
 
 
 class Clinic(models.Model):

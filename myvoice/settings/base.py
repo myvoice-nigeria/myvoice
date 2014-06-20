@@ -13,7 +13,7 @@ ADMINS = (
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'myvoice',
         'USER': '',
         'PASSWORD': '',
@@ -126,6 +126,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.humanize',
     'django.contrib.sitemaps',
+    'django.contrib.gis',
 
     # External apps
     "rapidsms",
@@ -141,6 +142,7 @@ INSTALLED_APPS = (
     'decisiontree',
     'pagination',
     'sorter',
+    'leaflet',
 
     # RapidSMS
     "rapidsms.backends.database",
