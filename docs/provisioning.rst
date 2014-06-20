@@ -232,7 +232,7 @@ makes use of `Django setup for Celery <http://celery.readthedocs.org/en/latest/d
 As documented you should create/import your Celery app in ``myvoice/__init__.py`` so that you
 can run the worker via::
 
-    python celery -A myvoice worker
+    celery -A myvoice worker
 
 Additionally you will need to configure the project settings for Celery::
 
