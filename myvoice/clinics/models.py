@@ -61,6 +61,8 @@ class Clinic(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    objects = gis.GeoManager()
+
     def __unicode__(self):
         return self.name
 
