@@ -53,6 +53,10 @@ You should now be able to run the development server::
 
     python manage.py runserver
 
+To import the default data, run::
+
+    python manage.py import_regions
+
 
 Deployment
 ------------------------
