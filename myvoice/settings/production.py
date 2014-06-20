@@ -9,5 +9,5 @@ DATABASES['default']['USER'] = 'myvoice_production'
 EMAIL_SUBJECT_PREFIX = '[Myvoice Prod] '
 
 # Uncomment if using celery worker configuration
-# BROKER_URL = ('amqp://myvoice_production:'
-#               '%(BROKER_PASSWORD)s@%(BROKER_HOST)s/myvoice_production' % os.environ)
+BROKER_URL = ('amqp://myvoice_production:'
+              '%(BROKER_PASSWORD)s@%(BROKER_HOST)s/myvoice_production' % os.environ)

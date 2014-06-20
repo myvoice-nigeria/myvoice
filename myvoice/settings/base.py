@@ -1,6 +1,8 @@
 # Django settings for myvoice project.
 import os
 
+from celery.schedules import crontab
+
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, os.pardir))
 
@@ -133,6 +135,7 @@ INSTALLED_APPS = (
     'compressor',
     "django_nose",
     "widget_tweaks",
+    "djcelery",
     # "djtables",  # required by rapidsms.contrib.locations
     "django_tables2",
     "selectable",
@@ -215,3 +218,14 @@ RAPIDSMS_HANDLERS = (
     'rapidsms.contrib.echo.handlers.echo.EchoHandler',
     'rapidsms.contrib.echo.handlers.ping.PingHandler',
 )
+
+import djcelery
+djcelery.setup_loader()
+
+CELERYBEAT_SCHEDULE = {
+    'sample-task': {
+        'task': 'myvoice.clinics.tasks.sample_task',
+        'schedule': crontab(hour='*/1', minute='0'),
+    },
+}
+
