@@ -3,8 +3,7 @@ from django.contrib.gis.db import models as gis
 from django.core.exceptions import ValidationError
 
 from myvoice.core.validators import validate_year
-
-from . import statistics
+from myvoice.statistics.models import Statistic
 
 
 class Region(gis.Model):
@@ -42,7 +41,8 @@ class Clinic(models.Model):
     lga = models.CharField(max_length=100, verbose_name='LGA')
     location = gis.PointField(null=True, blank=True)
 
-    category = models.CharField(max_length=32, blank=True)
+    category = models.CharField(
+        max_length=32, blank=True, verbose_name='PBF category')
     contact = models.ForeignKey(
         'rapidsms.Contact', blank=True, null=True,
         verbose_name='Preferred contact')
@@ -121,15 +121,10 @@ class ClinicStatistic(models.Model):
     clinic = models.ForeignKey('Clinic')
     month = models.DateField()
 
-    # NOTE: Take care when changing the statistic - the stored value
-    # associated with this instance will have to be updated if the type
+    # NOTE: Take care when changing the statistic or its type - the stored
+    # value associated with this instance will have to be updated if the type
     # changes.
-    statistic = models.CharField(
-        max_length=32, choices=statistics.get_statistic_choices(),
-        help_text="Statistic choices are hard-coded. If you do not see the "
-        "statistic you want, it must be added programatically. Each statistic "
-        "is associated with a data type (integer, float, percentage, or text) "
-        "that will determine how the value you enter is displayed.")
+    statistic = models.ForeignKey('statistics.Statistic')
 
     # In general, do not access these directly - use the `value` property and
     # `get_value_display()` instead.
@@ -158,12 +153,12 @@ class ClinicStatistic(models.Model):
 
     def _get_value(self):
         """Retrieve this statistic's value based on its type."""
-        statistic_type = self.get_statistic_type()
-        if statistic_type in (statistics.FLOAT, statistics.PERCENTAGE):
+        statistic_type = self.statistic.statistic_type
+        if statistic_type in (Statistic.FLOAT, Statistic.PERCENTAGE):
             return self.float_value
-        elif statistic_type in (statistics.INTEGER,):
+        elif statistic_type in (Statistic.INTEGER,):
             return self.int_value
-        elif statistic_type in (statistics.TEXT,):
+        elif statistic_type in (Statistic.TEXT,):
             return self.text_value
         else:
             raise Exception("Attempted to retrieve value before statistic "
@@ -176,16 +171,16 @@ class ClinicStatistic(models.Model):
         here - just like with a normal Django field, it will be validated
         when the model is cleaned.
         """
-        statistic_type = self.get_statistic_type()
-        if statistic_type in (statistics.FLOAT, statistics.PERCENTAGE):
+        statistic_type = self.statistic.statistic_type
+        if statistic_type in (Statistic.FLOAT, Statistic.PERCENTAGE):
             self.float_value = value
             self.int_value = None
             self.text_value = None
-        elif statistic_type in (statistics.INTEGER,):
+        elif statistic_type in (Statistic.INTEGER,):
             self.float_value = None
             self.int_value = value
             self.text_value = None
-        elif statistic_type in (statistics.TEXT,):
+        elif statistic_type in (Statistic.TEXT,):
             self.float_value = None
             self.int_value = None
             self.text_value = value
@@ -207,8 +202,8 @@ class ClinicStatistic(models.Model):
         incorporate this into a model form, see
         myvoice.clinics.forms.ClinicStatisticAdminForm.
         """
-        statistic_type = self.get_statistic_type()
-        if statistic_type in (statistics.FLOAT, statistics.PERCENTAGE):
+        statistic_type = self.statistic.statistic_type
+        if statistic_type in (Statistic.FLOAT, Statistic.PERCENTAGE):
             try:
                 self.float_value = float(self.float_value)
             except (ValueError, TypeError):
@@ -216,7 +211,7 @@ class ClinicStatistic(models.Model):
                 raise ValidationError({
                     'value': [error_msg.format(self.get_statistic_display())],
                 })
-        elif statistic_type in (statistics.INTEGER,):
+        elif statistic_type in (Statistic.INTEGER,):
             try:
                 self.int_value = int(self.int_value)
             except (ValueError, TypeError):
@@ -224,7 +219,7 @@ class ClinicStatistic(models.Model):
                 raise ValidationError({
                     'value': [error_msg.format(self.get_statistic_display())],
                 })
-        elif statistic_type in (statistics.TEXT,):
+        elif statistic_type in (Statistic.TEXT,):
             if self.text_value is None:
                 error_msg = '{0} requires a non-null text value.'
                 raise ValidationError({
@@ -232,9 +227,6 @@ class ClinicStatistic(models.Model):
                 })
             self.text_value = str(self.text_value)
         else:
-            # Either the statistic field has not been set, is invalid, or
-            # we have forgotten to include the correct information in the
-            # myvoice.clinics.statistics module.
             raise ValidationError({
                 'statistic': ["Unable to determine statistic type."],
             })
@@ -243,12 +235,9 @@ class ClinicStatistic(models.Model):
         return self.month.strftime(frmt)
 
     def get_value_display(self):
-        statistic_type = self.get_statistic_type()
-        if statistic_type == statistics.PERCENTAGE:
+        statistic_type = self.statistic.statistic_type
+        if statistic_type == Statistic.PERCENTAGE:
             return '{0}%'.format(round(self.value, 1))
-        elif statistic_type == statistics.FLOAT:
+        elif statistic_type == Statistic.FLOAT:
             return '{0}'.format(round(self.value, 1))
         return self.value
-
-    def get_statistic_type(self):
-        return statistics.get_statistic_type(self.statistic)
