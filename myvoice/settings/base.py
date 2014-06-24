@@ -140,9 +140,9 @@ INSTALLED_APPS = (
     # "djtables",  # required by rapidsms.contrib.locations
     "django_tables2",
     "selectable",
-    #'groups',
-    #'broadcast',
-    #'decisiontree',
+    # 'groups',
+    # 'broadcast',
+    # 'decisiontree',
     'pagination',
     'sorter',
     'leaflet',
@@ -247,4 +247,3 @@ CELERYBEAT_SCHEDULE = {
         'schedule': crontab(hour='*/1', minute='0'),
     },
 }
-

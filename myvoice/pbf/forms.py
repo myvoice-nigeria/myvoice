@@ -1,7 +1,6 @@
 from django import forms
 
 
-
 class SelectClinicForm(forms.Form):
     clinic = forms.ChoiceField(choices=[])
 

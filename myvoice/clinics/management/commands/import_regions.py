@@ -45,7 +45,7 @@ class Command(BaseCommand):
             self.import_shapefile(shapefile, schema)
 
 
-## Shapefile to Region mappings ##
+# Shapefile to Region mappings #
 
 class Schema(object):
     """Basic class to convert shapefile features into Region models"""
