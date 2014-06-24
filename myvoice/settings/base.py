@@ -247,7 +247,7 @@ djcelery.setup_loader()
 
 CELERYBEAT_SCHEDULE = {
     'sample-task': {
-        'task': 'myvoice.clinics.tasks.sample_task',
+        'task': 'myvoice.survey.tasks.import_responses',
         'schedule': crontab(hour='*/1', minute='0'),
     },
 }
