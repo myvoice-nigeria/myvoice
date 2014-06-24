@@ -239,6 +239,8 @@ RAPIDSMS_HANDLERS = (
     'rapidsms.contrib.echo.handlers.ping.PingHandler',
 )
 
+TEXTIT_API_TOKEN = os.environ.get('TEXTIT_API_TOKEN', '')
+
 import djcelery
 djcelery.setup_loader()
 
