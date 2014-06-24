@@ -1,4 +1,5 @@
 from django.contrib import admin
+from leaflet.admin import LeafletGeoAdmin
 
 from . import models
 from .forms import ClinicStatisticAdminForm
@@ -18,11 +19,12 @@ class ClinicStatisticInline(admin.TabularInline):
     form = ClinicStatisticAdminForm
 
 
-class ClinicAdmin(admin.ModelAdmin):
+class ClinicAdmin(LeafletGeoAdmin):
     inlines = [ClinicStaffInline, ClinicStatisticInline]
     list_display = ['name', 'lga']
     prepopulated_fields = {'slug': ['name']}
     readonly_fields = ['lga_rank', 'pbf_rank']
+    display_raw = True
 
 
 class ClinicStatisticAdmin(admin.ModelAdmin):
@@ -31,5 +33,13 @@ class ClinicStatisticAdmin(admin.ModelAdmin):
     readonly_fields = ['rank']
 
 
+class RegionAdmin(LeafletGeoAdmin):
+    search_fields = ['name', 'alternate_name', 'external_id']
+    list_display = ['name', 'alternate_name', 'type']
+    list_filter = ['type']
+    ordering = ['type', 'name']
+
+
 admin.site.register(models.Clinic, ClinicAdmin)
 admin.site.register(models.ClinicStatistic, ClinicStatisticAdmin)
+admin.site.register(models.Region, RegionAdmin)

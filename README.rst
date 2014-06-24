@@ -21,6 +21,10 @@ forwarding if it is not already by adding ``ForwardAgent yes`` to your SSH confi
 Getting Started
 ------------------------
 
+MyVoice uses PostGIS, so first install the necessary PostgreSQL extensions::
+
+    ./scripts/postgres-extensions.sh
+
 To setup your local environment you should create a virtualenv and install the
 necessary requirements::
 
@@ -41,12 +45,17 @@ Exit the virtualenv and reactivate it to activate the settings just changed::
 Create the Postgres database and run the initial syncdb/migrate::
 
     createdb -E UTF-8 myvoice
+    psql myvoice -c "CREATE EXTENSION postgis;"
     python manage.py syncdb
     python manage.py migrate
 
 You should now be able to run the development server::
 
     python manage.py runserver
+
+To import the default data, run::
+
+    python manage.py import_regions
 
 
 Deployment

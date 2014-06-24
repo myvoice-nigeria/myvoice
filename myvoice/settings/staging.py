@@ -40,4 +40,4 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(';')
 BROKER_URL = ('amqp://myvoice_staging:'
               '%(BROKER_PASSWORD)s@%(BROKER_HOST)s/myvoice_staging' % os.environ)
 
-
+LOGGING['handlers']['file']['filename'] = '/var/www/myvoice/log/myvoice.log'

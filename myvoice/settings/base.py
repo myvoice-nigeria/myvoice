@@ -15,7 +15,7 @@ ADMINS = (
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'myvoice',
         'USER': '',
         'PASSWORD': '',
@@ -128,6 +128,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.humanize',
     'django.contrib.sitemaps',
+    'django.contrib.gis',
 
     # External apps
     "rapidsms",
@@ -144,6 +145,7 @@ INSTALLED_APPS = (
     #'decisiontree',
     'pagination',
     'sorter',
+    'leaflet',
 
     # RapidSMS
     "rapidsms.backends.database",
@@ -175,18 +177,35 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
+    'formatters': {
+        'basic': {
+            'format': '%(asctime)s %(name)-20s %(levelname)-8s %(message)s',
+        },
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
-        }
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'basic',
+            'filename': os.path.join(PROJECT_ROOT, 'myvoice.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 10,
+        },
     },
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
             'propagate': True,
+        },
+        'myvoice': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
         },
     }
 }

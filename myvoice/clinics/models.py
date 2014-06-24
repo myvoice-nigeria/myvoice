@@ -1,9 +1,32 @@
 from django.db import models
+from django.contrib.gis.db import models as gis
 from django.core.exceptions import ValidationError
 
 from myvoice.core.validators import validate_year
 
 from . import statistics
+
+
+class Region(gis.Model):
+    """Geographical regions"""
+    TYPE_CHIOCES = (
+        ('country', 'Country'),
+        ('state', 'State'),
+        ('lga', 'Local Government Area'),
+    )
+    name = models.CharField(max_length=255)
+    alternate_name = models.CharField(max_length=255, blank=True)
+    type = models.CharField(max_length=16, choices=TYPE_CHIOCES, default='lga')
+    external_id = models.IntegerField("External ID")
+    boundary = gis.MultiPolygonField()
+
+    objects = gis.GeoManager()
+
+    class Meta(object):
+        unique_together = ('external_id', 'type')
+
+    def __unicode__(self):
+        return "{} - {}".format(self.get_type_display(), self.name)
 
 
 class Clinic(models.Model):
@@ -17,6 +40,7 @@ class Clinic(models.Model):
     town = models.CharField(max_length=100)
     ward = models.CharField(max_length=100)
     lga = models.CharField(max_length=100, verbose_name='LGA')
+    location = gis.PointField(null=True, blank=True)
 
     category = models.CharField(max_length=32, blank=True)
     contact = models.ForeignKey(
@@ -36,6 +60,8 @@ class Clinic(models.Model):
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    objects = gis.GeoManager()
 
     def __unicode__(self):
         return self.name
