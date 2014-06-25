@@ -138,13 +138,22 @@ class SurveyQuestionResponse(models.Model):
     run_id = models.CharField(max_length=128, verbose_name="Run ID")
     connection = models.ForeignKey('rapidsms.Connection')
     question = models.ForeignKey('survey.SurveyQuestion')
-    clinic = models.ForeignKey(
-        'clinics.Clinic', null=True, blank=True,
-        help_text="The clinic this response is about, if any.")
     response = models.CharField(max_length=255)
     datetime = models.DateTimeField(
         default=datetime.datetime.now,
         help_text="When this response was received.")
+
+    # Add these data points to give some context to the response.
+    # Since each survey is used for patients receiving any service from
+    # any health clinic, these are fields on the responses rather than, say,
+    # the Questions themselves.
+    # This data will be collected during the patient registration process.
+    clinic = models.ForeignKey(
+        'clinics.Clinic', null=True, blank=True,
+        help_text="The clinic this response is about, if any.")
+    service = models.ForeignKey(
+        'clinics.Service', null=True, blank=True,
+        help_text="The service this response is about, if any.")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

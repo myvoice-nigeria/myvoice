@@ -8,6 +8,7 @@ from django.db import models
 class Migration(SchemaMigration):
     depends_on = [
         ('statistics', '0001_initial'),
+        ('clinics', '0005_auto__add_service'),
     ]
 
     def forwards(self, orm):
@@ -46,9 +47,10 @@ class Migration(SchemaMigration):
             ('run_id', self.gf('django.db.models.fields.CharField')(max_length=128)),
             ('connection', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['rapidsms.Connection'])),
             ('question', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['survey.SurveyQuestion'])),
-            ('clinic', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'], null=True, blank=True)),
             ('response', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('datetime', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.now)),
+            ('clinic', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'], null=True, blank=True)),
+            ('service', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Service'], null=True, blank=True)),
             ('created', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('updated', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
         ))
@@ -93,6 +95,12 @@ class Migration(SchemaMigration):
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'ward': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'year_opened': ('django.db.models.fields.CharField', [], {'max_length': '4', 'blank': 'True'})
+        },
+        u'clinics.service': {
+            'Meta': {'object_name': 'Service'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'})
         },
         u'rapidsms.backend': {
             'Meta': {'object_name': 'Backend'},
@@ -162,6 +170,7 @@ class Migration(SchemaMigration):
             'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['survey.SurveyQuestion']"}),
             'response': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'run_id': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'service': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Service']", 'null': 'True', 'blank': 'True'}),
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         }
     }

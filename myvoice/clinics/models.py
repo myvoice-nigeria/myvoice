@@ -110,6 +110,15 @@ class ClinicStaff(models.Model):
         return self.user.get_full_name() if self.user else self.name
 
 
+class Service(models.Model):
+    """A medical service offered by a Clinic."""
+    name = models.CharField(max_length=128)
+    slug = models.SlugField(unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
 class ClinicStatistic(models.Model):
     """
     A statistic about a Clinic, valid in a given month.
