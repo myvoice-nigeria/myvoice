@@ -40,6 +40,18 @@ class RegionAdmin(LeafletGeoAdmin):
     ordering = ['type', 'name']
 
 
+class PatientAdmin(admin.ModelAdmin):
+    list_display = ['name', 'clinic', 'contact']
+    search_fields = ['name']
+
+
+class VisitAdmin(admin.ModelAdmin):
+    list_display = ['patient', 'visit_time', 'service_type', 'staff']
+    date_hierarchy = 'visit_time'
+
+
 admin.site.register(models.Clinic, ClinicAdmin)
 admin.site.register(models.ClinicStatistic, ClinicStatisticAdmin)
 admin.site.register(models.Region, RegionAdmin)
+admin.site.register(models.Patient, PatientAdmin)
+admin.site.register(models.Visit, VisitAdmin)
