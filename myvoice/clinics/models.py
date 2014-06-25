@@ -110,6 +110,29 @@ class ClinicStaff(models.Model):
         return self.user.get_full_name() if self.user else self.name
 
 
+class Patient(models.Model):
+    """Represents a patient at the Clinic."""
+    name = models.CharField(max_length=50, blank=True)
+    clinic = models.ForeignKey('Clinic')
+    contact = models.ForeignKey(
+        'rapidsms.Contact', verbose_name='Preferred contact',
+        blank=True, null=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class Visit(models.Model):
+    """Represents a visit of a Patient to the Clinic."""
+    patient = models.ForeignKey('Patient')
+    service_type = models.CharField(max_length=50)
+    staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
+    visit_time = models.DateTimeField(auto_now_add=True)
+
+    def __unicode__(self):
+        return unicode(self.patient)
+
+
 class ClinicStatistic(models.Model):
     """
     A statistic about a Clinic, valid in a given month.

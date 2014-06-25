@@ -43,6 +43,28 @@ class TestClinicStaff(TestCase):
         self.assertEqual(obj.get_name_display(), 'hello')
 
 
+class TestPatient(TestCase):
+    Model = models.Patient
+    Factory = factories.Patient
+
+    def test_unicode(self):
+        """Smoke test for Patient string representation."""
+        obj = self.Factory.create(name='test')
+        self.assertEqual(str(obj), 'test')
+
+
+class TestVisit(TestCase):
+    Model = models.Visit
+    Factory = factories.Visit
+
+    def test_unicode(self):
+        """Smoke test for Visit string representation."""
+        obj = self.Factory.create(
+            patient=factories.Patient(name='test_patient'),
+            service_type='test_service')
+        self.assertEqual(str(obj), 'test_patient')
+
+
 class TestClinicStatistic(TestCase):
     Model = models.ClinicStatistic
     Factory = factories.ClinicStatistic

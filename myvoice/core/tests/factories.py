@@ -42,6 +42,20 @@ class ClinicStaff(factory.django.DjangoModelFactory):
     is_manager = FuzzyBoolean()
 
 
+class Patient(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.Patient
+
+    name = factory.fuzzy.FuzzyText()
+    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
+
+
+class Visit(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.Visit
+
+    patient = factory.SubFactory('myvoice.core.tests.factories.Patient')
+    service_type = factory.fuzzy.FuzzyText()
+
+
 class ClinicStatistic(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.ClinicStatistic
 
