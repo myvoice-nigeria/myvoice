@@ -6,6 +6,9 @@ from django.db import models
 
 
 class Migration(SchemaMigration):
+    depends_on = [
+        ('statistics', '0001_initial'),
+    ]
 
     def forwards(self, orm):
         # Adding model 'Survey'
@@ -14,6 +17,7 @@ class Migration(SchemaMigration):
             ('flow_id', self.gf('django.db.models.fields.IntegerField')(unique=True, max_length=32)),
             ('name', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('active', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('role', self.gf('django.db.models.fields.CharField')(max_length=32, unique=True, null=True, blank=True)),
         ))
         db.send_create_signal(u'survey', ['Survey'])
 
@@ -25,9 +29,11 @@ class Migration(SchemaMigration):
             ('question_type', self.gf('django.db.models.fields.CharField')(max_length=32)),
             ('label', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('categories', self.gf('django.db.models.fields.TextField')(blank=True)),
+            ('question', self.gf('django.db.models.fields.CharField')(max_length=255, blank=True)),
             ('designation', self.gf('django.db.models.fields.CharField')(default='unknown', max_length=8)),
             ('order', self.gf('django.db.models.fields.IntegerField')(default=0)),
             ('statistic', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['statistics.Statistic'], null=True, blank=True)),
+            ('for_display', self.gf('django.db.models.fields.BooleanField')(default=True)),
         ))
         db.send_create_signal(u'survey', ['SurveyQuestion'])
 
@@ -129,15 +135,18 @@ class Migration(SchemaMigration):
             'active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'flow_id': ('django.db.models.fields.IntegerField', [], {'unique': 'True', 'max_length': '32'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'role': ('django.db.models.fields.CharField', [], {'max_length': '32', 'unique': 'True', 'null': 'True', 'blank': 'True'})
         },
         u'survey.surveyquestion': {
             'Meta': {'ordering': "['order', 'id']", 'unique_together': "[('survey', 'label')]", 'object_name': 'SurveyQuestion'},
             'categories': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'designation': ('django.db.models.fields.CharField', [], {'default': "'unknown'", 'max_length': '8'}),
+            'for_display': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'label': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'order': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'question': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'question_id': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'question_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'statistic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['statistics.Statistic']", 'null': 'True', 'blank': 'True'}),

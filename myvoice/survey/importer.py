@@ -61,6 +61,30 @@ def import_survey(flow_id):
         categories = [c for c in categories if c.lower() not in ('stop', 'other')]
         return SurveyQuestion.MULTIPLE_CHOICE, "\n".join(categories)
 
+    def _guess_question_text(question_id, action_sets):
+        """
+        The questions themselves aren't directly associated with the rules.
+        We have to guess at what the best question would be, from the actions
+        (in this case, the text message prompts) that get the user to that
+        question node. This isn't the most reliable method so this field
+        should remain editable in the database to allow admins to fix up any
+        mistakes we made.
+        """
+        possible_questions = [action['msg']
+                              for action_set in action_sets
+                              for action in action_set['actions']
+                              if action_set['destination'] == question_id
+                              and action['type'] == 'reply']
+        if possible_questions:
+            q = possible_questions[0]
+            if '?' in q:
+                # Get the first sentence that ends in a question mark.
+                # Many 'questions' also include directives like
+                # "Reply to 55999" at the end.
+                return q[:q.index('?') + 1]
+            return q
+        return ''
+
     data = TextItApi().get_flow_export(flow_id)
     flow = data['flows'][0]  # Seems only 1 is returned.
     rules = flow['definition']['rule_sets']
@@ -70,10 +94,13 @@ def import_survey(flow_id):
     survey.surveyquestion_set.all().delete()
     for question in rules:
         label = question['label']
+        question_id = question['uuid']
+        question_text = _guess_question_text(question_id, flow['definition']['action_sets'])
         question_type, categories = _guess_type_and_categories(question)
         survey_question = SurveyQuestion(
             survey=survey,
-            question_id=question['uuid'],
+            question_id=question_id,
+            question=question_text,
             label=label,
             question_type=question_type,
             categories=categories,

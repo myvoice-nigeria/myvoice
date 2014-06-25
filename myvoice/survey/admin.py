@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 
 from . import importer
 from . import models
@@ -9,12 +10,12 @@ class SurveyQuestionInline(admin.TabularInline):
     Disallow adding or deleting SurveyQuestions through the admin - they must
     be managed through the automatic import of Surveys.
 
-    Also disallow editing the fields that we import from TextIt.
+    Also disallow editing most of the fields that we import from TextIt.
     """
 
     extra = 0
-    fields = ['id', 'question_id', 'question_type', 'label',
-              'categories', 'designation', 'order', 'statistic']
+    fields = ['id', 'question_id', 'question', 'label', 'question_type',
+              'categories', 'designation', 'order', 'statistic', 'for_display']
     model = models.SurveyQuestion
     readonly_fields = ['id', 'question_id', 'label', 'question_type',
                        'categories']
@@ -39,10 +40,12 @@ class SurveyAdmin(admin.ModelAdmin):
             'description': "Enter the flow id and we will import its details "
                            "from TextIt.",
             'classes': ['wide'],
-            'fields': ['flow_id'],
+            'fields': ['flow_id', 'role'],
         }),
     ]
-    list_display = ['name', 'flow_id', 'question_count']
+    fields = ['flow_id', 'name', 'role', 'active']
+    list_display = ['name', 'flow_id', 'role', 'question_count']
+    save_on_top = True
 
     def add_view(self, *args, **kwargs):
         self.inlines = []
@@ -66,6 +69,8 @@ class SurveyAdmin(admin.ModelAdmin):
         """If we're adding the survey, import its name and questions."""
         super(SurveyAdmin, self).save_model(request, obj, form, change)
         if not change:
+            # FIXME - An exception is raised if this flow doesn't exist
+            # on TextIt; instead we should check for this in form validation.
             importer.import_survey(obj.flow_id)
 
 

@@ -111,11 +111,11 @@ class TextItApi(object):
             'csrfmiddlewaretoken': client.cookies['csrftoken'],
         })
         if response.status_code != 200:
-            raise Exception("Login failed.")
+            raise TextItException("Login failed.")
         response = client.get('https://textit.in/flow/export/{0}/'.format(flow_id))
         if response.status_code != 200:
-            raise Exception("Unable to retrieve survey export.")
+            raise TextItException("Unable to retrieve survey export.")
         try:
             return response.json()
         except:
-            raise Exception("Response data was not JSON.")
+            raise TextItException("Response data was not JSON.")
