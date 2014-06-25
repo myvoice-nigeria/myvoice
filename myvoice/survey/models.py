@@ -25,8 +25,10 @@ class Survey(models.Model):
     """Contains TextIt flow metadata."""
 
     PATIENT_FEEDBACK = 'patient-feedback'
+    PATIENT_REGISTRATION = 'patient-registration'
     SURVEY_ROLES = (
         (PATIENT_FEEDBACK, 'Patient Feedback'),
+        (PATIENT_REGISTRATION, 'Patient Registration'),
     )
 
     flow_id = models.IntegerField(
