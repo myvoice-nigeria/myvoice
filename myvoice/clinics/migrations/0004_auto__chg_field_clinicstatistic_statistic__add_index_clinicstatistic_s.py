@@ -6,23 +6,18 @@ from django.db import models
 
 
 class Migration(SchemaMigration):
+    depends_on = [
+        ('statistics', '0001_initial'),
+    ]
 
     def forwards(self, orm):
-        # Renaming column for 'ClinicStatistic.statistic' to match new field type.
-        db.rename_column(u'clinics_clinicstatistic', 'statistic', 'statistic_id')
-        # Changing field 'ClinicStatistic.statistic'
-        db.alter_column(u'clinics_clinicstatistic', 'statistic_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['statistics.Statistic']))
-        # Adding index on 'ClinicStatistic', fields ['statistic']
-        db.create_index(u'clinics_clinicstatistic', ['statistic_id'])
+        db.delete_column(u'clinics_clinicstatistic', 'statistic')
+        db.add_column(u'clinics_clinicstatistic', 'statistic', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['statistics.Statistic']))
 
 
     def backwards(self, orm):
-        # Removing index on 'ClinicStatistic', fields ['statistic']
-        db.delete_index(u'clinics_clinicstatistic', ['statistic_id'])
-        # Renaming column for 'ClinicStatistic.statistic' to match new field type.
-        db.rename_column(u'clinics_clinicstatistic', 'statistic_id', 'statistic')
-        # Changing field 'ClinicStatistic.statistic'
-        db.alter_column(u'clinics_clinicstatistic', 'statistic', self.gf('django.db.models.fields.CharField')(max_length=32))
+        db.delete_column(u'clinics_clinicstatistic', 'statistic_id')
+        db.add_column(u'clinics_clinicstatistic', 'statistic', self.gf('django.db.models.fields.CharField')(max_length=32))
 
     models = {
         u'auth.group': {
