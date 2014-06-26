@@ -1,0 +1,42 @@
+[
+    {
+        "model": "clinics.Service",
+        "pk": 1,
+        "fields": {
+            "name": "ANC",
+            "slug": "anc"
+        }
+    },
+    {
+        "model": "clinics.Service",
+        "pk": 2,
+        "fields": {
+            "name": "Normal Delivery",
+            "slug": "normal-delivery"
+        }
+    },
+    {
+        "model": "clinics.Service",
+        "pk": 3,
+        "fields": {
+            "name": "Immunization/Vaccination",
+            "slug": "immunization-vaccination"
+        }
+    },
+    {
+        "model": "clinics.Service",
+        "pk": 4,
+        "fields": {
+            "name": "OPD",
+            "slug": "opd"
+        }
+    },
+    {
+        "model": "clinics.Service",
+        "pk": 5,
+        "fields": {
+            "name": "Family Planning",
+            "slug": "family-planning"
+        }
+    }
+]
