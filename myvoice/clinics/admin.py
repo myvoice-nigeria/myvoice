@@ -50,8 +50,14 @@ class VisitAdmin(admin.ModelAdmin):
     date_hierarchy = 'visit_time'
 
 
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug']
+    ordering = ['name']
+
+
 admin.site.register(models.Clinic, ClinicAdmin)
 admin.site.register(models.ClinicStatistic, ClinicStatisticAdmin)
 admin.site.register(models.Region, RegionAdmin)
 admin.site.register(models.Patient, PatientAdmin)
 admin.site.register(models.Visit, VisitAdmin)
+admin.site.register(models.Service, ServiceAdmin)

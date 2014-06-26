@@ -115,6 +115,9 @@ class Service(models.Model):
     name = models.CharField(max_length=128)
     slug = models.SlugField(unique=True)
 
+    def __unicode__(self):
+        return self.name
+
 
 class Patient(models.Model):
     """Represents a patient at the Clinic."""

@@ -86,15 +86,16 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
             'fields': ['run_id', 'question'],
         }),
         ('The response', {
-            'fields': ['connection', 'clinic', 'response', 'datetime'],
+            'fields': ['connection', 'clinic', 'service', 'response', 'datetime'],
         }),
         ('Metadata', {
             'fields': ['created', 'updated'],
         }),
     ]
-    list_display = ['run_id', 'clinic', 'survey', 'question',
+    list_display = ['run_id', 'clinic', 'service', 'survey', 'question',
                     'question_type', 'response']
-    list_filter = ['question__survey', 'clinic', 'question__question_type']
+    list_filter = ['question__survey', 'clinic', 'service',
+                   'question__question_type']
     list_select_related = True
     ordering = ['run_id', 'question']
     readonly_fields = ['run_id', 'connection', 'question', 'response',
