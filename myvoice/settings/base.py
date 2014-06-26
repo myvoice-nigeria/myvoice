@@ -251,3 +251,7 @@ CELERYBEAT_SCHEDULE = {
         'schedule': crontab(hour='*/1', minute='0'),
     },
 }
+
+# Set PostGIS version so that Django can find it.
+# See http://stackoverflow.com/questions/10584852/my-postgis-database-looks-fine-but-geodjango-thinks-otherwise-why
+POSTGIS_VERSION = (2, 1)
