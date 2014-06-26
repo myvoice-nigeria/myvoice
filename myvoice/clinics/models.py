@@ -142,7 +142,6 @@ class Visit(models.Model):
     def __unicode__(self):
         return unicode(self.patient)
 
->>>>>>> origin/develop
 
 class ClinicStatistic(models.Model):
     """
