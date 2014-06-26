@@ -121,6 +121,10 @@ class Patient(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_name_display(self):
+        """Prefer the associated Contact's name to the name here."""
+        return self.contact.name if self.contact else self.name
+
 
 class Visit(models.Model):
     """Represents a visit of a Patient to the Clinic."""
