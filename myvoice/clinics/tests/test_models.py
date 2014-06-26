@@ -43,6 +43,40 @@ class TestClinicStaff(TestCase):
         self.assertEqual(obj.get_name_display(), 'hello')
 
 
+class TestPatient(TestCase):
+    Model = models.Patient
+    Factory = factories.Patient
+
+    def test_unicode(self):
+        """Smoke test for Patient string representation."""
+        obj = self.Factory.create(name='test')
+        self.assertEqual(str(obj), 'test')
+
+    def test_get_name_display(self):
+        """Contact name should be preferred to 'name' field on patient."""
+        obj = self.Factory.create(
+            name='test',
+            contact=factories.Contact(name='test contact'))
+        self.assertEqual(obj.get_name_display(), "test contact")
+
+    def test_get_name_no_contact(self):
+        """Show name if no contact attached to patient."""
+        obj = self.Factory.create(name='test')
+        self.assertEqual(obj.get_name_display(), 'test')
+
+
+class TestVisit(TestCase):
+    Model = models.Visit
+    Factory = factories.Visit
+
+    def test_unicode(self):
+        """Smoke test for Visit string representation."""
+        obj = self.Factory.create(
+            patient=factories.Patient(name='test_patient'),
+            service_type='test_service')
+        self.assertEqual(str(obj), 'test_patient')
+
+
 class TestClinicStatistic(TestCase):
     Model = models.ClinicStatistic
     Factory = factories.ClinicStatistic

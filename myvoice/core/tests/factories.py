@@ -11,6 +11,8 @@ from django.contrib.auth import models as auth
 from myvoice.clinics import statistics
 from myvoice.clinics import models as clinics
 
+from rapidsms import models as rapidsms
+
 from .utils import FuzzyBoolean, FuzzyEmail, FuzzyYear
 
 
@@ -40,6 +42,26 @@ class ClinicStaff(factory.django.DjangoModelFactory):
     staff_type = factory.fuzzy.FuzzyText()
     year_started = FuzzyYear()
     is_manager = FuzzyBoolean()
+
+
+class Contact(factory.django.DjangoModelFactory):
+    FACTORY_FOR = rapidsms.Contact
+
+    name = factory.fuzzy.FuzzyText()
+
+
+class Patient(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.Patient
+
+    name = factory.fuzzy.FuzzyText()
+    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
+
+
+class Visit(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.Visit
+
+    patient = factory.SubFactory('myvoice.core.tests.factories.Patient')
+    service_type = factory.fuzzy.FuzzyText()
 
 
 class ClinicStatistic(factory.django.DjangoModelFactory):
