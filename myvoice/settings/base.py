@@ -251,7 +251,7 @@ CELERYBEAT_SCHEDULE = {
 }
 
 # Set PostGIS version so that Django can find it.
-# See http://stackoverflow.com/questions/10584852/my-postgis-database-looks-fine-but-geodjango-thinks-otherwise-why
+# See http://stackoverflow.com/questions/10584852/my-postgis-database-looks-fine-but-geodjango-thinks-otherwise-why  # noqa
 POSTGIS_VERSION = (2, 1)
 
 TEXTIT_API_TOKEN = os.environ.get('TEXTIT_API_TOKEN', '')
