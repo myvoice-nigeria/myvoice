@@ -58,6 +58,9 @@ class Clinic(models.Model):
     pbf_rank = models.IntegerField(
         blank=True, null=True, verbose_name='PBF rank', editable=False)
 
+    # Code of Service to be used in SMS registration
+    code = models.PositiveIntegerField()
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -129,6 +132,7 @@ class Patient(models.Model):
     contact = models.ForeignKey(
         'rapidsms.Contact', verbose_name='Preferred contact',
         blank=True, null=True)
+    serial = models.PositiveIntegerField()
 
     def __unicode__(self):
         return self.get_name_display()

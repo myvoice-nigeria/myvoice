@@ -32,6 +32,7 @@ class Clinic(factory.django.DjangoModelFactory):
     town = factory.fuzzy.FuzzyText()
     ward = factory.fuzzy.FuzzyText()
     lga = factory.fuzzy.FuzzyText()
+    code = factory.fuzzy.FuzzyInteger(1)
 
 
 class ClinicStaff(factory.django.DjangoModelFactory):
