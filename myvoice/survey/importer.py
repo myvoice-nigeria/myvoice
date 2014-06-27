@@ -15,7 +15,7 @@ from .textit import TextItApi
 logger = logging.getLogger(__file__)
 
 
-def import_survey(flow_id):
+def import_survey(flow_id, role=None):
     """
     Imports questions for a TextIt flow, overwriting any questions (and
     responses) that currently exist.
@@ -90,6 +90,7 @@ def import_survey(flow_id):
     rules = flow['definition']['rule_sets']
     survey, _ = Survey.objects.get_or_create(flow_id=flow['id'])
     survey.name = flow['name']
+    survey.role = role
     survey.save()
     survey.surveyquestion_set.all().delete()
     for question in rules:
