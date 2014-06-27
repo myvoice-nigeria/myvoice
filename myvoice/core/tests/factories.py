@@ -44,6 +44,13 @@ class ClinicStaff(factory.django.DjangoModelFactory):
     is_manager = FuzzyBoolean()
 
 
+class Service(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.Service
+
+    name = factory.fuzzy.FuzzyText()
+    code = factory.fuzzy.FuzzyInteger(0)
+
+
 class Contact(factory.django.DjangoModelFactory):
     FACTORY_FOR = rapidsms.Contact
 
@@ -61,7 +68,7 @@ class Visit(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.Visit
 
     patient = factory.SubFactory('myvoice.core.tests.factories.Patient')
-    service_type = factory.fuzzy.FuzzyText()
+    service = factory.SubFactory('myvoice.core.tests.factories.Service')
 
 
 class ClinicStatistic(factory.django.DjangoModelFactory):

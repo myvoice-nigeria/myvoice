@@ -115,6 +115,9 @@ class Service(models.Model):
     name = models.CharField(max_length=128)
     slug = models.SlugField(unique=True)
 
+    # Code of Service to be used in SMS registration
+    code = models.PositiveIntegerField()
+
     def __unicode__(self):
         return self.name
 
@@ -138,7 +141,7 @@ class Patient(models.Model):
 class Visit(models.Model):
     """Represents a visit of a Patient to the Clinic."""
     patient = models.ForeignKey('Patient')
-    service_type = models.CharField(max_length=50)
+    service = models.ForeignKey('Service')
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
     visit_time = models.DateTimeField(auto_now_add=True)
 
