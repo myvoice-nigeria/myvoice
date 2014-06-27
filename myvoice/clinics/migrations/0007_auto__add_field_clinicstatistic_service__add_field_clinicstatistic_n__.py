@@ -8,8 +8,13 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Removing unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
-        db.delete_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
+        try:
+            # Removing unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
+            db.delete_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
+        except:
+            # FIXME: Sometimes this fails saying that the unique constraint
+            # isn't present. For now, that's good enough.
+            pass
 
         # Adding field 'ClinicStatistic.service'
         db.add_column(u'clinics_clinicstatistic', 'service',
