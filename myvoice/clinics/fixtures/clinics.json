@@ -1,0 +1,15 @@
+[
+    {
+        "model": "clinics.Clinic",
+        "pk": 1,
+        "fields": {
+            "name": "Wamba PHC Model Clinic",
+            "slug": "wamba-phc-model-clinic",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "LGA",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136"
+        }
+    }
+]
