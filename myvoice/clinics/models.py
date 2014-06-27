@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import models
 from django.contrib.gis.db import models as gis
 from django.core.exceptions import ValidationError
@@ -154,7 +156,8 @@ class ClinicStatistic(models.Model):
     regularly scrape, extract, and analyze this data, and store it using this
     model.
     """
-    clinic = models.ForeignKey('Clinic')
+    clinic = models.ForeignKey('Clinic', null=True, blank=True)
+    service = models.ForeignKey('Service', null=True, blank=True)
     month = models.DateField()
 
     # NOTE: Take care when changing the statistic or its type - the stored
@@ -169,6 +172,10 @@ class ClinicStatistic(models.Model):
     text_value = models.CharField(
         max_length=255, null=True, blank=True, editable=False)
 
+    n = models.IntegerField(
+        default=0,
+        help_text="Number of data points used for this statistic.")
+
     # In general, this will be calculated programatically.
     rank = models.IntegerField(
         blank=True, null=True, editable=False,
@@ -179,12 +186,13 @@ class ClinicStatistic(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = [('clinic', 'statistic', 'month')]
+        #unique_together = [('clinic', 'statistic', 'month')]
+        unique_together = [('clinic', 'service', 'statistic', 'month')]
         verbose_name = 'statistic'
 
     def __unicode__(self):
         return '{statistic} for {clinic} for {month}'.format(
-            statistic=self.get_statistic_display(), clinic=self.clinic.name,
+            statistic=self.statistic, clinic=self.clinic.name,
             month=self.get_month_display())
 
     def _get_value(self):
@@ -273,7 +281,14 @@ class ClinicStatistic(models.Model):
     def get_value_display(self):
         statistic_type = self.statistic.statistic_type
         if statistic_type == Statistic.PERCENTAGE:
-            return '{0}%'.format(round(self.value, 1))
+            return '{0}%'.format(round(self.value * 100, 1))
         elif statistic_type == Statistic.FLOAT:
             return '{0}'.format(round(self.value, 1))
         return self.value
+
+    def save(self, *args, **kwargs):
+        # Normalize 'month' field so that it is the first day of the month.
+        if isinstance(self.month, datetime.datetime):
+            self.month = self.month.date()
+        self.month.replace(day=1)
+        return super(ClinicStatistic, self).save(*args, **kwargs)
