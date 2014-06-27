@@ -1,4 +1,5 @@
 import logging
+import re
 
 import dateutil.parser
 
@@ -6,6 +7,7 @@ from django.utils.text import slugify
 
 from rapidsms.models import Backend, Connection
 
+from myvoice.clinics.models import Clinic, Service
 from myvoice.statistics.models import Statistic, StatisticGroup
 
 from .models import Survey, SurveyQuestion, SurveyQuestionResponse
@@ -108,9 +110,11 @@ def import_survey(flow_id, role=None):
         )
         if question_type == SurveyQuestion.MULTIPLE_CHOICE:
             # Guess the statistic to display this question.
-            statistic, _ = Statistic.objects.get_or_create(name=label, defaults={
-                'slug': slugify(label),
+            statistic_label = re.sub('([a-z])([A-Z])', '\g<1> \g<2>', label).title()
+            statistic, _ = Statistic.objects.get_or_create(name=statistic_label, defaults={
+                'slug': slugify(statistic_label),
                 'group': StatisticGroup.objects.get(slug='survey-results'),
+                'statistic_type': Statistic.PERCENTAGE,
             })
             survey_question.statistic = statistic
         survey_question.save()
@@ -188,7 +192,8 @@ def import_responses(flow_id):
             connection, _ = Connection.objects.get_or_create(
                 backend=textit, identity=rrun['phone'])
             response.connection = connection
-            response.clinic = None  # TODO - associate a clinic.
+            response.clinic = Clinic.objects.get(slug='wamba-phc-model-clinic')  # FIXME
+            response.service = Service.objects.get(slug='anc')  # FIXME
             response.response = value
             response.datetime = dateutil.parser.parse(answer['time'])
             response.save()
