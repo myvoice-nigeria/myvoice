@@ -129,6 +129,7 @@ class Patient(models.Model):
     """Represents a patient at the Clinic."""
     name = models.CharField(max_length=50, blank=True)
     clinic = models.ForeignKey('Clinic')
+    mobile = models.CharField(max_length=11, blank=True)
     contact = models.ForeignKey(
         'rapidsms.Contact', verbose_name='Preferred contact',
         blank=True, null=True)
