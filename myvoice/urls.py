@@ -14,4 +14,5 @@ urlpatterns = [
     url(r'^groups/', include('groups.urls')),
     url(r'^decisiontree/', include('decisiontree.urls')),
     url(r'^pbf/', include('myvoice.pbf.urls')),
+    url(r'^clinics/', include('myvoice.clinics.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

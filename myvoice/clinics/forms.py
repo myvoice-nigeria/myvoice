@@ -35,3 +35,29 @@ class ClinicStatisticAdminForm(forms.ModelForm):
             # Standard form validation will display the error that this
             # field is required.
             pass
+
+
+class VisitForm(forms.Form):
+    phone = forms.CharField(max_length=20, required=False)
+    text = forms.RegexField('^\d{1,3}\s+((1)|(0[789]\d{9}))\s+\d{4,6}\s+\d+$', max_length=50)
+
+    def clean_text(self):
+        """Validate input text.
+
+        text is in format: CLINIC PHONE SERIAL SERVICE
+        """
+        #srvc = self.cleaned_data['text'].split()
+        clnc, phone, serial, srvc = self.cleaned_data['text'].split()
+        #import pdb;pdb.set_trace()
+        # Check if clinic is valid
+        try:
+            clinic = models.Clinic.objects.get(code=clnc)
+        except (models.Clinic.DoesNotExist, ValueError):
+            raise forms.ValidationError('Invalid clinic code')
+
+        # Check if service is valid
+        try:
+            service = models.Service.objects.get(code=srvc)
+        except (models.Service.DoesNotExist, ValueError):
+            raise forms.ValidationError('Invalid service code')
+        return clinic, phone, serial, service
