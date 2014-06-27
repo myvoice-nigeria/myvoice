@@ -59,7 +59,7 @@ class Clinic(models.Model):
         blank=True, null=True, verbose_name='PBF rank', editable=False)
 
     # Code of Service to be used in SMS registration
-    code = models.PositiveIntegerField()
+    code = models.PositiveIntegerField(unique=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
