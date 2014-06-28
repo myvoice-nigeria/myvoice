@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.views.generic import View
+from django.views.decorators.csrf import csrf_exempt
 
 import json
 
@@ -11,6 +12,10 @@ class VisitView(View):
     form_class = forms.VisitForm
     success_msg = "Thank you for registering"
     error_msg = "Your message is invalid, please retry"
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(VisitView, self).dispatch(*args, **kwargs)
 
     def post(self, request):
         form = self.form_class(request.POST)
@@ -30,6 +35,9 @@ class VisitView(View):
             data = json.dumps({'text': self.get_error_msg(form)})
 
         response = HttpResponse(data, mimetype='text/json')
+
+        # This is to test webhooks from localhost
+        # response['Access-Control-Allow-Origin'] = '*'
         return response
 
     def get_error_msg(self, form):
