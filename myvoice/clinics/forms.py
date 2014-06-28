@@ -39,7 +39,10 @@ class ClinicStatisticAdminForm(forms.ModelForm):
 
 class VisitForm(forms.Form):
     phone = forms.CharField(max_length=20, required=False)
-    text = forms.RegexField('^\d{1,3}\s+((1)|(0[789]\d{9}))\s+\d{4,6}\s+\d+$', max_length=50)
+    text = forms.RegexField(
+        '^\d{1,3}\s+((1)|(\d+))\s+\d{4,6}\s+\d+$',
+        max_length=50,
+        error_messages={'invalid': 'Your message is invalid. Please retry'})
 
     def clean_text(self):
         """Validate input text.
@@ -48,17 +51,41 @@ class VisitForm(forms.Form):
         """
         #srvc = self.cleaned_data['text'].split()
         clnc, phone, serial, srvc = self.cleaned_data['text'].split()
+        error_messages = []
         #import pdb;pdb.set_trace()
+        # Check if mobile is incorrect
+        if len(phone) not in [1, 11]:
+            error_msg = 'Mobile number incorrect. Must be 11 digits with no spaces. '\
+                        'Please check your instruction card and re-enter the entire '\
+                        'patient code in 1 text.'
+            error_messages.append(error_msg)
+            #raise forms.ValidationError(error_msg)
         # Check if clinic is valid
         try:
             clinic = models.Clinic.objects.get(code=clnc)
         except (models.Clinic.DoesNotExist, ValueError):
-            raise forms.ValidationError('Invalid clinic code')
+            error_msg = 'Clinic number incorrect. Must be 1-11, please check your '\
+                        'instruction card and re-enter the entire patient code in 1 sms'
+            error_messages.append(error_msg)
+            #raise forms.ValidationError(error_msg)
 
         # Check if service is valid
         try:
             service = models.Service.objects.get(code=srvc)
         except (models.Service.DoesNotExist, ValueError):
-            raise forms.ValidationError('Invalid service code')
+            error_msg = 'Service code incorrect. Must be a number 1 - 5 please check '\
+                        'your instruction card and re-enter the entire patient code in 1 text.'
+            error_messages.append(error_msg)
+            #raise forms.ValidationError(error_msg)
+
+        # If multiple error messages, say so
+        num_messages = len(error_messages)
+        if num_messages == 1:
+            raise forms.ValidationError(error_messages[0])
+        elif num_messages > 1:
+            msg = "Some of the fields you have entered are incorrect. This patient has not "\
+                  "been registered.  Must be a number 1 - 5 please check your instruction "\
+                  "card and re-enter the entire patient code in 1 text."
+            raise forms.ValidationError(msg)
 
         return clinic, phone, serial, service

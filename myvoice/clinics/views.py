@@ -27,4 +27,8 @@ class VisitView(View):
             models.Visit.objects.create(patient=patient, service=serv)
             return HttpResponse(json.dumps({'text': self.success_msg}))
         else:
-            return HttpResponse(json.dumps({'text': self.error_msg}))
+            return HttpResponse(json.dumps({'text': self.get_error_msg(form)}))
+
+    def get_error_msg(self, form):
+        """Extract the first error message from the form's 'text' field."""
+        return form.errors['text'][0]

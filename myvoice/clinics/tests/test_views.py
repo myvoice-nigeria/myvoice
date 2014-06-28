@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 #import mock
+import json
 
 from myvoice.core.tests import factories
 
@@ -37,15 +38,28 @@ class TestVisitView(TestCase):
             'text': '2 08122356701 4001 5'
         }
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "Your message is invalid, please retry"}')
+        error_msg = "Clinic number incorrect. Must be 1-11, please check your instruction card "\
+            "and re-enter the entire patient code in 1 sms"
+        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
 
-    def test_visit_parts(self):
-        """Test that the message must be of 4 parts."""
+    def test_multiple_fields_incorrect(self):
+        """Test multiple fields are incorrect."""
         reg_data = {
-            'text': '08122356701 4001 3'
+            'text': '15 8122356701 4000 5'
         }
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "Your message is invalid, please retry"}')
+        error_msg = "Some of the fields you have entered are incorrect. This patient has not "\
+                    "been registered.  Must be a number 1 - 5 please check your instruction "\
+                    "card and re-enter the entire patient code in 1 text."
+        self.assertEqual(response.content, json.dumps({"text": "%s" % error_msg}))
+
+    def test_visit_registration(self):
+        """Test that the registration works."""
+        reg_data = {
+            'text': '08122356701 4001 5'
+        }
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, '{"text": "Your message is invalid. Please retry"}')
 
     def test_visit_no_phone(self):
         """Test that the phone number of '1' will validate."""
@@ -53,23 +67,27 @@ class TestVisitView(TestCase):
         response = self.make_request(reg_data)
         self.assertEqual(response.content, '{"text": "Thank you for registering"}')
 
-    def test_visit_invalid_clinic_code(self):
-        """Test that a non-numeric clinic is not registered."""
-        reg_data = {'text': 'A 08122356701 4000 3'}
+    def test_visit_non_numeric_data(self):
+        """Test that a non-numeric data is not registered."""
+        reg_data = {'text': 'A 08122356701 4000 5'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "Your message is invalid, please retry"}')
+        self.assertEqual(response.content, '{"text": "Your message is invalid. Please retry"}')
 
     def test_invalid_phone(self):
         """Test that a non 11-digit number is not registered."""
-        reg_data = {'text': '1 8122356701 4000 3'}
+        reg_data = {'text': '1 8122356701 4000 5'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "Your message is invalid, please retry"}')
+        error_msg = 'Mobile number incorrect. Must be 11 digits with no spaces. Please check your '\
+                    'instruction card and re-enter the entire patient code in 1 text.'
+        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
 
-    def test_visit_invalid_serial(self):
-        """Test that invalid serial is not registered."""
+    def test_visit_invalid_service(self):
+        """Test that invalid service code is not registered."""
         reg_data = {'text': '1 08122356701 4005 3'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "Your message is invalid, please retry"}')
+        error_msg = 'Service code incorrect. Must be a number 1 - 5 please check your '\
+                    'instruction card and re-enter the entire patient code in 1 text.'
+        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
 
     def test_save_visit(self):
         """Test that the visit information is saved."""
