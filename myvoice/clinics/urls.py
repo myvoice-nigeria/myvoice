@@ -4,5 +4,5 @@ from .views import VisitView
 
 
 urlpatterns = [
-    url(r'^$', VisitView.as_view(), name='visit'),
+    url(r'^patient/$', VisitView.as_view(), name='visit'),
 ]
