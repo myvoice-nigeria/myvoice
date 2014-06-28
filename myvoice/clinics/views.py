@@ -1,14 +1,10 @@
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse
 from django.views.generic import View
 
 import json
 
 from myvoice.clinics import forms
 from myvoice.clinics import models
-
-
-ERROR_MSG = 'Your message is invalid, please retry'
-SUCCESS_MSG = 'Thank you for registering'
 
 
 class VisitView(View):

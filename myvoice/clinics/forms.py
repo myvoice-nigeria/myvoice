@@ -60,4 +60,5 @@ class VisitForm(forms.Form):
             service = models.Service.objects.get(code=srvc)
         except (models.Service.DoesNotExist, ValueError):
             raise forms.ValidationError('Invalid service code')
+
         return clinic, phone, serial, service

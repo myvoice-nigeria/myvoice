@@ -80,8 +80,3 @@ class TestVisitView(TestCase):
         self.make_request(reg_data)
         visit_count = models.Visit.objects.count()
         self.assertEqual(1, visit_count)
-
-    def test_multiple_serials_in_clinic(self):
-        """Test that you can't use multiple serials
-        for same patient.
-        """
