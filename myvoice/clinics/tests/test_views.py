@@ -20,7 +20,8 @@ class TestVisitView(TestCase):
     def make_request(self, data):
         """Make Test request with POST data"""
         request = self.factory.post('/views/registration/', data=data)
-        return clinics.visit(request)
+        return clinics.VisitView.as_view()(request)
+        #return clinics.visit(request)
 
     def test_visit(self):
         reg_data = {
