@@ -27,6 +27,11 @@ CACHES = {
 }
 
 EMAIL_SUBJECT_PREFIX = '[Myvoice Staging] '
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_HOST_USER = 'reboot-myvoice'
+EMAIL_HOST_PASSWORD = os.environ['SENDGRID_PASSWORD']
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
 COMPRESS_ENABLED = True
 
