@@ -10,7 +10,8 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    # ('Your Name', 'your_email@example.com'),
+    ('MyVoice Team', 'myvoice-team@caktusgroup.com'),
+    ('Bayo Opadeyi', 'bayokrapht@gmail.com'),
 )
 
 DATABASES = {
