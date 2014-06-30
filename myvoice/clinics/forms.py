@@ -38,9 +38,9 @@ class ClinicStatisticAdminForm(forms.ModelForm):
 
 
 class VisitForm(forms.Form):
-    phone = forms.CharField(max_length=20, required=False)
+    phone = forms.CharField(max_length=20)
     text = forms.RegexField(
-        '^\d{1,3}\s+((1)|(\d+))\s+\d{4,6}\s+\d+$',
+        '^\d+\s+((1)|(\d+))\s+\d+\s+\d+$',
         max_length=50,
         error_messages={'invalid': 'Your message is invalid. Please retry'})
 
@@ -49,43 +49,28 @@ class VisitForm(forms.Form):
 
         text is in format: CLINIC PHONE SERIAL SERVICE
         """
-        #srvc = self.cleaned_data['text'].split()
         clnc, phone, serial, srvc = self.cleaned_data['text'].split()
-        error_messages = []
-        #import pdb;pdb.set_trace()
         # Check if mobile is incorrect
         if len(phone) not in [1, 11]:
-            error_msg = 'Mobile number incorrect. Must be 11 digits with no spaces. '\
-                        'Please check your instruction card and re-enter the entire '\
-                        'patient code in 1 text.'
-            error_messages.append(error_msg)
-            #raise forms.ValidationError(error_msg)
+            error_msg = 'Mobile number incorrect for patient with serial {serial}. Must '\
+                        'be 11 digits with no spaces. Please check your instruction card '\
+                        'and re-enter the entire patient code in 1 text.'
+            raise forms.ValidationError(error_msg.format(serial=serial))
         # Check if clinic is valid
         try:
             clinic = models.Clinic.objects.get(code=clnc)
         except (models.Clinic.DoesNotExist, ValueError):
             error_msg = 'Clinic number incorrect. Must be 1-11, please check your '\
                         'instruction card and re-enter the entire patient code in 1 sms'
-            error_messages.append(error_msg)
-            #raise forms.ValidationError(error_msg)
+            # If ValidationError exists don't raise error but send "empty" clinic
+            if models.VisitRegistrationError.objects.filter(sender=phone).count():
+                clinic = None
+                # Clear VisitRegistrationError
+                models.VisitRegistrationError.objects.filter(sender=phone).delete()
+            else:
+                models.VisitRegistrationError.objects.create(sender=phone)
+                raise forms.ValidationError(error_msg)
+        else:
+            models.VisitRegistrationError.objects.filter(sender=phone).delete()
 
-        # Check if service is valid
-        try:
-            service = models.Service.objects.get(code=srvc)
-        except (models.Service.DoesNotExist, ValueError):
-            error_msg = 'Service code incorrect. Must be a number 1 - 5 please check '\
-                        'your instruction card and re-enter the entire patient code in 1 text.'
-            error_messages.append(error_msg)
-            #raise forms.ValidationError(error_msg)
-
-        # If multiple error messages, say so
-        num_messages = len(error_messages)
-        if num_messages == 1:
-            raise forms.ValidationError(error_messages[0])
-        elif num_messages > 1:
-            msg = "Some of the fields you have entered are incorrect. This patient has not "\
-                  "been registered.  Must be a number 1 - 5 please check your instruction "\
-                  "card and re-enter the entire patient code in 1 text."
-            raise forms.ValidationError(msg)
-
-        return clinic, phone, serial, service
+        return clinic, phone, serial, srvc, self.cleaned_data['text']
