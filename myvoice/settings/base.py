@@ -10,7 +10,8 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
-    ('Caktus', 'myvoice-team@caktusgroup.com'),
+    ('MyVoice Team', 'myvoice-team@caktusgroup.com'),
+    ('Bayo Opadeyi', 'bayokrapht@gmail.com'),
 )
 
 DATABASES = {
@@ -201,7 +202,7 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
-            'handlers': ['mail_admins'],
+            'handlers': ['mail_admins', 'file'],
             'level': 'ERROR',
             'propagate': True,
         },
