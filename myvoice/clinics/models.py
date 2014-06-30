@@ -58,7 +58,7 @@ class Clinic(models.Model):
     pbf_rank = models.IntegerField(
         blank=True, null=True, verbose_name='PBF rank', editable=False)
 
-    # Code of Service to be used in SMS registration
+    # Code of Clinic to be used in SMS registration
     code = models.PositiveIntegerField(unique=True)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -128,7 +128,7 @@ class Service(models.Model):
 class Patient(models.Model):
     """Represents a patient at the Clinic."""
     name = models.CharField(max_length=50, blank=True)
-    clinic = models.ForeignKey('Clinic')
+    clinic = models.ForeignKey('Clinic', blank=True, null=True)
     mobile = models.CharField(max_length=11, blank=True)
     contact = models.ForeignKey(
         'rapidsms.Contact', verbose_name='Preferred contact',
@@ -146,12 +146,41 @@ class Patient(models.Model):
 class Visit(models.Model):
     """Represents a visit of a Patient to the Clinic."""
     patient = models.ForeignKey('Patient')
-    service = models.ForeignKey('Service')
+    service = models.ForeignKey('Service', blank=True, null=True)
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
     visit_time = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
         return unicode(self.patient)
+
+
+class VisitRegistrationError(models.Model):
+    """Keeps current state of errors in Visit registration SMS.
+
+    Right now, only "wrong clinic" is useful."""
+    WRONG_CLINIC = 0
+    WRONG_MOBILE = 1
+    WRONG_SERIAL = 2
+    WRONG_SERVICE = 3
+
+    ERROR_TYPES = enumerate(('Wrong Clinic', 'Wrong Mobile', 'Wrong Serial', 'Wrong Service'))
+
+    sender = models.CharField(max_length=20)
+    error_type = models.PositiveIntegerField(choices=ERROR_TYPES, default=WRONG_CLINIC)
+
+    def __unicode__(self):
+        return self.sender
+
+
+class VisitRegistrationErrorLog(models.Model):
+    """Keeps log of errors in Visit registration SMS."""
+    sender = models.CharField(max_length=20)
+    error_type = models.CharField(max_length=50)
+    message_date = models.DateTimeField(auto_now=True)
+    message = models.CharField(max_length=160)
+
+    def __unicode__(self):
+        return self.sender
 
 
 class ClinicStatistic(models.Model):
