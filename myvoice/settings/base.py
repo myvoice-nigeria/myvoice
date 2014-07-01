@@ -119,7 +119,7 @@ FIXTURE_DIRS = (
     os.path.join(BASE_DIR, 'fixtures'),
 )
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.humanize',
@@ -163,7 +163,7 @@ INSTALLED_APPS = (
     "myvoice.pbf",
 
     "rapidsms.contrib.default",  # Must be last
-)
+]
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -252,3 +252,6 @@ CELERYBEAT_SCHEDULE = {
 # Set PostGIS version so that Django can find it.
 # See http://stackoverflow.com/questions/10584852/my-postgis-database-looks-fine-but-geodjango-thinks-otherwise-why
 POSTGIS_VERSION = (2, 1)
+
+INSTALLED_APPS += ['comps']
+COMPS_DIR = os.path.join(BASE_DIR, 'templates/comps')
