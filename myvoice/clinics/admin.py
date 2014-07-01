@@ -51,7 +51,7 @@ class PatientAdmin(admin.ModelAdmin):
 
 
 class VisitAdmin(admin.ModelAdmin):
-    list_display = ['patient', 'visit_time', 'service_type', 'staff']
+    list_display = ['patient', 'visit_time', 'service', 'staff']
     date_hierarchy = 'visit_time'
 
 

@@ -35,3 +35,42 @@ class ClinicStatisticAdminForm(forms.ModelForm):
             # Standard form validation will display the error that this
             # field is required.
             pass
+
+
+class VisitForm(forms.Form):
+    phone = forms.CharField(max_length=20)
+    text = forms.RegexField(
+        '^\d+\s+((1)|(\d+))\s+\d+\s+\d+$',
+        max_length=50,
+        error_messages={'invalid': 'Your message is invalid. Please retry'})
+
+    def clean_text(self):
+        """Validate input text.
+
+        text is in format: CLINIC PHONE SERIAL SERVICE
+        """
+        clnc, phone, serial, srvc = self.cleaned_data['text'].split()
+        # Check if mobile is incorrect
+        if len(phone) not in [1, 11]:
+            error_msg = 'Mobile number incorrect for patient with serial {serial}. Must '\
+                        'be 11 digits with no spaces. Please check your instruction card '\
+                        'and re-enter the entire patient code in 1 text.'
+            raise forms.ValidationError(error_msg.format(serial=serial))
+        # Check if clinic is valid
+        try:
+            clinic = models.Clinic.objects.get(code=clnc)
+        except (models.Clinic.DoesNotExist, ValueError):
+            error_msg = 'Clinic number incorrect. Must be 1-11, please check your '\
+                        'instruction card and re-enter the entire patient code in 1 sms'
+            # If ValidationError exists don't raise error but send "empty" clinic
+            if models.VisitRegistrationError.objects.filter(sender=phone).count():
+                clinic = None
+                # Clear VisitRegistrationError
+                models.VisitRegistrationError.objects.filter(sender=phone).delete()
+            else:
+                models.VisitRegistrationError.objects.create(sender=phone)
+                raise forms.ValidationError(error_msg)
+        else:
+            models.VisitRegistrationError.objects.filter(sender=phone).delete()
+
+        return clinic, phone, serial, srvc, self.cleaned_data['text']
