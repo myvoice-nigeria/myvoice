@@ -1,6 +1,6 @@
 environment: production
 
-domain: myvoice-prod.caktusgroup.com
+domain: myvoicenigeria.com
 
 repo:
   url: git@github.com:caktus/myvoice.git
