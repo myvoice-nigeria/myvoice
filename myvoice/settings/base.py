@@ -158,7 +158,6 @@ INSTALLED_APPS = [
     # Internal apps
     "myvoice.core",
     "myvoice.clinics",
-    "myvoice.pbf",
     "myvoice.statistics",
     "myvoice.survey",
 
