@@ -2,9 +2,9 @@ import datetime
 
 from dateutil.relativedelta import relativedelta
 
-from myvoice.clinics.models import Clinic, ClinicStatistic
+from myvoice.clinics.models import ClinicStatistic
 
-from .models import Survey, SurveyQuestion, SurveyQuestionResponse
+from .models import Survey, SurveyQuestionResponse
 
 
 # Associates question label with the "positive" response.
@@ -18,6 +18,7 @@ _QUESTION_ANSWERS = [
     ('Overcharge', 'overcharged'),
 ]
 
+
 def analyze(month=None):
     """
     Heavily hard-coded survey analyzing code so that we can have something
@@ -27,7 +28,7 @@ def analyze(month=None):
     # Calculate the time period to analyze.
     month = month or datetime.datetime.today()
     start = month.replace(day=1)  # inclusive
-    end = month.replace(day=1) + relativedelta(months=1) # exclusive
+    end = month.replace(day=1) + relativedelta(months=1)  # exclusive
 
     # Grab all patient feedback responses for the time period as a base.
     survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)

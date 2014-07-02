@@ -1,8 +1,8 @@
 import datetime
 
-from django.db import models
 from django.contrib.gis.db import models as gis
 from django.core.exceptions import ValidationError
+from django.db import models
 
 from myvoice.core.validators import validate_year
 from myvoice.statistics.models import Statistic
@@ -223,7 +223,6 @@ class ClinicStatistic(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        #unique_together = [('clinic', 'statistic', 'month')]
         unique_together = [('clinic', 'service', 'statistic', 'month')]
         verbose_name = 'statistic'
 
