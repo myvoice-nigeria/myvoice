@@ -73,6 +73,13 @@ class Visit(factory.django.DjangoModelFactory):
     service = factory.SubFactory('myvoice.core.tests.factories.Service')
 
 
+class GenericFeedback(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.GenericFeedback
+
+    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
+    sender = factory.fuzzy.FuzzyText()
+
+
 class ClinicStatistic(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.ClinicStatistic
 
