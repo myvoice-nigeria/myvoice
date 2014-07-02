@@ -92,7 +92,8 @@ def import_survey(flow_id, role=None):
     rules = flow['definition']['rule_sets']
     survey, _ = Survey.objects.get_or_create(flow_id=flow['id'])
     survey.name = flow['name']
-    survey.role = role
+    if role is not None:
+        survey.role = role
     survey.save()
     survey.surveyquestion_set.all().delete()
     for question in rules:
