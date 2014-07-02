@@ -138,7 +138,20 @@ def import_responses(flow_id):
     textit = Backend.objects.get(name='TextIt')
     questions = dict([(q.label, q) for q in survey.surveyquestion_set.all()])
 
-    for rrun in TextItApi().get_runs_for_flow(flow_id):
+    # A 'run' is each time that a user starts a flow. So a user might have
+    # multiple runs associated with them but only complete the survey once.
+    # Oddly enough, TextIt returns the 'values' of the good run for each run
+    # associated with the user. So we'll only keep the most recent run.
+    runs = TextItApi().get_runs_for_flow(flow_id)
+    runs_by_user = {}
+    for run in runs:
+        phone = run['phone']
+        if phone in runs_by_user:
+            if run['created_on'] <= runs_by_user[phone]['created_on']:
+                continue
+        runs_by_user[phone] = run
+
+    for rrun in runs_by_user.values():
         # A run through a flow can have anywhere from 0 to N answers, where N
         # is the number of questions associated with the survey.
         for answer in rrun['values']:
