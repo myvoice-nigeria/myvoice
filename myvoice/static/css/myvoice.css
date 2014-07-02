@@ -218,6 +218,50 @@ h2 {
   margin-left:3px;
  }
 
+  .green-question-dot {
+  border-radius: 50%;
+  width:12px;
+  background-color: #8ac43f;
+  color:#fff;
+  height: 12px;
+  text-align: center;
+  font-size:8px;
+  font-weight: 700;
+  padding-top: 1px;
+  margin-bottom:2px;
+ }
+
+.popover {
+    background-clip: padding-box;
+    background-color: #fff;
+    border:none;
+    border-radius: 0;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    max-width: 150px;
+    padding: 1px;
+    position: absolute;
+    text-align: left;
+    white-space: normal;
+    z-index: 1060;
+    margin-left: 61px;
+}
+
+.popover.bottom {
+    margin-top: 38px;
+}
+
+.popover.bottom > .arrow {
+    border:none;
+    border-top-width: 0;
+    left: 50%;
+    margin-left: -61px;
+    top: -11px;
+}
+
+ .popover-content {
+    font-size: 10px;
+}
+
 
 /* Undo custom dropdowns */
 .navbar .navbar-nav .open .dropdown-menu {
