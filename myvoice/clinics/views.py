@@ -157,7 +157,9 @@ class ClinicReport(DetailView):
             responses = self.responses
         wait_times = responses.filter(question__label='Wait Time')
         wait_times = wait_times.values_list('response', flat=True)
-        return max(Counter(wait_times).iteritems(), key=operator.itemgetter(1))[0]
+        if wait_times:
+            return max(Counter(wait_times).iteritems(), key=operator.itemgetter(1))[0]
+        return None
 
     def get_patient_satisfaction(self):
         pass  # TODO
