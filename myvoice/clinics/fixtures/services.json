@@ -4,7 +4,8 @@
         "pk": 1,
         "fields": {
             "name": "ANC",
-            "slug": "anc"
+            "slug": "anc",
+            "code": 1
         }
     },
     {
@@ -12,7 +13,8 @@
         "pk": 2,
         "fields": {
             "name": "Normal Delivery",
-            "slug": "normal-delivery"
+            "slug": "normal-delivery",
+            "code": 2
         }
     },
     {
@@ -20,7 +22,8 @@
         "pk": 3,
         "fields": {
             "name": "Immunization/Vaccination",
-            "slug": "immunization-vaccination"
+            "slug": "immunization-vaccination",
+            "code": 3
         }
     },
     {
@@ -28,7 +31,8 @@
         "pk": 4,
         "fields": {
             "name": "OPD",
-            "slug": "opd"
+            "slug": "opd",
+            "code": 4
         }
     },
     {
@@ -36,7 +40,8 @@
         "pk": 5,
         "fields": {
             "name": "Family Planning",
-            "slug": "family-planning"
+            "slug": "family-planning",
+            "code": 5
         }
     }
 ]
