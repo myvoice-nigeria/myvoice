@@ -76,7 +76,7 @@ h2 {
 
 .participation-module .content {
 	background-color: #E5E5E5;
-	padding: 0 16px 20px 16px;	
+	padding: 0 16px 20px 16px;
 	height:101px;
 }
 
@@ -261,7 +261,7 @@ h2 {
 }
 
 .special-table-row {
-	background-color: #A6A8AB !important; 
+	background-color: #A6A8AB !important;
 	color:#fff;
 	font-size: 9px;
 	padding-top:3px !important;
@@ -304,11 +304,11 @@ td {
 .form-signin .form-control:focus {
   z-index: 2;
 }
-.form-signin input[type="email"] {
+.form-signin input[name="username"] {
   margin-bottom: 20px;
   border-radius: 0;
 }
-.form-signin input[type="password"] {
+.form-signin input[name="password"] {
   margin-bottom: 10px;
   border-radius: 0;
 }
