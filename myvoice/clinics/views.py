@@ -135,7 +135,10 @@ class ClinicReport(DetailView):
             main_choice = question.get_categories()[0]
             question_responses = self.responses_by_question.get(label)
             main_choice_count = question_responses.filter(response=main_choice).count()
-            percentage = round(float(main_choice_count) / len(question_responses) * 100, 2)
+            if question_responses:
+                percentage = round(float(main_choice_count) / len(question_responses) * 100, 2)
+            else:
+                percentage = 0
             data.append((question, percentage, len(question_responses)))
         return data
 
