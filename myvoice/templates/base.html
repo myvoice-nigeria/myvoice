@@ -62,7 +62,10 @@
                 <a href="#">summary report</a>
               </li>
               <li class="dropdown">
-                <a href="#" data-toggle="dropdown" class="dropdown-toggle" style="border:none;">facility report<b class="caret"></b></a>
+                <a href="#" data-toggle="dropdown"
+                   class="dropdown-toggle" style="border:none;">
+                  facility report<b class="caret"></b>
+                </a>
                 <ul class="dropdown-menu">
                   {% for facility in all_facilities %}
                     <li>
@@ -100,7 +103,7 @@
                 <ul class="nav navbar-nav">
                   <li><a href="{% url 'home' %}">home</a></li>
                   <li><a href="#">summary report</a></li>
-                  <li><a href="#">facility report</a></li>
+                  <li><a href="{% url 'select_clinic' %}">facility report</a></li>
                   <li><a href="{% url 'login' %}">login</a></li>
                 </ul>
               </div>

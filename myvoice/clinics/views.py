@@ -2,9 +2,10 @@ from collections import Counter
 import json
 import operator
 
-from django.views.generic import DetailView, View
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import DetailView, View, FormView
+from django.shortcuts import redirect
 
 from myvoice.clinics.models import Service
 from myvoice.survey.models import SurveyQuestion, Survey
@@ -76,6 +77,15 @@ class VisitView(View):
     def get_error_msg(self, form):
         """Extract the first error message from the form's 'text' field."""
         return form.errors['text'][0]
+
+
+class ClinicReportSelectClinic(FormView):
+    template_name = 'clinics/select.html'
+    form_class = forms.SelectClinicForm
+
+    def form_valid(self, form):
+        clinic = form.cleaned_data['clinic']
+        return redirect('clinic_report', slug=clinic.slug)
 
 
 class ClinicReport(DetailView):

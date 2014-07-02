@@ -74,3 +74,11 @@ class VisitForm(forms.Form):
             models.VisitRegistrationError.objects.filter(sender=phone).delete()
 
         return clinic, phone, serial, srvc, self.cleaned_data['text']
+
+
+class SelectClinicForm(forms.Form):
+    clinic = forms.ModelChoiceField(queryset=None)
+
+    def __init__(self, *args, **kwargs):
+        super(SelectClinicForm, self).__init__(*args, **kwargs)
+        self.fields['clinic'].queryset = models.Clinic.objects.order_by('name')
