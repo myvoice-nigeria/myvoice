@@ -105,8 +105,9 @@ class ClinicReport(DetailView):
             surveyquestionresponse__in=self.responses).distinct()
 
         self.responses_by_question = {}
-        for label in ['HospitalAvailable', 'RespectfulStaff', 'Wait time',
-                      'CleanHospitalMaterials', 'Overcharge']:
+        for label in ['Open Facility', 'Respectful Staff Treatment',
+                      'Clean Hospital Materials', 'Charged Fairly',
+                      'Wait Time']:
             if label not in self.questions:
                 # Fail fast if our hard-coded expectations aren't met.
                 raise Exception("Expecting question with label " + label)
@@ -129,8 +130,8 @@ class ClinicReport(DetailView):
         if responses is None:
             responses = self.responses
         data = []
-        for label in ['HospitalAvailable', 'RespectfulStaff',
-                      'CleanHospitalMaterials', 'Overcharge']:
+        for label in ['Open Facility', 'Respectful Staff Treatment',
+                      'Clean Hospital Materials', 'Charged Fairly']:
             question = self.questions.get(label)
             main_choice = question.get_categories()[0]
             question_responses = self.responses_by_question.get(label)
@@ -154,7 +155,7 @@ class ClinicReport(DetailView):
         """Return the most commonly reported wait time."""
         if responses is None:
             responses = self.responses
-        wait_times = responses.filter(question__label='Wait time')
+        wait_times = responses.filter(question__label='Wait Time')
         wait_times = wait_times.values_list('response', flat=True)
         return max(Counter(wait_times).iteritems(), key=operator.itemgetter(1))[0]
 
