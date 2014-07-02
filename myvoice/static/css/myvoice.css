@@ -180,6 +180,45 @@ h2 {
   float: right;
 }
 
+.dropdown-menu {
+  background-color: #8ac43f;
+      padding-top:20px;
+    box-shadow: none;
+    border: none;
+    text-transform: none;
+    border-radius: 0;
+}
+
+.dropdown-menu > li > a {
+  color:#fff;
+  font-size: 9px;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+ }
+
+ #week1chart, #week2chart, #week3chart, #week4chart {
+  margin-top:20px;
+ }
+
+ .green-dot {
+  border-radius: 50%;
+  width:20px;
+  background-color: #8ac43f;
+  color:#fff;
+  height: 20px;
+  text-align: center;
+  float: left;
+  padding-top:3px;
+ }
+
+ .green-dot-label {
+  float: right;
+  margin-left:3px;
+ }
+
+
 /* Undo custom dropdowns */
 .navbar .navbar-nav .open .dropdown-menu {
   position: absolute;
@@ -238,6 +277,53 @@ th {
 
 td {
 	font-size: 9px;
+}
+
+.form-signin {
+  max-width: 330px;
+  padding: 15px;
+  margin: 0 auto;
+  margin-top:50px;
+}
+.form-signin .form-signin-heading,
+.form-signin .checkbox {
+  margin-bottom: 10px;
+}
+.form-signin .checkbox {
+  font-weight: normal;
+}
+.form-signin .form-control {
+  position: relative;
+  height: auto;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+  padding: 10px;
+  font-size: 16px;
+}
+.form-signin .form-control:focus {
+  z-index: 2;
+}
+.form-signin input[type="email"] {
+  margin-bottom: 20px;
+  border-radius: 0;
+}
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-radius: 0;
+}
+
+.btn-primary {
+    background-color: #8AC43F;
+    border:none;
+    color: #fff;
+    border-radius: 0;
+}
+
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .open > .dropdown-toggle.btn-primary {
+    background-color: #72A72E;
+    border:none;
+    color: #fff;
 }
 
 

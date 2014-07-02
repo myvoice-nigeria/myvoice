@@ -6,9 +6,31 @@
 
 {% block extra-js %}
 <script src="{% static 'lib/chart-1.0.1b/Chart.js' %}"></script>
+
 <script>
   $(function() {
     var week1chart = document.getElementById("week1chart").getContext("2d");
+
+    var barData = {
+      labels : ["Open Facility","Respectful Staff Treatment","Clean Hospital Materials","Charged Fairly"],
+
+      datasets : [
+        {
+          fillColor : ["#6D6E71", "#ff000"],
+          data : [75,80,20,40]
+        }
+      ]
+    };
+
+    new Chart(week1chart).Bar(barData,  {
+      barShowStroke: false, scaleFontSize: 9, scaleFontFamily: "'Source Sans Pro', sans-serif", barValueSpacing : 8,
+    });
+  });
+</script>
+
+<script>
+  $(function() {
+    var week2chart = document.getElementById("week2chart").getContext("2d");
 
     var barData = {
       labels : ["Open Facility","Respectful Staff Treatment","Clean Hospital Materials","Charged Fairly"],
@@ -21,11 +43,54 @@
       ]
     };
 
-    new Chart(week1chart).Bar(barData,  {
+    new Chart(week2chart).Bar(barData,  {
       barShowStroke: false, scaleFontSize: 9, scaleFontFamily: "'Source Sans Pro', sans-serif", barValueSpacing : 8,
     });
   });
 </script>
+
+<script>
+  $(function() {
+    var week3chart = document.getElementById("week3chart").getContext("2d");
+
+    var barData = {
+      labels : ["Open Facility","Respectful Staff Treatment","Clean Hospital Materials","Charged Fairly"],
+
+      datasets : [
+        {
+          fillColor : "#6D6E71",
+          data : [75,80,20,40]
+        }
+      ]
+    };
+
+    new Chart(week3chart).Bar(barData,  {
+      barShowStroke: false, scaleFontSize: 9, scaleFontFamily: "'Source Sans Pro', sans-serif", barValueSpacing : 8,
+    });
+  });
+</script>
+
+<script>
+  $(function() {
+    var week4chart = document.getElementById("week4chart").getContext("2d");
+
+    var barData = {
+      labels : ["Open Facility","Respectful Staff Treatment","Clean Hospital Materials","Charged Fairly"],
+
+      datasets : [
+        {
+          fillColor : "#6D6E71",
+          data : [75,80,20,40]
+        }
+      ]
+    };
+
+    new Chart(week4chart).Bar(barData,  {
+      barShowStroke: false, scaleFontSize: 9, scaleFontFamily: "'Source Sans Pro', sans-serif", barValueSpacing : 8,
+    });
+  });
+</script>
+
 {% endblock extra-js %}
 
 {% block content %}
@@ -49,9 +114,89 @@
     <div id="feedback-analytics" class="container">
       <div class="col-xs-12 section-heading"><h2>FEEDBACK ANALYTICS</h2></div>
 
-        <div class="col-xs-6" style="padding:0;"><h2>WEEK 1</h2>
+        <div class="col-xs-6" style="padding:0;">
+        <div class="col-xs-4"><h2>WEEK 1</h2></div>
+        <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
+          <div class="green-dot">
+          50%
+          </div>
+          <div class="green-dot-label">
+          Patient<br>satisfaction
+          </div>
+        </div>
+        <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
+          <div class="green-dot">
+          .5hr
+          </div>
+          <div class="green-dot-label">
+          Most common<br>wait time
+          </div>
+        </div>
         <canvas id="week1chart" height="250" width="275"></canvas>
         </div>
+
+        <div class="col-xs-6" style="padding:0;">
+        <div class="col-xs-4"><h2>WEEK 2</h2></div>
+        <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
+          <div class="green-dot">
+          50%
+          </div>
+          <div class="green-dot-label">
+          Patient<br>satisfaction
+          </div>
+        </div>
+        <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
+          <div class="green-dot">
+          .5hr
+          </div>
+          <div class="green-dot-label">
+          Most common<br>wait time
+          </div>
+        </div>
+        <canvas id="week2chart" height="250" width="275"></canvas>
+        </div> 
+
+        <div class="col-xs-6" style="padding:0;">
+        <div class="col-xs-4"><h2>WEEK 3</h2></div>
+        <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
+          <div class="green-dot">
+          50%
+          </div>
+          <div class="green-dot-label">
+          Patient<br>satisfaction
+          </div>
+        </div>
+        <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
+          <div class="green-dot">
+          .5hr
+          </div>
+          <div class="green-dot-label">
+          Most common<br>wait time
+          </div>
+        </div>
+        <canvas id="week3chart" height="250" width="275"></canvas>
+        </div>
+
+        <div class="col-xs-6" style="padding:0;">
+        <div class="col-xs-4"><h2>WEEK 4</h2></div>
+        <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
+          <div class="green-dot">
+          50%
+          </div>
+          <div class="green-dot-label">
+          Patient<br>satisfaction
+          </div>
+        </div>
+        <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
+          <div class="green-dot">
+          .5hr
+          </div>
+          <div class="green-dot-label">
+          Most common<br>wait time
+          </div>
+        </div>
+        <canvas id="week4chart" height="250" width="275"></canvas>
+        </div>                 
 
 
     </div><!-- / #feedback-analytics .container -->
