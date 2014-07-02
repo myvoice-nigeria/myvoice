@@ -119,7 +119,7 @@ FIXTURE_DIRS = (
     os.path.join(BASE_DIR, 'fixtures'),
 )
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.humanize',
@@ -162,7 +162,7 @@ INSTALLED_APPS = (
     "myvoice.survey",
 
     "rapidsms.contrib.default",  # Must be last
-)
+]
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -255,3 +255,6 @@ POSTGIS_VERSION = (2, 1)
 TEXTIT_API_TOKEN = os.environ.get('TEXTIT_API_TOKEN', '')
 TEXTIT_USERNAME = os.environ.get('TEXTIT_USERNAME', '')
 TEXTIT_PASSWORD = os.environ.get('TEXTIT_PASSWORD', '')
+
+INSTALLED_APPS += ['comps']
+COMPS_DIR = os.path.join(BASE_DIR, 'templates/comps')

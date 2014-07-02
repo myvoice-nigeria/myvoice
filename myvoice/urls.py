@@ -13,3 +13,6 @@ urlpatterns = [
     url(r'^pbf/', include('myvoice.pbf.urls')),
     url(r'^clinics/', include('myvoice.clinics.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if 'comps' in settings.INSTALLED_APPS:
+    urlpatterns += [url(r'^', include('comps.urls'))]
