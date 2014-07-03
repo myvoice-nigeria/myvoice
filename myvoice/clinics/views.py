@@ -9,6 +9,7 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 
+from myvoice.clinics.models import Visit
 from myvoice.core.utils import get_week_start, get_week_end
 from myvoice.survey.models import SurveyQuestion, Survey
 
@@ -155,10 +156,8 @@ class ClinicReport(DetailView):
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
         self.responses = self.responses.select_related('question', 'service')
-        self.min_date = self.responses.aggregate(Min('datetime')).values()[0]
-        self.min_date = get_week_start(self.min_date)
-        self.max_date = self.responses.aggregate(Max('datetime')).values()[0]
-        self.max_date = get_week_end(self.max_date)
+        self.min_date = get_week_start(min(self.responses, key=attrgetter('datetime')).datetime)
+        self.max_date = get_week_end(max(self.responses, key=attrgetter('datetime')).datetime)
         self._check_assumptions()
         return obj
 
@@ -230,4 +229,15 @@ class ClinicReport(DetailView):
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'] = self.min_date
         kwargs['max_date'] = self.max_date
+
+        # Count the number of visits we have for this clinic.
+        kwargs['num_registered'] = Visit.objects.filter(patient__clinic=self.object).count()
+
+        # For now, count the number of individuals who have answered at least
+        # one question. It's harder to answer who's completed a survey, as
+        # not all questions need to be answered to get through a survey.
+        kwargs['num_completed'] = len(set([r.phone for r in self.responses]))
+
+        # TODO - participation rank amongst other clinics.
+
         return super(ClinicReport, self).get_context_data(**kwargs)
