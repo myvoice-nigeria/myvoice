@@ -156,8 +156,8 @@ class ClinicReport(DetailView):
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
         self.responses = self.responses.select_related('question', 'service')
-        self.min_date = get_week_start(min(self.responses, key=attrgetter('datetime')).datetime)
-        self.max_date = get_week_end(max(self.responses, key=attrgetter('datetime')).datetime)
+        self.min_date = min(self.responses, key=attrgetter('datetime')).datetime
+        self.max_date = max(self.responses, key=attrgetter('datetime')).datetime
         self._check_assumptions()
         return obj
 
@@ -217,6 +217,7 @@ class ClinicReport(DetailView):
             wait_times = [r.response for r in responses_by_question['Wait Time']]
             data.append({
                 'week_start': week_start,
+                'week_end': get_week_end(week_start),
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
                 'wait_time_mode': self._get_mode(wait_times),
@@ -227,8 +228,9 @@ class ClinicReport(DetailView):
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
-        kwargs['min_date'] = self.min_date
-        kwargs['max_date'] = self.max_date
+
+        kwargs['min_date'] = get_week_start(self.min_date)
+        kwargs['max_date'] = get_week_end(self.max_date)
 
         # Count the number of visits we have for this clinic.
         kwargs['num_registered'] = Visit.objects.filter(patient__clinic=self.object).count()

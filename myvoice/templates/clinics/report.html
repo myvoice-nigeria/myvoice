@@ -52,7 +52,7 @@
     </div>
 
     <div class="col-xs-5 participation-module no-padding-right">
-      <div class="date">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</div>
+      <div class="date">{{ min_date.date|date:"F j, Y" }} - {{ max_date.date|date:"F j, Y" }}</div>
         <div class="content">
           <h2>FEEDBACK PARTICIPATION</h2>
           <div class="col-xs-{#4#}6">
@@ -78,7 +78,7 @@
 
     {% for week in feedback_by_week %}
       <div class="col-xs-6" style="padding:0;">
-        <div class="col-xs-4"><h2>WEEK {{ forloop.counter }}</h2></div>
+        <div class="col-xs-4"><h2>{{ week.week_start.date|date:"l, F j" }} - {{ week.week_end.date|date:"l, F j" }}</h2></div>
         <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
           <div class="green-dot">
             {% if week.patient_satisfaction == None %}
