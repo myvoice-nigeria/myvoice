@@ -25,9 +25,11 @@ class Survey(models.Model):
     """Contains TextIt flow metadata."""
 
     PATIENT_FEEDBACK = 'patient-feedback'
+    GENERIC_FEEDBACK = 'generic-feedback'
     PATIENT_REGISTRATION = 'patient-registration'
     SURVEY_ROLES = (
         (PATIENT_FEEDBACK, 'Patient Feedback'),
+        (GENERIC_FEEDBACK, 'Generic Feedback'),
         (PATIENT_REGISTRATION, 'Patient Registration'),
     )
 
