@@ -7,28 +7,32 @@
 {% block extra-js %}
 <script src="{% static 'lib/chart-1.0.1b/Chart.js' %}"></script>
 <script>
-  $(function() {
-    {% for i in "1234" %}
-      var week{{ i }}chart = document.getElementById("week{{ i }}chart").getContext("2d");
-
-      var barData{{ i }} = {
-        labels : ["Open Facility", "Respectful Staff Treatment",
-                  "Clean Hospital Materials","Charged Fairly"],
-        datasets : [
-          {
-            fillColor : ["#6D6E71", "#ff000"],
-            data : [75, 80, 20, 40]
-          }
-        ]
-      };
-
-      new Chart(week{{ i }}chart).Bar(barData{{ i }},  {
+  var labels = ['Open Facility', 'Respectful Staff Treatment',
+                'Clean Hospital Materials', 'Charged Fairly'],
+      fillColor = ['#6D6E71', '#FF0000'],
+      barOptions = {
         barShowStroke: false,
         scaleFontSize: 9,
         scaleFontFamily: "'Source Sans Pro', sans-serif",
         barValueSpacing : 8
-      });
-  {% endfor %}
+      };
+
+  var createChart = function(id, data) {
+    var chart = $(id)[0].getContext('2d');
+    var barData = {
+      labels: labels,
+      datasets : [{fillColor: fillColor, data: data}]
+    };
+    return new Chart(chart).Bar(barData, barOptions);
+  }
+  $(function() {
+    {% for week in feedback_by_week %}
+      createChart("#weekChart{{ forloop.counter }}", [
+        {% for percentage, count in week.data %}
+          {{ percentage }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      ]);
+    {% endfor %}
   });
 </script>
 {% endblock extra-js %}
@@ -49,10 +53,10 @@
           <div class="content">
             <h2>FEEDBACK PARTICIPATION</h2>
             <div class="col-xs-4">
-              <h1>XX</h1> Patients registered for survey
+              <h1>{{ num_registered }}</h1> Patients registered for survey
             </div>
             <div class="col-xs-4">
-              <h1>XX</h1> Completed surveys
+              <h1>{{ num_completed }}</h1> Completed surveys
             </div>
             <div class="col-xs-4">
               <h1>XX</h1> Participation ranking among facilities
@@ -62,18 +66,34 @@
     </div><!-- /.container -->
 
   <div id="feedback-analytics" class="container">
-    {% for i in "1234" %}
+    <div class="col-xs-12 section-heading">
+      <h2>FEEDBACK ANALYTICS</h2>
+    </div>
+
+    {% for week in feedback_by_week %}
       <div class="col-xs-6" style="padding:0;">
         <div class="col-xs-4"><h2>WEEK {{ forloop.counter }}</h2></div>
         <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
-          <div class="green-dot">50%</div>
+          <div class="green-dot">
+            {% if week.patient_satisfaction == None %}
+              N/A
+            {% else %}
+              {{ week.patient_satisfaction }}%
+            {% endif %}
+          </div>
           <div class="green-dot-label">Patient<br />satisfaction</div>
         </div>
         <div class="col-xs-4 no-padding-left" style="padding-top:20px;">
-          <div class="green-dot">.5hr</div>
+          <div class="green-dot">
+            {% if week.wait_time_mode == None %}
+              N/A
+            {% else %}
+              {{ week.wait_time_mode }}
+            {% endif %}
+          </div>
           <div class="green-dot-label">Most common<br />wait time</div>
         </div>
-        <canvas id="week{{ forloop.counter }}chart" height="250" width="275"></canvas>
+        <canvas id="weekChart{{ forloop.counter }}" height="250" width="275"></canvas>
       </div>
     {% endfor %}
   </div><!-- / .container#feedback-analytics -->
@@ -92,21 +112,19 @@
         <tr>
           <th class="special-th">July 7-13 2014</th>
           <th>Open Facility</th>
-          <th>Respectful<br>Staff Treatment</th>
-          <th>Clean<br>Hospital Materials</th>
+          <th>Respectful<br />Staff Treatment</th>
+          <th>Clean<br />Hospital Materials</th>
           <th>Charged Fairly</th>
-          <th>Most Common<br>Wait Time (hrs)</th>
+          <th>Most Common<br />Wait Time (hrs)</th>
         </tr>
       </thead>
       <tbody>
-        {% for i in "12345" %}
+        {% for service, service_data in feedback_by_service %}
           <tr>
-            <td>{% cycle "ANC" "Normal Delivery" "Immunization/Vaccination" "OPD" "Family Planning" %}</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>4</td>
+            <td>{{ service.name }}</td>
+            {% for result, total_respondents in service_data %}
+              <td>{{ result }} ({{ total_respondents }})</td>
+            {% endfor %}
           </tr>
         {% endfor %}
       </tbody>

@@ -149,7 +149,7 @@ def import_responses(flow_id):
                              "flow {flow_id}: {label}".format(**kwargs))
                 continue
 
-            # Discard 'stop' answers.
+            # Discard 'stop' and 'error' answers.
             if answer['category'].lower() in ('stop', 'error'):
                 logger.debug("Discarding message that user used to stop "
                              "the survey.")

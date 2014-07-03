@@ -122,6 +122,15 @@ class SurveyQuestion(models.Model):
     def get_categories(self):
         return self.categories.splitlines()
 
+    @property
+    def primary_answer(self):
+        """
+        We maintain the convention that the first answer listed is the
+        primary answer.
+        """
+        categories = self.get_categories()
+        return categories[0] if categories else None
+
     def save(self, *args, **kwargs):
         """Attempt to auto-set statistic when question is first saved."""
         if not self.pk and not self.statistic:

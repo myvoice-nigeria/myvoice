@@ -1,13 +1,14 @@
-from collections import Counter
+from collections import Counter, defaultdict
+from itertools import groupby
 import json
-import operator
+from operator import attrgetter, itemgetter
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.shortcuts import redirect
 
-from myvoice.clinics.models import Service
+from myvoice.core.utils import get_week_start
 from myvoice.survey.models import SurveyQuestion, Survey
 
 from . import forms
@@ -92,82 +93,136 @@ class ClinicReport(DetailView):
     template_name = 'clinics/report.html'
     model = models.Clinic
 
-    def get_object(self, queryset=None):
-        obj = super(ClinicReport, self).get_object(queryset)
+    def _analyze(self, responses, answer):
+        """Return the percentage of responses with the specified answer."""
+        if not responses:
+            return None  # Avoid divide-by-0 error.
+        count = len([r for r in responses if r.response == answer])
+        return round(float(count) / len(responses) * 100, 2)
 
-        self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
-        self.questions = self.survey.surveyquestion_set.all()
-        self.questions = dict([(q.label, q) for q in self.questions])
-
-        self.responses = obj.surveyquestionresponse_set.all().select_related('question')
-
-        self.services = Service.objects.filter(
-            surveyquestionresponse__in=self.responses).distinct()
-
-        self.responses_by_question = {}
+    def _check_assumptions(self):
+        """Fail fast if our hard-coded assumpions are not met."""
         for label in ['Open Facility', 'Respectful Staff Treatment',
                       'Clean Hospital Materials', 'Charged Fairly',
                       'Wait Time']:
             if label not in self.questions:
-                # Fail fast if our hard-coded expectations aren't met.
                 raise Exception("Expecting question with label " + label)
-            responses = self.responses.filter(question=self.questions.get(label))
-            self.responses_by_question[label] = responses
 
+    def _get_mode(self, answers):
+        """Return the most commonly reported answer."""
+        if answers:
+            return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
+        return None
+
+    def _get_responses_by_question(self, responses):
+        """
+        Returns a dictionary of question labels mapped to associated responses.
+        """
+        grouped = defaultdict(list)
+        for r in responses:
+            grouped[r.question.label].append(r)
+        return grouped
+
+    def _get_patient_satisfaction(self, responses):
+        """Patient satisfaction is gauged on their answers to 3 questions."""
+        grouped = groupby(sorted(responses, key=attrgetter('phone')), lambda r: r.phone)
+        grouped = [(l, dict([(rr.question.label, rr.response) for rr in r]))
+                   for l, r in grouped]
+        treatment = self.questions['Respectful Staff Treatment']
+        overcharge = self.questions['Charged Fairly']
+        wait_time = self.questions['Wait Time']
+        unsatisfied_count = 0
+        for phone, answers in grouped:
+            if treatment.label in answers:
+                if answers.get(treatment.label) != treatment.primary_answer:
+                    unsatisfied_count += 1
+                    continue
+            if overcharge.label in answers:
+                if answers.get(overcharge.label) != overcharge.primary_answer:
+                    unsatisfied_count += 1
+                    continue
+            if wait_time.label in answers:
+                if answers.get(wait_time.label) == wait_time.get_categories()[-1]:
+                    unsatisfied_count += 1
+                    continue
+        return int(float(unsatisfied_count) / len(grouped) * 100)
+
+    def get_object(self, queryset=None):
+        obj = super(ClinicReport, self).get_object(queryset)
+        self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
+        self.questions = self.survey.surveyquestion_set.all()
+        self.questions = dict([(q.label, q) for q in self.questions])
+        self.responses = obj.surveyquestionresponse_set.all()
+        self.responses = self.responses.select_related('question', 'service')
+        self._check_assumptions()
         return obj
 
     def get_detailed_comments(self):
-        """Return all open-ended responses.
-
-        Ordered by question label, so that we can use {% regroup %}.
         """
-        comments = self.responses.filter(question__question_type=SurveyQuestion.OPEN_ENDED)
-        comments = comments.select_related('question', 'connection')
-        comments = comments.order_by('question__label')
+        Return all open-ended responses. Ordered by question, so that we can
+        use {% regroup %} in the template.
+        """
+        comments = self.responses.filter(
+            question__question_type=SurveyQuestion.OPEN_ENDED)
+        comments = comments.order_by('question')
         return comments
 
-    def get_feedback_analytics(self, responses=None):
-        if responses is None:
-            responses = self.responses
-        data = []
-        for label in ['Open Facility', 'Respectful Staff Treatment',
-                      'Clean Hospital Materials', 'Charged Fairly']:
-            question = self.questions.get(label)
-            main_choice = question.get_categories()[0]
-            question_responses = self.responses_by_question.get(label)
-            main_choice_count = question_responses.filter(response=main_choice).count()
-            if question_responses:
-                percentage = round(float(main_choice_count) / len(question_responses) * 100, 2)
-            else:
-                percentage = 0
-            data.append((question, percentage, len(question_responses)))
-        return data
-
     def get_feedback_by_service(self):
+        """Return analyzed feedback by service then question."""
         data = []
-        for service in self.services:
-            responses = self.responses.filter(service=service)
-            data.append((service, self.get_feedback_analytics(responses),
-                         self.get_most_common_wait_time(responses)))
+        responses = self.responses.order_by('service', 'question')
+        for service, service_responses in groupby(responses, lambda r: r.service):
+            responses_by_question = self._get_responses_by_question(service_responses)
+            service_data = []
+            for label in ['Open Facility', 'Respectful Staff Treatment',
+                          'Clean Hospital Materials', 'Charged Fairly']:
+                if label in responses_by_question:
+                    question = self.questions[label]
+                    question_responses = responses_by_question[label]
+                    total_responses = len(question_responses)
+                    percentage = self._analyze(question_responses, question.primary_answer)
+                    service_data.append(('{}%'.format(percentage), total_responses))
+                else:
+                    service_data.append((None, 0))
+            if 'Wait Time' in responses_by_question:
+                wait_times = [r.response for r in responses_by_question['Wait Time']]
+                mode = self._get_mode(wait_times)
+                service_data.append((mode, len(wait_times)))
+            else:
+                service_data.append((None, 0))
+            data.append((service, service_data))
         return data
 
-    def get_most_common_wait_time(self, responses=None):
-        """Return the most commonly reported wait time."""
-        if responses is None:
-            responses = self.responses
-        wait_times = responses.filter(question__label='Wait Time')
-        wait_times = wait_times.values_list('response', flat=True)
-        if wait_times:
-            return max(Counter(wait_times).iteritems(), key=operator.itemgetter(1))[0]
-        return None
-
-    def get_patient_satisfaction(self):
-        pass  # TODO
+    def get_feedback_by_week(self):
+        responses = self.responses.order_by('datetime', 'question__label')
+        data = []
+        for week_start, week_responses in groupby(responses, lambda r: get_week_start(r.datetime)):
+            week_responses = list(week_responses)
+            responses_by_question = self._get_responses_by_question(week_responses)
+            week_data = []
+            for label in ['Open Facility', 'Respectful Staff Treatment',
+                          'Clean Hospital Materials', 'Charged Fairly']:
+                if label in responses_by_question:
+                    question = self.questions[label]
+                    question_responses = list(responses_by_question[label])
+                    total_responses = len(question_responses)
+                    percentage = self._analyze(question_responses, question.primary_answer)
+                    week_data.append((percentage, total_responses))
+                else:
+                    week_data.append((None, 0))
+            wait_times = [r.response for r in responses_by_question['Wait Time']]
+            data.append({
+                'week_start': week_start,
+                'data': week_data,
+                'patient_satisfaction': self._get_patient_satisfaction(week_responses),
+                'wait_time_mode': self._get_mode(wait_times),
+            })
+        return data
 
     def get_context_data(self, **kwargs):
         kwargs['detailed_comments'] = self.get_detailed_comments()
-        kwargs['feedback_analytics'] = self.get_feedback_analytics()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
-        kwargs['most_common_wait_time'] = self.get_most_common_wait_time()
-        kwargs['patient_satisfaction'] = self.get_patient_satisfaction()
+        kwargs['feedback_by_week'] = self.get_feedback_by_week()
+        kwargs['num_registered'] = self.survey.num_registered
+        kwargs['num_completed'] = self.survey.num_completed
         return super(ClinicReport, self).get_context_data(**kwargs)
