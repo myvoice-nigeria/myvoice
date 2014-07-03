@@ -188,7 +188,7 @@ def import_responses(flow_id):
             else:
                 value = answer['category']  # Normalized response.
 
-            response.clinic = Clinic.objects.get(slug='wamba-phc-model-clinic')  # FIXME
+            response.clinic = Clinic.objects.get(slug='wamba-model-clinic')  # FIXME
             response.service = Service.objects.get(slug='anc')  # FIXME
             response.response = value
             response.datetime = dateutil.parser.parse(answer['time'])

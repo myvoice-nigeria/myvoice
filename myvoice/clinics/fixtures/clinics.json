@@ -101,8 +101,8 @@
         "model": "clinics.Clinic",
         "pk": 8,
         "fields": {
-            "name": "Wamba PHC Model Clinic",
-            "slug": "wamba-phc-model-clinic",
+            "name": "Wamba Model Clinic",
+            "slug": "wamba-model-clinic",
             "town": "Town",
             "ward": "Ward",
             "lga": "Wamba",
