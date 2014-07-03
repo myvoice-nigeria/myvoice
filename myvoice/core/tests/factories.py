@@ -32,6 +32,7 @@ class Clinic(factory.django.DjangoModelFactory):
     town = factory.fuzzy.FuzzyText()
     ward = factory.fuzzy.FuzzyText()
     lga = factory.fuzzy.FuzzyText()
+    code = factory.fuzzy.FuzzyInteger(1)
 
 
 class ClinicStaff(factory.django.DjangoModelFactory):
@@ -42,6 +43,13 @@ class ClinicStaff(factory.django.DjangoModelFactory):
     staff_type = factory.fuzzy.FuzzyText()
     year_started = FuzzyYear()
     is_manager = FuzzyBoolean()
+
+
+class Service(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.Service
+
+    name = factory.fuzzy.FuzzyText()
+    code = factory.fuzzy.FuzzyInteger(0)
 
 
 class Contact(factory.django.DjangoModelFactory):
@@ -55,13 +63,14 @@ class Patient(factory.django.DjangoModelFactory):
 
     name = factory.fuzzy.FuzzyText()
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
+    serial = factory.fuzzy.FuzzyInteger(0)
 
 
 class Visit(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.Visit
 
     patient = factory.SubFactory('myvoice.core.tests.factories.Patient')
-    service_type = factory.fuzzy.FuzzyText()
+    service = factory.SubFactory('myvoice.core.tests.factories.Service')
 
 
 class ClinicStatistic(factory.django.DjangoModelFactory):

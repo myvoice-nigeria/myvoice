@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% load static from staticfiles %}
+
+{% block title %}Facility Report{% endblock title %}
+
+{% block extra-js %}
+<script src="{% static 'lib/chart-1.0.1b/Chart.js' %}"></script>
+<script>
+  var labels = ['Open Facility', 'Respectful Staff Treatment',
+                'Clean Hospital Materials', 'Charged Fairly'],
+      fillColor = ['#6D6E71', '#FF0000'],
+      barOptions = {
+        barShowStroke: false,
+        scaleFontSize: 9,
+        scaleFontFamily: "'Source Sans Pro', sans-serif",
+        barValueSpacing : 8
+      };
+
+  var createChart = function(id, data) {
+    var chart = $(id)[0].getContext('2d');
+    var barData = {
+      labels: labels,
+      datasets : [{fillColor: fillColor, data: data}]
+    };
+    return new Chart(chart).Bar(barData, barOptions);
+  }
+  $(function() {
+    {% for week in feedback_by_week %}
+      createChart("#weekChart{{ forloop.counter }}", [
+        {% for percentage, count in week.data %}
+          {{ percentage }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+      ]);
+    {% endfor %}
+  });
+</script>
+{% endblock extra-js %}
+
+{% block content %}
+  <div class="container main-header">
+    <div class="col-xs-7 no-padding-left">
+      <h1>
+        <span style="font-weight: 700;">{{ object.name }}</span><br />
+        Facility Report
+      </h1>
+
+      <div class="lead">The following document was generated through the ICT4SA
+      program, intended to provide trial period reporting to selected
+      {{ object.lga }} Clinic Staff. The following data was collected through
+      SMS surveys of patients at {{ object.name }}.</div>
+    </div>
+
+    <div class="col-xs-5 participation-module no-padding-right">
+      <div class="date">{{ min_date.date|date:"F j, Y" }} - {{ max_date.date|date:"F j, Y" }}</div>
+        <div class="content">
+          <h2>FEEDBACK PARTICIPATION</h2>
+          <div class="col-xs-{#4#}6">
+            <h1>{{ num_registered }}</h1> Patients registered for survey
+          </div>
+          <div class="col-xs-{#4#}6">
+            <h1>{{ num_completed }}</h1> Completed surveys
+          </div>
+          {% comment %}
+          {# TODO #}
+          <div class="col-xs-4">
+            <h1>{{ participation_rank }}</h1> Participation ranking among facilities
+          </div>
+          {% endcomment %}
+        </div>
+    </div>
+  </div><!-- /.container -->
+
+{% if not responses %}
+  <div class="container">
+    <p>We do not yet have any responses from patients for {{ clinic.name }}.
+    Please try again later!</p>
+  </div>
+{% else %}
+  <div id="feedback-analytics" class="container">
+    <div class="col-xs-12 section-heading">
+      <h2>FEEDBACK ANALYTICS</h2>
+    </div>
+
+    {% for week in feedback_by_week %}
+      <div class="col-xs-6" style="padding:0;">
+        <div class="col-xs-12"><h2>{{ week.week_start.date|date:"l, F j" }} - {{ week.week_end.date|date:"l, F j" }}</h2></div>
+        <div class="col-xs-6">
+          <div class="green-box">
+            {% if week.patient_satisfaction == None %}
+              N/A
+            {% else %}
+              {{ week.patient_satisfaction }}%
+            {% endif %}
+          </div>
+          <div class="green-box-label">Patient<br />satisfaction</div>
+        </div>
+        <div class="col-xs-6">
+          <div class="green-box">
+            {% if week.wait_time_mode == None %}
+              N/A
+            {% else %}
+              {{ week.wait_time_mode }}
+            {% endif %}
+          </div>
+          <div class="green-box-label">Most common<br />wait time</div>
+        </div>
+        <canvas id="weekChart{{ forloop.counter }}" height="250" width="275"></canvas>
+      </div>
+    {% endfor %}
+  </div><!-- / .container#feedback-analytics -->
+
+
+  <div id="feedback-on-services" class="container">
+    <div class="col-xs-12 section-heading">
+      <h2>FEEDBACK ON SERVICES</h2>
+    </div>
+
+    <p>Number of patients with this service who reported this feedback.</p>
+
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th class="special-th">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
+          <th>Open Facility</th>
+          <th>Respectful<br />Staff Treatment</th>
+          <th>Clean<br />Hospital Materials</th>
+          <th>Charged Fairly</th>
+          <th>Most Common<br />Wait Time (hrs)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for service, service_data in feedback_by_service %}
+          <tr>
+            <td>{{ service.name }}</td>
+            {% for result, total_respondents in service_data %}
+              <td>{{ result }} ({{ total_respondents }})</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div><!-- / .container#feedback-on-services -->
+
+  <div id="detailed-comments" class="container">
+    <div class="col-xs-12 section-heading">
+      <h2>DETAILED COMMENTS</h2>
+    </div>
+
+    <table id="comments-table" class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th class="special-th no-bottom-border">Date</th>
+          <th class="no-bottom-border">Comments</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% regroup detailed_comments by question as comments %}
+        {% for comment_group in comments %}
+          <tr>
+            <td colspan="6" class="special-table-row">
+              {{ comment_group.grouper.label|upper }}
+            </td>
+          </tr>
+          {% for comment in comment_group.list %}
+            <tr>
+              <td>{{ comment.datetime|date:"m/d/Y" }}</td>
+              <td>{{ comment.response }}</td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div><!-- / .container#detailed-comments -->
+{% endif %}
+{% endblock content %}

@@ -2,19 +2,15 @@
 
 {% load widget_tweaks %}
 
-{% block title %}PBF{% endblock title %}
-
-{% block body-class %}fancy{% endblock body-class %}
-{% block body-id %}pbf-select-clinic{% endblock body-id %}
+{% block title %}Select Clinic For Report{% endblock title %}
 
 {% block content %}
-<div class="row">
-  <div class="col-md-12">
+  <div class="container">
     <div class="page-header">
       <h1>WAMBA LGA FACILITIES <small>SELECT ONE</small></h1>
     </div>
     <form role="form" class="form-inline"
-          method="post" action="{% url 'pbf_dashboard_select' %}">
+          method="post" action="{% url 'select_clinic' %}">
       {% csrf_token %}
       {{ form.clinic.errors }}
       {{ form.non_field_errors }}
@@ -29,5 +25,4 @@
       </div>
     </form>
   </div>
-</div>
 {% endblock content %}

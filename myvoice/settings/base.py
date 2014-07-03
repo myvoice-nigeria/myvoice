@@ -94,6 +94,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.tz',
     'django.core.context_processors.request',
     'django.contrib.messages.context_processors.messages',
+    'myvoice.clinics.context_processors.facilities',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -119,7 +120,7 @@ FIXTURE_DIRS = (
     os.path.join(BASE_DIR, 'fixtures'),
 )
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.humanize',
@@ -141,9 +142,6 @@ INSTALLED_APPS = (
     # "djtables",  # required by rapidsms.contrib.locations
     "django_tables2",
     "selectable",
-    # 'groups',
-    # 'broadcast',
-    # 'decisiontree',
     'pagination',
     'sorter',
     'leaflet',
@@ -160,10 +158,11 @@ INSTALLED_APPS = (
     # Internal apps
     "myvoice.core",
     "myvoice.clinics",
-    "myvoice.pbf",
+    "myvoice.statistics",
+    "myvoice.survey",
 
     "rapidsms.contrib.default",  # Must be last
-)
+]
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
@@ -244,11 +243,18 @@ djcelery.setup_loader()
 
 CELERYBEAT_SCHEDULE = {
     'sample-task': {
-        'task': 'myvoice.clinics.tasks.sample_task',
+        'task': 'myvoice.survey.tasks.import_responses',
         'schedule': crontab(hour='*/1', minute='0'),
     },
 }
 
 # Set PostGIS version so that Django can find it.
-# See http://stackoverflow.com/questions/10584852/my-postgis-database-looks-fine-but-geodjango-thinks-otherwise-why
+# See http://stackoverflow.com/questions/10584852/my-postgis-database-looks-fine-but-geodjango-thinks-otherwise-why  # noqa
 POSTGIS_VERSION = (2, 1)
+
+TEXTIT_API_TOKEN = os.environ.get('TEXTIT_API_TOKEN', '')
+TEXTIT_USERNAME = os.environ.get('TEXTIT_USERNAME', '')
+TEXTIT_PASSWORD = os.environ.get('TEXTIT_PASSWORD', '')
+
+INSTALLED_APPS += ['comps']
+COMPS_DIR = os.path.join(BASE_DIR, 'templates/comps')

@@ -29,8 +29,13 @@ class ClinicAdmin(LeafletGeoAdmin):
 
 class ClinicStatisticAdmin(admin.ModelAdmin):
     form = ClinicStatisticAdminForm
-    list_display = ['statistic', 'month', 'clinic', 'value', 'rank']
+    list_display = ['statistic', 'month', 'clinic', 'service', 'value', 'n', 'rank']
+    list_filter = ['statistic', 'clinic', 'service']
+    date_hierarchy = 'month'
     readonly_fields = ['rank']
+
+    def value(self, obj):
+        return obj.get_value_display()
 
 
 class RegionAdmin(LeafletGeoAdmin):
@@ -46,8 +51,13 @@ class PatientAdmin(admin.ModelAdmin):
 
 
 class VisitAdmin(admin.ModelAdmin):
-    list_display = ['patient', 'visit_time', 'service_type', 'staff']
+    list_display = ['patient', 'visit_time', 'service', 'staff']
     date_hierarchy = 'visit_time'
+
+
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug']
+    ordering = ['name']
 
 
 admin.site.register(models.Clinic, ClinicAdmin)
@@ -55,3 +65,4 @@ admin.site.register(models.ClinicStatistic, ClinicStatisticAdmin)
 admin.site.register(models.Region, RegionAdmin)
 admin.site.register(models.Patient, PatientAdmin)
 admin.site.register(models.Visit, VisitAdmin)
+admin.site.register(models.Service, ServiceAdmin)
