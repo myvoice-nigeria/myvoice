@@ -89,3 +89,31 @@ class TestClinicStatisticAdminForm(TestCase):
         self.assertFalse(form.is_valid())
         self.assertEqual(len(form.errors), 1)
         self.assertTrue('value' in form.errors)
+
+
+class TestFeedbackForm(TestCase):
+    """
+    Assumptions:
+    Clinic ID comes as numeric category with label "clinicid".
+    Clinic name (if clinic is not one of the options) comes as text with label "clinictext".
+    Complaint message comes as text with label "complaint".
+    Any message that comes with category "Other" is ignored.
+
+    More Assumptions:
+    All clinic IDs configured in Textit have corresponding code in Clinic model.
+    """
+
+    def test_return_values(self):
+        """Test that form.clean_values() returns a dict of clinic and complaint"""
+        pass
+
+    def test_numeric_clinicid(self):
+        """Test that with a numeric clinicid we return valid clinic and message."""
+
+    def test_clinictext(self):
+        """Test that with clinictext, we return None for Clinic and a concat
+        of clinictext value and message value.
+        """
+
+    def test_phone(self):
+        """Test that proper phone is returned."""

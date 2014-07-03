@@ -71,3 +71,16 @@ class VisitView(View):
     def get_error_msg(self, form):
         """Extract the first error message from the form's 'text' field."""
         return form.errors['text'][0]
+
+
+class FeedbackView(View):
+    form_class = forms.FeedbackForm
+
+    def post(self, request):
+        form = self.form_class(request.POST)
+        #import pdb;pdb.set_trace()
+        if form.is_valid():
+            sender = form.cleaned_data['phone']
+            data = form.cleaned_data['values']
+
+            return HttpResponse('ok')

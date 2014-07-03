@@ -1,5 +1,7 @@
 from django import forms
 
+import json
+
 from . import models
 
 
@@ -74,3 +76,16 @@ class VisitForm(forms.Form):
             models.VisitRegistrationError.objects.filter(sender=phone).delete()
 
         return clinic, phone, serial, srvc, self.cleaned_data['text']
+
+
+class FeedbackForm(forms.Form):
+    phone = forms.CharField(max_length=20)
+    values = forms.CharField()
+
+    def clean_values(self):
+        """Return Clinic and Message."""
+        #import pdb;pdb.set_trace()
+        data = self.cleaned_data['values']
+        values = json.loads(data)
+
+        return values

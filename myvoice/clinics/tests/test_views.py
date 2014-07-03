@@ -22,8 +22,8 @@ class TestVisitView(TestCase):
                             "as listed on your instruction card"
 
     def make_request(self, data):
-        """Make Test request with POST data"""
-        request = self.factory.post('/views/registration/', data=data)
+        """Make Test request with POST data."""
+        request = self.factory.post('/clinics/visit/', data=data)
         return clinics.VisitView.as_view()(request)
 
     def test_visit(self):
@@ -168,3 +168,53 @@ class TestVisitView(TestCase):
         self.make_request(reg_data)
         visit_count = models.Visit.objects.count()
         self.assertEqual(1, visit_count)
+
+
+class TestFeedbackView(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def make_request(self, data):
+        """Make test request with POST data."""
+        request = self.factory.post('/clinics/feedback/', data=data)
+        return clinics.FeedbackView.as_view()(request)
+
+    def test_feedback_status(self):
+        """Test that feedback view returns status_code 200."""
+        values = [
+            {
+                "category": "1",
+                "time": "2014-07-02T07:38:37.490596Z",
+                "text": "1",
+                "rule_value": "1",
+                "value": "1",
+                "label": "number"
+            },
+            {
+                "category": "All Responses",
+                "time": "2014-07-02T07:38:37.510620Z",
+                "text": "text",
+                "rule_value": "text",
+                "value": "text",
+                "label": "text"
+            }
+        ]
+        json_data = json.dumps(values)
+
+        feedback = {
+            "phone": ["+12065551212"],
+            "values": json_data
+            }
+        response = self.make_request(feedback)
+        self.assertEqual(200, response.status_code)
+
+        # Test that data is saved.
+        #self.assertEqual(1, models.GenericFeedback.objects.count())
+
+    def test_feedback_saved(self):
+        """Test that feedback is saved."""
+
+    def test_feedback_noclinic_saved(self):
+        """Test that feedback without clinic is saved with the clinic name
+        in message field."""
