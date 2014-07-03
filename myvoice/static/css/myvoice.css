@@ -202,21 +202,18 @@ h2 {
   margin-top:20px;
  }
 
- .green-dot {
-  border-radius: 50%;
-  width:20px;
+ .green-box {
+  width:auto;
   background-color: #8ac43f;
   color:#fff;
-  height: 20px;
   text-align: center;
   float: left;
-  padding-top:3px;
   font-size: 9px;
+  padding: 5px;
+  margin-right: 5px;
  }
 
- .green-dot-label {
-  float: right;
-  margin-left:3px;
+ .green-box-label {
   font-size: 9px;
  }
 
