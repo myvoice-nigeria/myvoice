@@ -11,7 +11,6 @@ six==1.6.1
 rapidsms==0.17.0
 django-widget-tweaks==1.3
 django-leaflet==0.13.5
-django-comps==0.3.0
 
 BeautifulSoup4==4.3.2
 
