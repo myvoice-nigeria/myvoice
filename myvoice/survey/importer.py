@@ -5,8 +5,6 @@ import dateutil.parser
 
 from django.utils.text import slugify
 
-from rapidsms.models import Backend, Connection
-
 from myvoice.clinics.models import Clinic, Service
 from myvoice.statistics.models import Statistic, StatisticGroup
 
@@ -135,23 +133,10 @@ def import_responses(flow_id):
     except Survey.DoesNotExist:
         raise Exception("There is no survey for flow_id {0}".format(flow_id))
 
-    textit = Backend.objects.get(name='TextIt')
     questions = dict([(q.label, q) for q in survey.surveyquestion_set.all()])
 
-    # A 'run' is each time that a user starts a flow. So a user might have
-    # multiple runs associated with them but only complete the survey once.
-    # Oddly enough, TextIt returns the 'values' of the good run for each run
-    # associated with the user. So we'll only keep the most recent run.
     runs = TextItApi().get_runs_for_flow(flow_id)
-    runs_by_user = {}
-    for run in runs:
-        phone = run['phone']
-        if phone in runs_by_user:
-            if run['created_on'] <= runs_by_user[phone]['created_on']:
-                continue
-        runs_by_user[phone] = run
-
-    for rrun in runs_by_user.values():
+    for rrun in runs:
         # A run through a flow can have anywhere from 0 to N answers, where N
         # is the number of questions associated with the survey.
         for answer in rrun['values']:
@@ -165,7 +150,7 @@ def import_responses(flow_id):
                 continue
 
             # Discard 'stop' answers.
-            if answer['value'].lower() == 'stop':
+            if answer['category'].lower() in ('stop', 'error'):
                 logger.debug("Discarding message that user used to stop "
                              "the survey.")
                 continue
@@ -174,12 +159,12 @@ def import_responses(flow_id):
             # response to the same question).
             try:
                 response = SurveyQuestionResponse.objects.get(
-                    run_id=rrun['run'], question=questions.get(label))
+                    phone=rrun['phone'], question=questions.get(label))
             except SurveyQuestionResponse.DoesNotExist:
                 # Create a new object - this is the first answer we've seen to
                 # this question.
                 response = SurveyQuestionResponse(
-                    run_id=rrun['run'], question=questions.get(label))
+                    phone=rrun['phone'], question=questions.get(label))
             else:
                 # The user has already answered this question. Either we've
                 # imported this answer before, or the user has answered the
@@ -203,9 +188,6 @@ def import_responses(flow_id):
             else:
                 value = answer['category']  # Normalized response.
 
-            connection, _ = Connection.objects.get_or_create(
-                backend=textit, identity=rrun['phone'])
-            response.connection = connection
             response.clinic = Clinic.objects.get(slug='wamba-phc-model-clinic')  # FIXME
             response.service = Service.objects.get(slug='anc')  # FIXME
             response.response = value
