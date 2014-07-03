@@ -198,8 +198,13 @@ h2 {
     display: block;
  }
 
- #week1chart, #week2chart, #week3chart, #week4chart {
+ canvas#weekChart {
   margin-top:20px;
+ }
+
+ .chart-container {
+  padding:0;
+  margin-bottom: 20px;
  }
 
  .green-box {

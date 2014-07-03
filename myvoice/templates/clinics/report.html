@@ -92,7 +92,7 @@
     </div>
 
     {% for week in feedback_by_week %}
-      <div class="col-xs-6" style="padding:0;">
+      <div class="col-xs-6 chart-container">
         <div class="col-xs-12"><h2>{{ week.week_start.date|date:"l, F j" }} - {{ week.week_end.date|date:"l, F j" }}</h2></div>
         <div class="col-xs-6">
           <div class="green-box">
