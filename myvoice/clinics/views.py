@@ -3,12 +3,13 @@ from itertools import groupby
 import json
 from operator import attrgetter, itemgetter
 
+from django.db.models import Min, Max
 from django.http import HttpResponse
+from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
-from django.shortcuts import redirect
 
-from myvoice.core.utils import get_week_start
+from myvoice.core.utils import get_week_start, get_week_end
 from myvoice.survey.models import SurveyQuestion, Survey
 
 from . import forms
@@ -154,6 +155,10 @@ class ClinicReport(DetailView):
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
         self.responses = self.responses.select_related('question', 'service')
+        self.min_date = self.responses.aggregate(Min('datetime')).values()[0]
+        self.min_date = get_week_start(self.min_date)
+        self.max_date = self.responses.aggregate(Max('datetime')).values()[0]
+        self.max_date = get_week_end(self.max_date)
         self._check_assumptions()
         return obj
 
@@ -223,4 +228,6 @@ class ClinicReport(DetailView):
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
+        kwargs['min_date'] = self.min_date
+        kwargs['max_date'] = self.max_date
         return super(ClinicReport, self).get_context_data(**kwargs)
