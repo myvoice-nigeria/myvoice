@@ -5,6 +5,10 @@ from . import views
 
 urlpatterns = [
     url(r'^clinics/patient/$', views.VisitView.as_view(), name='visit'),
+
+    url(r'^reports/region/(?P<pk>\d+)/$',
+        views.RegionReport.as_view(),
+        name='region_report'),
     url(r'^reports/facility/$',
         views.ClinicReportSelectClinic.as_view(),
         name='select_clinic'),

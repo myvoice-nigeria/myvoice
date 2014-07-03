@@ -13,7 +13,7 @@ class Region(gis.Model):
     TYPE_CHIOCES = (
         ('country', 'Country'),
         ('state', 'State'),
-        ('lga', 'Local Government Area'),
+        ('lga', 'LGA'),
     )
     name = models.CharField(max_length=255)
     alternate_name = models.CharField(max_length=255, blank=True)

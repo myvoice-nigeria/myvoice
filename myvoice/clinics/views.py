@@ -225,3 +225,8 @@ class ClinicReport(DetailView):
         # TODO - participation rank amongst other clinics.
 
         return super(ClinicReport, self).get_context_data(**kwargs)
+
+
+class RegionReport(DetailView):
+    template_name = 'clinics/summary.html'
+    model = models.Region
