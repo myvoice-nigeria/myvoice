@@ -71,6 +71,12 @@
     </div>
   </div><!-- /.container -->
 
+{% if not responses %}
+  <div class="container">
+    <p>We do not yet have any responses from patients for {{ clinic.name }}.
+    Please try again later!</p>
+  </div>
+{% else %}
   <div id="feedback-analytics" class="container">
     <div class="col-xs-12 section-heading">
       <h2>FEEDBACK ANALYTICS</h2>
@@ -166,4 +172,5 @@
       </tbody>
     </table>
   </div><!-- / .container#detailed-comments -->
+{% endif %}
 {% endblock content %}

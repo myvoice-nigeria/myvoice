@@ -156,8 +156,6 @@ class ClinicReport(DetailView):
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
         self.responses = self.responses.select_related('question', 'service')
-        self.min_date = min(self.responses, key=attrgetter('datetime')).datetime
-        self.max_date = max(self.responses, key=attrgetter('datetime')).datetime
         self._check_assumptions()
         return obj
 
@@ -229,8 +227,13 @@ class ClinicReport(DetailView):
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
 
-        kwargs['min_date'] = get_week_start(self.min_date)
-        kwargs['max_date'] = get_week_end(self.max_date)
+        if self.responses:
+            min_date = min(self.responses, key=attrgetter('datetime')).datetime
+            kwargs['min_date'] = get_week_start(min_date)
+            max_date = max(self.responses, key=attrgetter('datetime')).datetime
+            kwargs['max_date'] = get_week_end(max_date)
+        else:
+            kwargs['min_date'] = kwargs['max_date'] = None
 
         # Count the number of visits we have for this clinic.
         kwargs['num_registered'] = Visit.objects.filter(patient__clinic=self.object).count()
