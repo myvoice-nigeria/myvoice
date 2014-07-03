@@ -5,25 +5,29 @@
 {% block title %}Facility Report{% endblock title %}
 
 {% block extra-js %}
-<script src="{% static 'lib/chart-1.0.1b/Chart.js' %}"></script>
+<script src="{% static 'lib/chart-1.0.1b/ChartNew.js' %}"></script>
 
 <script>
   $(function() {
     var week1chart = document.getElementById("week1chart").getContext("2d");
 
     var barData = {
-      labels : ["Open Facility","Respectful Staff Treatment","Clean Hospital Materials","Charged Fairly"],
+      labels : ["Open\nFacility","Respectful\nStaff\nTreatment","Clean\nHospital\nMaterials","Charged\nFairly"],
 
       datasets : [
         {
-          fillColor : ["#6D6E71", "#ff000"],
+          fillColor : ["#6D6E71","#808184","929497","A6A8AB",],
           data : [75,80,20,40]
         }
       ]
     };
 
     new Chart(week1chart).Bar(barData,  {
-      barShowStroke: false, scaleFontSize: 9, scaleFontFamily: "'Source Sans Pro', sans-serif", barValueSpacing : 8,
+      barShowStroke: false, scaleFontSize: 9, scaleFontFamily: "'Source Sans Pro', sans-serif", barValueSpacing : 8, inGraphDataShow : true, inGraphDataYPosition : 2, inGraphDataFontColor : "black",
+  scaleOverride : true,
+  scaleStartValue : 0,
+  scaleSteps : 5,
+  scaleStepWidth : 20
     });
   });
 </script>
