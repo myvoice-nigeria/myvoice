@@ -168,7 +168,7 @@ class ClinicReport(DetailView):
         """
         comments = self.responses.filter(
             question__question_type=SurveyQuestion.OPEN_ENDED)
-        comments = comments.order_by('question')
+        comments = comments.order_by('question', 'datetime')
         return comments
 
     def get_feedback_by_service(self):
