@@ -223,6 +223,4 @@ class ClinicReport(DetailView):
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
-        kwargs['num_registered'] = self.survey.num_registered
-        kwargs['num_completed'] = self.survey.num_completed
         return super(ClinicReport, self).get_context_data(**kwargs)
