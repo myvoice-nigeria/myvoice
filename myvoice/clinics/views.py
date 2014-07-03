@@ -11,6 +11,7 @@ from django.views.generic import DetailView, View, FormView
 
 from myvoice.clinics.models import Visit
 from myvoice.core.utils import get_week_start, get_week_end
+from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import SurveyQuestion, Survey
 
 from . import forms
@@ -95,13 +96,6 @@ class ClinicReport(DetailView):
     template_name = 'clinics/report.html'
     model = models.Clinic
 
-    def _analyze(self, responses, answer):
-        """Return the percentage of responses with the specified answer."""
-        if not responses:
-            return None  # Avoid divide-by-0 error.
-        count = len([r for r in responses if r.response == answer])
-        return round(float(count) / len(responses) * 100, 2)
-
     def _check_assumptions(self):
         """Fail fast if our hard-coded assumpions are not met."""
         for label in ['Open Facility', 'Respectful Staff Treatment',
@@ -109,21 +103,6 @@ class ClinicReport(DetailView):
                       'Wait Time']:
             if label not in self.questions:
                 raise Exception("Expecting question with label " + label)
-
-    def _get_mode(self, answers):
-        """Return the most commonly reported answer."""
-        if answers:
-            return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
-        return None
-
-    def _get_responses_by_question(self, responses):
-        """
-        Returns a dictionary of question labels mapped to associated responses.
-        """
-        grouped = defaultdict(list)
-        for r in responses:
-            grouped[r.question.label].append(r)
-        return grouped
 
     def _get_patient_satisfaction(self, responses):
         """Patient satisfaction is gauged on their answers to 3 questions."""
@@ -174,7 +153,7 @@ class ClinicReport(DetailView):
         data = []
         responses = self.responses.order_by('service', 'question')
         for service, service_responses in groupby(responses, lambda r: r.service):
-            responses_by_question = self._get_responses_by_question(service_responses)
+            responses_by_question = survey_utils.group_by_question(service_responses)
             service_data = []
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
@@ -182,13 +161,13 @@ class ClinicReport(DetailView):
                     question = self.questions[label]
                     question_responses = responses_by_question[label]
                     total_responses = len(question_responses)
-                    percentage = self._analyze(question_responses, question.primary_answer)
+                    percentage = survey_utils.analyze(question_responses, question.primary_answer)
                     service_data.append(('{}%'.format(percentage), total_responses))
                 else:
                     service_data.append((None, 0))
             if 'Wait Time' in responses_by_question:
-                wait_times = [r.response for r in responses_by_question['Wait Time']]
-                mode = self._get_mode(wait_times)
+                wait_times = responses_by_question['Wait Time']
+                mode = survey_utils.get_mode(wait_times)
                 service_data.append((mode, len(wait_times)))
             else:
                 service_data.append((None, 0))
@@ -200,7 +179,7 @@ class ClinicReport(DetailView):
         data = []
         for week_start, week_responses in groupby(responses, lambda r: get_week_start(r.datetime)):
             week_responses = list(week_responses)
-            responses_by_question = self._get_responses_by_question(week_responses)
+            responses_by_question = survey_utils.group_by_question(week_responses)
             week_data = []
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
@@ -208,17 +187,16 @@ class ClinicReport(DetailView):
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
                     total_responses = len(question_responses)
-                    percentage = self._analyze(question_responses, question.primary_answer)
+                    percentage = survey_utils.analyze(question_responses, question.primary_answer)
                     week_data.append((percentage, total_responses))
                 else:
                     week_data.append((None, 0))
-            wait_times = [r.response for r in responses_by_question['Wait Time']]
             data.append({
                 'week_start': week_start,
                 'week_end': get_week_end(week_start),
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
-                'wait_time_mode': self._get_mode(wait_times),
+                'wait_time_mode': survey_utils.get_mode(responses_by_question['Wait Time']),
             })
         return data
 
