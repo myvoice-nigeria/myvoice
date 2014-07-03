@@ -12,11 +12,14 @@
              placeholder="username" required autofocus>
       <input type="password" name="password" class="form-control"
              placeholder="password" required>
+      {% comment %}
+      {# TODO - implement "Remember me" functionality #}
       <div class="checkbox">
         <label>
           <input type="checkbox" name="remember-me" value="remember-me"> Remember me
         </label>
       </div>
+      {% endcomment %}
       <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
     </form>
   </div><!-- /.container -->
