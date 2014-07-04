@@ -180,3 +180,52 @@ class TestVisitView(TestCase):
         self.make_request(reg_data)
         visit_count = models.Visit.objects.count()
         self.assertEqual(1, visit_count)
+
+    def test_alpha_clinic(self):
+        """Test that we interprete 'i' or 'I' as 1 in clinic."""
+        reg_data = {'text': 'i 08122233301 400 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+        reg_data = {'text': 'I 08122233301 400 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(2, models.Visit.objects.count())
+
+    def test_alpha_mobile(self):
+        """Test that we interprete 'i' or 'I' as 1 in mobile."""
+        reg_data = {'text': '1 08I2223330i 400 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+    def test_alpha_mixed(self):
+        """Test that we interprete 'i', 'I' as 1; 'o', 'O' as 0 in serial."""
+        reg_data = {'text': 'i 08I2223330i 4oI 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+    def test_whitespace(self):
+        """Test that <enter> is treated like <space>."""
+        reg_data = {'text': '1\n08122233301\n401\n5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+        # Test the values are correctly saved
+        obj = models.Visit.objects.all()[0]
+        self.assertEqual(obj.patient.clinic, self.clinic)
+        self.assertEqual('08122233301', obj.patient.mobile)
+        self.assertEqual(401, obj.patient.serial)
