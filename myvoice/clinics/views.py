@@ -104,6 +104,8 @@ class ClinicReport(DetailView):
 
     def _get_patient_satisfaction(self, responses):
         """Patient satisfaction is gauged on their answers to 3 questions."""
+        if not responses:
+            return None  # Avoid divide-by-zero error.
         grouped = groupby(sorted(responses, key=attrgetter('phone')), lambda r: r.phone)
         grouped = [(l, dict([(rr.question.label, rr.response) for rr in r]))
                    for l, r in grouped]
@@ -124,7 +126,7 @@ class ClinicReport(DetailView):
                 if answers.get(wait_time.label) == wait_time.get_categories()[-1]:
                     unsatisfied_count += 1
                     continue
-        return int(float(unsatisfied_count) / len(grouped) * 100)
+        return 1 - int(float(unsatisfied_count) / len(grouped) * 100)
 
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
