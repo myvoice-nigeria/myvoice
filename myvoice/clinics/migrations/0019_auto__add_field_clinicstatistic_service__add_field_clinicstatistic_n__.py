@@ -18,21 +18,20 @@ class Migration(SchemaMigration):
 
         # Adding field 'ClinicStatistic.service'
         db.add_column(u'clinics_clinicstatistic', 'service',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Service'],
-                      null=True, blank=True), keep_default=False)
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Service'], null=True, blank=True),
+                      keep_default=False)
 
         # Adding field 'ClinicStatistic.n'
         db.add_column(u'clinics_clinicstatistic', 'n',
                       self.gf('django.db.models.fields.IntegerField')(default=0),
                       keep_default=False)
 
-        # Changing field 'ClinicStatistic.clinic'
-        db.alter_column(u'clinics_clinicstatistic', 'clinic_id',
-                        self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'], null=True))
 
+        # Changing field 'ClinicStatistic.clinic'
+        db.alter_column(u'clinics_clinicstatistic', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'], null=True))
         # Adding unique constraint on 'ClinicStatistic', fields ['clinic', 'service', 'statistic', 'month']
-        db.create_unique(u'clinics_clinicstatistic',
-                         ['clinic_id', 'service_id', 'statistic_id', 'month'])
+        db.create_unique(u'clinics_clinicstatistic', ['clinic_id', 'service_id', 'statistic_id', 'month'])
+
 
     def backwards(self, orm):
         # Removing unique constraint on 'ClinicStatistic', fields ['clinic', 'service', 'statistic', 'month']
@@ -46,7 +45,7 @@ class Migration(SchemaMigration):
 
 
         # Changing field 'ClinicStatistic.clinic'
-        db.alter_column(u'clinics_clinicstatistic', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['clinics.Clinic']))
+        db.alter_column(u'clinics_clinicstatistic', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['clinics.Clinic']))
         # Adding unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
         db.create_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
 
@@ -84,6 +83,7 @@ class Migration(SchemaMigration):
         u'clinics.clinic': {
             'Meta': {'object_name': 'Clinic'},
             'category': ('django.db.models.fields.CharField', [], {'max_length': '32', 'blank': 'True'}),
+            'code': ('django.db.models.fields.PositiveIntegerField', [], {'unique': 'True'}),
             'contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['rapidsms.Contact']", 'null': 'True', 'blank': 'True'}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -127,12 +127,22 @@ class Migration(SchemaMigration):
             'text_value': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
+        u'clinics.genericfeedback': {
+            'Meta': {'object_name': 'GenericFeedback'},
+            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'message': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
+            'message_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'sender': ('django.db.models.fields.CharField', [], {'max_length': '20'})
+        },
         u'clinics.patient': {
             'Meta': {'object_name': 'Patient'},
-            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']"}),
+            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
             'contact': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['rapidsms.Contact']", 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'})
+            'mobile': ('django.db.models.fields.CharField', [], {'max_length': '11', 'blank': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
+            'serial': ('django.db.models.fields.PositiveIntegerField', [], {})
         },
         u'clinics.region': {
             'Meta': {'unique_together': "(('external_id', 'type'),)", 'object_name': 'Region'},
@@ -145,6 +155,7 @@ class Migration(SchemaMigration):
         },
         u'clinics.service': {
             'Meta': {'object_name': 'Service'},
+            'code': ('django.db.models.fields.PositiveIntegerField', [], {}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
             'slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '50'})
@@ -153,9 +164,23 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Visit'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'patient': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Patient']"}),
-            'service_type': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'service': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Service']", 'null': 'True', 'blank': 'True'}),
             'staff': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.ClinicStaff']", 'null': 'True', 'blank': 'True'}),
             'visit_time': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'})
+        },
+        u'clinics.visitregistrationerror': {
+            'Meta': {'object_name': 'VisitRegistrationError'},
+            'error_type': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'sender': ('django.db.models.fields.CharField', [], {'max_length': '20'})
+        },
+        u'clinics.visitregistrationerrorlog': {
+            'Meta': {'object_name': 'VisitRegistrationErrorLog'},
+            'error_type': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'message': ('django.db.models.fields.CharField', [], {'max_length': '160'}),
+            'message_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'sender': ('django.db.models.fields.CharField', [], {'max_length': '20'})
         },
         u'contenttypes.contenttype': {
             'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
