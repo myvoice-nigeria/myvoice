@@ -242,10 +242,14 @@ import djcelery
 djcelery.setup_loader()
 
 CELERYBEAT_SCHEDULE = {
-    'sample-task': {
+    'import-responses': {
         'task': 'myvoice.survey.tasks.import_responses',
         'schedule': crontab(hour='*/1', minute='0'),
     },
+    'start-surveys': {
+        'task': 'myvoice.survey.tasks.start_surveys',
+        'schedule': crontab(hour='*/1', minute='0'),
+    }
 }
 
 # Set PostGIS version so that Django can find it.
