@@ -149,9 +149,21 @@ class TestVisitView(TestCase):
         # Test error is logged.
         self.assertEqual(1, models.VisitRegistrationErrorLog.objects.count())
 
-    def test_visit_invalid_serial(self):
-        """Test that invalid serial gives correct message and registered."""
+    def test_visit_3digit_serial_valid(self):
+        """Test that 3-digit serial is valid."""
         reg_data = {'text': '1 08122233301 400 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that it is registered.
+        self.assertEqual(1, models.Visit.objects.count())
+
+        # Test error is not logged.
+        self.assertEqual(0, models.VisitRegistrationErrorLog.objects.count())
+
+    def test_visit_invalid_serial(self):
+        """Test that invalid serial gives correct message and is still registered."""
+        reg_data = {'text': '1 08122233301 40 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
         error_msg = 'Serial number does not seem correct, but patient was registered. Thank you.'
         self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
