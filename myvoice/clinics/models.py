@@ -186,7 +186,7 @@ class VisitRegistrationErrorLog(models.Model):
 class GenericFeedback(models.Model):
     """Keeps Feedback information sent by patients."""
     sender = models.CharField(max_length=20)
-    clinic = models.ForeignKey('Clinic')
+    clinic = models.ForeignKey('Clinic', null=True, blank=True)
     message = models.CharField(max_length=200, blank=True)
     message_date = models.DateTimeField(auto_now=True)
 
