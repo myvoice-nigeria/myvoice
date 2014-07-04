@@ -12,7 +12,7 @@ class VisitView(View):
     form_class = forms.VisitForm
     success_msg = "Entry was received. Thank you."
     error_msg = "Your message is invalid, please retry"
-    serial_min = 4
+    serial_min = 3
     serial_max = 6
 
     @csrf_exempt
