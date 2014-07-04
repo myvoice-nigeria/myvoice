@@ -244,11 +244,11 @@ djcelery.setup_loader()
 CELERYBEAT_SCHEDULE = {
     'import-responses': {
         'task': 'myvoice.survey.tasks.import_responses',
-        'schedule': crontab(hour='*/1', minute='0'),
+        'schedule': crontab(minute='*/5'),
     },
     'start-surveys': {
         'task': 'myvoice.survey.tasks.start_surveys',
-        'schedule': crontab(hour='*/1', minute='0'),
+        'schedule': crontab(minute='*/5'),
     }
 }
 
