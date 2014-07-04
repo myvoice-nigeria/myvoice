@@ -22,8 +22,8 @@ class TestVisitView(TestCase):
                             "as listed on your instruction card"
 
     def make_request(self, data):
-        """Make Test request with POST data"""
-        request = self.factory.post('/views/registration/', data=data)
+        """Make Test request with POST data."""
+        request = self.factory.post('/clinics/visit/', data=data)
         return clinics.VisitView.as_view()(request)
 
     def test_visit(self):
@@ -149,9 +149,21 @@ class TestVisitView(TestCase):
         # Test error is logged.
         self.assertEqual(1, models.VisitRegistrationErrorLog.objects.count())
 
-    def test_visit_invalid_serial(self):
-        """Test that invalid serial gives correct message and registered."""
+    def test_visit_3digit_serial_valid(self):
+        """Test that 3-digit serial is valid."""
         reg_data = {'text': '1 08122233301 400 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that it is registered.
+        self.assertEqual(1, models.Visit.objects.count())
+
+        # Test error is not logged.
+        self.assertEqual(0, models.VisitRegistrationErrorLog.objects.count())
+
+    def test_visit_invalid_serial(self):
+        """Test that invalid serial gives correct message and is still registered."""
+        reg_data = {'text': '1 08122233301 40 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
         error_msg = 'Serial number does not seem correct, but patient was registered. Thank you.'
         self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
@@ -168,3 +180,110 @@ class TestVisitView(TestCase):
         self.make_request(reg_data)
         visit_count = models.Visit.objects.count()
         self.assertEqual(1, visit_count)
+
+    def test_alpha_clinic(self):
+        """Test that we interprete 'i' or 'I' as 1 in clinic."""
+        reg_data = {'text': 'i 08122233301 400 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+        reg_data = {'text': 'I 08122233301 400 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(2, models.Visit.objects.count())
+
+    def test_alpha_mobile(self):
+        """Test that we interprete 'i' or 'I' as 1 in mobile."""
+        reg_data = {'text': '1 08I2223330i 400 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+    def test_alpha_mixed(self):
+        """Test that we interprete 'i', 'I' as 1; 'o', 'O' as 0 in serial."""
+        reg_data = {'text': 'i 08I2223330i 4oI 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+    def test_whitespace(self):
+        """Test that <enter> is treated like <space>."""
+        reg_data = {'text': '1\n08122233301\n401\n5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+        # Test the values are correctly saved
+        obj = models.Visit.objects.all()[0]
+        self.assertEqual(obj.patient.clinic, self.clinic)
+        self.assertEqual('08122233301', obj.patient.mobile)
+        self.assertEqual(401, obj.patient.serial)
+
+
+class TestFeedbackView(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.clinic = factories.Clinic.create(code=1)
+        self.phone = '+12065551212'
+        self.values = [
+            {"category": "1", "value": "1", "label": "clinicid"},
+            {"category": "All Responses", "value": "text", "label": "complaint"},
+        ]
+
+    def make_request(self, data):
+        """Make test request with POST data."""
+        request = self.factory.post('/clinics/feedback/', data=data)
+        return clinics.FeedbackView.as_view()(request)
+
+    def test_feedback_status(self):
+        """Test that feedback view returns status_code 200."""
+        feedback = {
+            "phone": self.phone,
+            "values": json.dumps(self.values)
+        }
+        response = self.make_request(feedback)
+        self.assertEqual(200, response.status_code)
+
+    def test_feedback_saved(self):
+        """Test that feedback is saved."""
+        feedback = {
+            "phone": self.phone,
+            "values": json.dumps(self.values)
+        }
+        self.make_request(feedback)
+        self.assertEqual(1, models.GenericFeedback.objects.count())
+
+        obj = models.GenericFeedback.objects.get(sender=self.phone)
+        self.assertEqual('text', obj.message)
+        self.assertEqual(self.clinic, obj.clinic)
+
+    def test_feedback_noclinic_saved(self):
+        """Test that feedback without clinic is saved with the clinic name
+        in message field."""
+        values = [
+            {"category": "Other", "value": "none", "label": "clinicid"},
+            {"category": "Other", "value": "none", "label": "clinicid"},
+            {"category": "All Responses", "value": "none", "label": "clinictext"},
+            {"category": "All Responses", "value": "no", "label": "complaint"},
+        ]
+
+        feedback = {
+            "phone": self.phone,
+            "values": json.dumps(values)
+        }
+        self.make_request(feedback)
+        obj = models.GenericFeedback.objects.get(sender=self.phone)
+        self.assertEqual('no (none)', obj.message)
+        self.assertIsNone(obj.clinic)

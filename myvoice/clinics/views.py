@@ -22,7 +22,7 @@ class VisitView(View):
     form_class = forms.VisitForm
     success_msg = "Entry was received. Thank you."
     error_msg = "Your message is invalid, please retry"
-    serial_min = 4
+    serial_min = 3
     serial_max = 6
 
     @csrf_exempt
@@ -230,3 +230,18 @@ class ClinicReport(DetailView):
 class RegionReport(DetailView):
     template_name = 'clinics/summary.html'
     model = models.Region
+
+
+class FeedbackView(View):
+    form_class = forms.FeedbackForm
+
+    def post(self, request):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            values = form.cleaned_data['values']
+            models.GenericFeedback.objects.create(
+                sender=form.cleaned_data['phone'],
+                clinic=values.get('clinic'),
+                message=values.get('message'))
+
+        return HttpResponse('ok')

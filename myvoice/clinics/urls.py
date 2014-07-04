@@ -15,4 +15,6 @@ urlpatterns = [
     url(r'^reports/facility/(?P<slug>[ \w-]+)/$',
         views.ClinicReport.as_view(),
         name='clinic_report'),
+    url(r'^visit/$', views.VisitView.as_view(), name='visit'),
+    url(r'^feedback/$', views.VisitView.as_view(), name='visit'),
 ]

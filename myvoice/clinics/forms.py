@@ -1,5 +1,7 @@
 from django import forms
 
+import json
+
 from . import models
 
 
@@ -40,17 +42,23 @@ class ClinicStatisticAdminForm(forms.ModelForm):
 class VisitForm(forms.Form):
     phone = forms.CharField(max_length=20)
     text = forms.RegexField(
-        '^\d+\s+((1)|(\d+))\s+\d+\s+\d+$',
+        '^(i|I|\d+)\s+((1|i|I)|((i|I|o|O|[0-9])+))\s+(i|I|o|O|[0-9])+\s+(i|I|o|O|[0-9])+$',
         max_length=50,
         error_messages={'invalid': 'Your message is invalid. Please retry'})
+
+    def replace_alpha(self, text):
+        """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
+        return text.replace('o', '0').replace('O', '0').replace('i', '1').replace('I', '1')
 
     def clean_text(self):
         """Validate input text.
 
         text is in format: CLINIC PHONE SERIAL SERVICE
         """
-        clnc, phone, serial, srvc = self.cleaned_data['text'].split()
-        # Check if mobile is incorrect
+        clnc, phone, serial, srvc = [
+            self.replace_alpha(i) for i in self.cleaned_data['text'].split()]
+
+        # Check if mobile is correct
         if len(phone) not in [1, 11]:
             error_msg = 'Mobile number incorrect for patient with serial {serial}. Must '\
                         'be 11 digits with no spaces. Please check your instruction card '\
@@ -82,3 +90,45 @@ class SelectClinicForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(SelectClinicForm, self).__init__(*args, **kwargs)
         self.fields['clinic'].queryset = models.Clinic.objects.order_by('name')
+
+
+class FeedbackForm(forms.Form):
+    """
+    Requirements from TextIt Generic feedback flow
+    Clinic ID response come as numeric category with label "clinicid".
+    Clinic name (if clinic is not sent) comes as text with label "clinictext".
+    Complaint message comes as text with label "complaint".
+    Any message that comes with category "Other" is ignored.
+
+    More:
+    Clinics configured in Textit flow have corresponding code in Clinic model.
+    """
+    phone = forms.CharField(max_length=20)
+    values = forms.CharField()
+
+    def clean_values(self):
+        """Return Clinic and Message."""
+        data = self.cleaned_data['values']
+        values = json.loads(data)
+
+        clinic = None
+        clinic_text = ''
+        message = ''
+
+        for item in values:
+            category = item.get('category').lower()
+            label = item.get('label').lower()
+            value = item.get('value')
+
+            if category == 'other':
+                continue
+            elif label == 'complaint':
+                message = value
+            elif label == 'clinicid':
+                clinic = models.Clinic.objects.get(code=category)
+            elif label == 'clinictext':
+                clinic_text = value
+
+        if clinic_text:
+            message += ' ({})'.format(clinic_text)
+        return {'clinic': clinic, 'message': message}
