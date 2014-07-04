@@ -46,12 +46,15 @@ class RegionAdmin(LeafletGeoAdmin):
 
 
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ['name', 'clinic', 'contact']
-    search_fields = ['name']
+    list_display = ['name', 'clinic', 'mobile', 'serial']
+    list_filter = ['clinic']
+    order_by = ['mobile']
+    search_fields = ['name', 'mobile', 'serial']
 
 
 class VisitAdmin(admin.ModelAdmin):
-    list_display = ['patient', 'visit_time', 'service', 'staff']
+    list_display = ['patient', 'service', 'staff', 'visit_time', 'survey_sent']
+    list_filter = ['patient__clinic', 'service']
     date_hierarchy = 'visit_time'
 
 

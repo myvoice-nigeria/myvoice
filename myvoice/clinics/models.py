@@ -138,7 +138,7 @@ class Patient(models.Model):
     serial = models.PositiveIntegerField()
 
     def __unicode__(self):
-        return self.get_name_display()
+        return '{0} at {1}'.format(self.serial, self.clinic.name)
 
     def get_name_display(self):
         """Prefer the associated Contact's name to the name here."""
@@ -151,6 +151,7 @@ class Visit(models.Model):
     service = models.ForeignKey('Service', blank=True, null=True)
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
     visit_time = models.DateTimeField(auto_now_add=True)
+    survey_sent = models.BooleanField(default=False)
 
     def __unicode__(self):
         return unicode(self.patient)
@@ -160,6 +161,7 @@ class VisitRegistrationError(models.Model):
     """Keeps current state of errors in Visit registration SMS.
 
     Right now, only "wrong clinic" is useful."""
+
     WRONG_CLINIC = 0
     WRONG_MOBILE = 1
     WRONG_SERIAL = 2
