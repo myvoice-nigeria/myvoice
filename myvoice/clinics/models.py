@@ -193,8 +193,7 @@ class ClinicStatistic(models.Model):
     regularly scrape, extract, and analyze this data, and store it using this
     model.
     """
-    clinic = models.ForeignKey('Clinic', null=True, blank=True)
-    service = models.ForeignKey('Service', null=True, blank=True)
+    clinic = models.ForeignKey('Clinic')
     month = models.DateField()
 
     # NOTE: Take care when changing the statistic or its type - the stored
@@ -209,10 +208,6 @@ class ClinicStatistic(models.Model):
     text_value = models.CharField(
         max_length=255, null=True, blank=True, editable=False)
 
-    n = models.IntegerField(
-        default=0,
-        help_text="Number of data points used for this statistic.")
-
     # In general, this will be calculated programatically.
     rank = models.IntegerField(
         blank=True, null=True, editable=False,
@@ -223,7 +218,7 @@ class ClinicStatistic(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = [('clinic', 'service', 'statistic', 'month')]
+        unique_together = [('clinic', 'statistic', 'month')]
         verbose_name = 'statistic'
 
     def __unicode__(self):

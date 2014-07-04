@@ -29,8 +29,8 @@ class ClinicAdmin(LeafletGeoAdmin):
 
 class ClinicStatisticAdmin(admin.ModelAdmin):
     form = ClinicStatisticAdminForm
-    list_display = ['statistic', 'month', 'clinic', 'service', 'value', 'n', 'rank']
-    list_filter = ['statistic', 'clinic', 'service']
+    list_display = ['statistic', 'month', 'clinic', 'value', 'rank']
+    list_filter = ['statistic', 'clinic']
     date_hierarchy = 'month'
     readonly_fields = ['rank']
 
