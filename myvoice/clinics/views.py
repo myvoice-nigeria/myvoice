@@ -126,7 +126,7 @@ class ClinicReport(DetailView):
                 if answers.get(wait_time.label) == wait_time.get_categories()[-1]:
                     unsatisfied_count += 1
                     continue
-        return 1 - int(float(unsatisfied_count) / len(grouped) * 100)
+        return 100 - int(float(unsatisfied_count) / len(grouped) * 100)
 
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
