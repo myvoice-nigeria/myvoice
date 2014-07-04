@@ -1,6 +1,5 @@
 from collections import defaultdict, Counter
-from itertools import groupby
-from operator import attrgetter, itemgetter
+from operator import itemgetter
 
 
 def analyze(responses, answer):
@@ -33,3 +32,19 @@ def group_by_question(responses):
     for r in responses:
         grouped[r.question.label].append(r)
     return grouped
+
+
+def convert_to_local_format(phone):
+    """Simplistic utility to convert phone number to local Nigerian format."""
+    if phone.startswith('0'):
+        if len(phone) == 11:
+            return phone  # Aleady in the correct format.
+    elif phone.startswith('+234'):
+        new_phone = '0' + phone[4:]
+        if len(new_phone) == 11:
+            return new_phone
+    elif phone.startswith('234'):
+        new_phone = '0' + phone[3:]
+        if len(new_phone) == 11:
+            return new_phone
+    raise Exception("Unable to understand {0}".format(phone))

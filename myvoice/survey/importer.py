@@ -5,9 +5,10 @@ import dateutil.parser
 
 from django.utils.text import slugify
 
-from myvoice.clinics.models import Clinic, Service
+from myvoice.clinics.models import Visit
 from myvoice.statistics.models import Statistic, StatisticGroup
 
+from . import utils as survey_utils
 from .models import Survey, SurveyQuestion, SurveyQuestionResponse
 from .textit import TextItApi
 
@@ -141,6 +142,8 @@ def import_responses(flow_id):
         # is the number of questions associated with the survey.
         for answer in rrun['values']:
             label = answer['label']
+            local_phone = survey_utils.convert_to_local_format(rrun['phone'])
+            response_time = dateutil.parser.parse(answer['time'])
 
             # Only process answers for questions we know about.
             if label not in questions:
@@ -159,20 +162,19 @@ def import_responses(flow_id):
             # response to the same question).
             try:
                 response = SurveyQuestionResponse.objects.get(
-                    phone=rrun['phone'], question=questions.get(label))
+                    phone=local_phone, question=questions.get(label))
             except SurveyQuestionResponse.DoesNotExist:
                 # Create a new object - this is the first answer we've seen to
                 # this question.
                 response = SurveyQuestionResponse(
-                    phone=rrun['phone'], question=questions.get(label))
+                    phone=local_phone, question=questions.get(label))
             else:
                 # The user has already answered this question. Either we've
                 # imported this answer before, or the user has answered the
                 # question more than once (as would happen if the user gives
                 # an unintelligible answer and the question is re-asked).
                 # We'll keep the most recent answer.
-                new_datetime = dateutil.parser.parse(answer['time'])
-                if new_datetime <= response.datetime:
+                if response_time <= response.datetime:
                     logger.debug("Discarding answer because we have a more "
                                  "recent answer to the same question already "
                                  "in the database.")
@@ -188,8 +190,24 @@ def import_responses(flow_id):
             else:
                 value = answer['category']  # Normalized response.
 
-            response.clinic = Clinic.objects.get(slug='wamba-model-clinic')  # FIXME
-            response.service = Service.objects.get(slug='anc')  # FIXME
+            # Find visits we've registered for this phone number that
+            # were registered before this response was received.
+            visits = Visit.objects.filter(patient__mobile=local_phone)
+            visits = visits.filter(visit_time__lte=response_time)
+
+            try:
+                # Choose the visit closets in time to this response.
+                visit = visits.order_by('-visit_time')[0]
+                response.visit = visit
+                response.service_id = visit.service_id
+                response.clinic_id = visit.patient.clinic_id if visit.patient else None
+            except IndexError:
+                # Save the response, but we don't have a visit to associate
+                # with.
+                response.visit = None
+                response.service = None
+                response.clinic = None
+
             response.response = value
-            response.datetime = dateutil.parser.parse(answer['time'])
+            response.datetime = response_time
             response.save()

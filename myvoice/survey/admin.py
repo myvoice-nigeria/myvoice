@@ -86,7 +86,7 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
             'fields': ['phone', 'question'],
         }),
         ('The response', {
-            'fields': ['clinic', 'service', 'response', 'datetime'],
+            'fields': ['visit', 'clinic', 'service', 'response', 'datetime'],
         }),
         ('Metadata', {
             'fields': ['created', 'updated'],

@@ -1,9 +1,7 @@
-from collections import Counter, defaultdict
 from itertools import groupby
 import json
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 
-from django.db.models import Min, Max
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
