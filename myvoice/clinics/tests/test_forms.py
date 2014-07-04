@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from django.test import TestCase
 
@@ -93,7 +94,7 @@ class TestClinicStatisticAdminForm(TestCase):
 
 class TestFeedbackForm(TestCase):
     """
-    Assumptions:
+    Requirements from TextIt Generic feedback flow
     Clinic ID comes as numeric category with label "clinicid".
     Clinic name (if clinic is not one of the options) comes as text with label "clinictext".
     Complaint message comes as text with label "complaint".
@@ -103,17 +104,52 @@ class TestFeedbackForm(TestCase):
     All clinic IDs configured in Textit have corresponding code in Clinic model.
     """
 
-    def test_return_values(self):
-        """Test that form.clean_values() returns a dict of clinic and complaint"""
-        pass
+    def setUp(self):
+        self.clinic = factories.Clinic.create(name='test', code=1)
+        self.phone = "+12065551212"
+        self.values = [
+            {
+                "category": "1",
+                "text": "1",
+                "value": "1",
+                "label": "clinicid"
+            },
+            {
+                "category": "All Responses",
+                "text": "text",
+                "value": "text",
+                "label": "complaint"
+            }
+        ]
 
-    def test_numeric_clinicid(self):
-        """Test that with a numeric clinicid we return valid clinic and message."""
+    def test_clinicid(self):
+        """Test that with clinicid and a numeric category, we return the Clinic
+        and the complaint message."""
+        values = [
+            {"category": "1", "value": "1", "label": "clinicid"},
+            {"category": "All Responses", "value": "text", "label": "complaint"},
+        ]
+        json_data = json.dumps(values)
+        data = {"phone": self.phone, "values": json_data}
+        form = forms.FeedbackForm(data)
+
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['values']['clinic'], self.clinic)
+        self.assertEqual(form.cleaned_data['values']['message'], 'text')
+        self.assertEqual(form.cleaned_data['phone'], '+12065551212')
 
     def test_clinictext(self):
         """Test that with clinictext, we return None for Clinic and a concat
-        of clinictext value and message value.
-        """
-
-    def test_phone(self):
-        """Test that proper phone is returned."""
+        of clinictext value and message value."""
+        values = [
+            {"category": "Other", "value": "1", "label": "clinicid"},
+            {"category": "Other", "value": "9", "label": "clinicid"},
+            {"category": "All Responses", "value": "9", "label": "clinictext"},
+            {"category": "All Responses", "value": "no", "label": "complaint"},
+        ]
+        json_data = json.dumps(values)
+        data = {"phone": self.phone, "values": json_data}
+        form = forms.FeedbackForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['values']['clinic'], None)
+        self.assertEqual(form.cleaned_data['values']['message'], 'no (9)')

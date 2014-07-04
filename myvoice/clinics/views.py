@@ -78,9 +78,11 @@ class FeedbackView(View):
 
     def post(self, request):
         form = self.form_class(request.POST)
-        #import pdb;pdb.set_trace()
         if form.is_valid():
-            sender = form.cleaned_data['phone']
-            data = form.cleaned_data['values']
+            values = form.cleaned_data['values']
+            models.GenericFeedback.objects.create(
+                sender=form.cleaned_data['phone'],
+                clinic=values.get('clinic'),
+                message=values.get('message'))
 
-            return HttpResponse('ok')
+        return HttpResponse('ok')

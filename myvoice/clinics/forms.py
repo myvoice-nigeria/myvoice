@@ -79,13 +79,42 @@ class VisitForm(forms.Form):
 
 
 class FeedbackForm(forms.Form):
+    """
+    Requirements from TextIt Generic feedback flow
+    Clinic ID response come as numeric category with label "clinicid".
+    Clinic name (if clinic is not sent) comes as text with label "clinictext".
+    Complaint message comes as text with label "complaint".
+    Any message that comes with category "Other" is ignored.
+
+    More:
+    Clinics configured in Textit flow have corresponding code in Clinic model.
+    """
     phone = forms.CharField(max_length=20)
     values = forms.CharField()
 
     def clean_values(self):
         """Return Clinic and Message."""
-        #import pdb;pdb.set_trace()
         data = self.cleaned_data['values']
         values = json.loads(data)
 
-        return values
+        clinic = None
+        clinic_text = ''
+        message = ''
+
+        for item in values:
+            category = item.get('category').lower()
+            label = item.get('label').lower()
+            value = item.get('value')
+
+            if category == 'other':
+                continue
+            elif label == 'complaint':
+                message = value
+            elif label == 'clinicid':
+                clinic = models.Clinic.objects.get(code=category)
+            elif label == 'clinictext':
+                clinic_text = value
+
+        if clinic_text:
+            message += ' ({})'.format(clinic_text)
+        return {'clinic': clinic, 'message': message}

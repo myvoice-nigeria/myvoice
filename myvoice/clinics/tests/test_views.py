@@ -174,6 +174,12 @@ class TestFeedbackView(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
+        self.clinic = factories.Clinic.create(code=1)
+        self.phone = '+12065551212'
+        self.values = [
+            {"category": "1", "value": "1", "label": "clinicid"},
+            {"category": "All Responses", "value": "text", "label": "complaint"},
+        ]
 
     def make_request(self, data):
         """Make test request with POST data."""
@@ -182,39 +188,41 @@ class TestFeedbackView(TestCase):
 
     def test_feedback_status(self):
         """Test that feedback view returns status_code 200."""
-        values = [
-            {
-                "category": "1",
-                "time": "2014-07-02T07:38:37.490596Z",
-                "text": "1",
-                "rule_value": "1",
-                "value": "1",
-                "label": "number"
-            },
-            {
-                "category": "All Responses",
-                "time": "2014-07-02T07:38:37.510620Z",
-                "text": "text",
-                "rule_value": "text",
-                "value": "text",
-                "label": "text"
-            }
-        ]
-        json_data = json.dumps(values)
-
         feedback = {
-            "phone": ["+12065551212"],
-            "values": json_data
-            }
+            "phone": self.phone,
+            "values": json.dumps(self.values)
+        }
         response = self.make_request(feedback)
         self.assertEqual(200, response.status_code)
 
-        # Test that data is saved.
-        #self.assertEqual(1, models.GenericFeedback.objects.count())
-
     def test_feedback_saved(self):
         """Test that feedback is saved."""
+        feedback = {
+            "phone": self.phone,
+            "values": json.dumps(self.values)
+        }
+        self.make_request(feedback)
+        self.assertEqual(1, models.GenericFeedback.objects.count())
+
+        obj = models.GenericFeedback.objects.get(sender=self.phone)
+        self.assertEqual('text', obj.message)
+        self.assertEqual(self.clinic, obj.clinic)
 
     def test_feedback_noclinic_saved(self):
         """Test that feedback without clinic is saved with the clinic name
         in message field."""
+        values = [
+            {"category": "Other", "value": "none", "label": "clinicid"},
+            {"category": "Other", "value": "none", "label": "clinicid"},
+            {"category": "All Responses", "value": "none", "label": "clinictext"},
+            {"category": "All Responses", "value": "no", "label": "complaint"},
+        ]
+
+        feedback = {
+            "phone": self.phone,
+            "values": json.dumps(values)
+        }
+        self.make_request(feedback)
+        obj = models.GenericFeedback.objects.get(sender=self.phone)
+        self.assertEqual('no (none)', obj.message)
+        self.assertIsNone(obj.clinic)
