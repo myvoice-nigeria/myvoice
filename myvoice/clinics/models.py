@@ -150,7 +150,7 @@ class Visit(models.Model):
     patient = models.ForeignKey('Patient')
     service = models.ForeignKey('Service', blank=True, null=True)
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
-    visit_time = models.DateTimeField(auto_now_add=True)
+    visit_time = models.DateTimeField(default=datetime.datetime.now)
     survey_sent = models.BooleanField(default=False)
 
     def __unicode__(self):
