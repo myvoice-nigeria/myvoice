@@ -29,10 +29,10 @@ class TestClinicStatisticAdminForm(TestCase):
 
     def test_edit_initial_value(self):
         """Initial value should be populated when editing a statistic."""
-        statistic = factories.Statistic.create(statistic_type='text')
+        #statistic = factories.Statistic.create(statistic_type='text')
         instance = self.Factory(
             clinic=factories.Clinic(),
-            statistic=statistic)
+            statistic__statistic_type='text')
         form = self.Form(instance=instance)
         self.assertEqual(form.fields['value'].initial, instance.value)
 

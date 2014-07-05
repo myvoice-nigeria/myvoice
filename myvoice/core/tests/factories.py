@@ -86,7 +86,6 @@ class ClinicStatistic(factory.django.DjangoModelFactory):
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
     statistic = factory.SubFactory('myvoice.core.tests.factories.Statistic')
     month = factory.LazyAttribute(lambda o: datetime.datetime.today())
-    statistic = factory.SubFactory('myvoice.core.tests.factories.Statistic')
 
     @factory.post_generation
     def value(self, create, extracted, **kwargs):
