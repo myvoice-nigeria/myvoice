@@ -8,47 +8,14 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        try:
-            # Removing unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
-            db.delete_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
-        except:
-            # FIXME: Sometimes this fails saying that the unique constraint
-            # isn't present. For now, that's good enough.
-            pass
 
-        # Adding field 'ClinicStatistic.service'
-        db.add_column(u'clinics_clinicstatistic', 'service',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Service'], null=True, blank=True),
-                      keep_default=False)
-
-        # Adding field 'ClinicStatistic.n'
-        db.add_column(u'clinics_clinicstatistic', 'n',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
-                      keep_default=False)
-
-
-        # Changing field 'ClinicStatistic.clinic'
-        db.alter_column(u'clinics_clinicstatistic', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'], null=True))
-        # Adding unique constraint on 'ClinicStatistic', fields ['clinic', 'service', 'statistic', 'month']
-        db.create_unique(u'clinics_clinicstatistic', ['clinic_id', 'service_id', 'statistic_id', 'month'])
-
+        # Changing field 'GenericFeedback.clinic'
+        db.alter_column(u'clinics_genericfeedback', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'], null=True))
 
     def backwards(self, orm):
-        # Removing unique constraint on 'ClinicStatistic', fields ['clinic', 'service', 'statistic', 'month']
-        db.delete_unique(u'clinics_clinicstatistic', ['clinic_id', 'service_id', 'statistic_id', 'month'])
 
-        # Deleting field 'ClinicStatistic.service'
-        db.delete_column(u'clinics_clinicstatistic', 'service_id')
-
-        # Deleting field 'ClinicStatistic.n'
-        db.delete_column(u'clinics_clinicstatistic', 'n')
-
-
-        # Changing field 'ClinicStatistic.clinic'
-        db.alter_column(u'clinics_clinicstatistic', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['clinics.Clinic']))
-        # Adding unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
-        db.create_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
-
+        # Changing field 'GenericFeedback.clinic'
+        db.alter_column(u'clinics_genericfeedback', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['clinics.Clinic']))
 
     models = {
         u'auth.group': {
@@ -113,16 +80,14 @@ class Migration(SchemaMigration):
             'year_started': ('django.db.models.fields.CharField', [], {'max_length': '4', 'blank': 'True'})
         },
         u'clinics.clinicstatistic': {
-            'Meta': {'unique_together': "[('clinic', 'service', 'statistic', 'month')]", 'object_name': 'ClinicStatistic'},
-            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
+            'Meta': {'unique_together': "[('clinic', 'statistic', 'month')]", 'object_name': 'ClinicStatistic'},
+            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']"}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'float_value': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'int_value': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'month': ('django.db.models.fields.DateField', [], {}),
-            'n': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'rank': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
-            'service': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Service']", 'null': 'True', 'blank': 'True'}),
             'statistic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['statistics.Statistic']"}),
             'text_value': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
@@ -166,7 +131,8 @@ class Migration(SchemaMigration):
             'patient': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Patient']"}),
             'service': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Service']", 'null': 'True', 'blank': 'True'}),
             'staff': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.ClinicStaff']", 'null': 'True', 'blank': 'True'}),
-            'visit_time': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'})
+            'survey_sent': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'visit_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'})
         },
         u'clinics.visitregistrationerror': {
             'Meta': {'object_name': 'VisitRegistrationError'},

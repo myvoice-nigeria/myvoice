@@ -138,7 +138,8 @@ class Migration(SchemaMigration):
             'patient': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Patient']"}),
             'service': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Service']", 'null': 'True', 'blank': 'True'}),
             'staff': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.ClinicStaff']", 'null': 'True', 'blank': 'True'}),
-            'visit_time': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'})
+            'survey_sent': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'visit_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'})
         },
         u'clinics.visitregistrationerror': {
             'Meta': {'object_name': 'VisitRegistrationError'},
