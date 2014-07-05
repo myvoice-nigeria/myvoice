@@ -13,3 +13,7 @@ before_script:
   - python manage.py syncdb --migrate --noinput
 script:
   - python manage.py test
+notifications:
+  email:
+    - myvoice-team@caktusgroup.com
+    - bayokrapht@gmail.com
