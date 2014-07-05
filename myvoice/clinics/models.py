@@ -187,6 +187,17 @@ class VisitRegistrationErrorLog(models.Model):
         return self.sender
 
 
+class GenericFeedback(models.Model):
+    """Keeps Feedback information sent by patients."""
+    sender = models.CharField(max_length=20)
+    clinic = models.ForeignKey('Clinic', null=True, blank=True)
+    message = models.CharField(max_length=200, blank=True)
+    message_date = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return self.sender
+
+
 class ClinicStatistic(models.Model):
     """
     A statistic about a Clinic, valid in a given month.

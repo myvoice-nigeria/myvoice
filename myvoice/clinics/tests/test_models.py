@@ -86,6 +86,18 @@ class TestVisit(TestCase):
         self.assertEqual(str(obj), '5 at Hello')
 
 
+class TestGenericFeedback(TestCase):
+    Model = models.GenericFeedback
+    Factory = factories.GenericFeedback
+
+    def test_unicode(self):
+        """Smoke test for Generic Feedback string representation."""
+        obj = self.Factory.create(
+            clinic=factories.Clinic(name='text_clinic'),
+            sender='234811111111')
+        self.assertEqual(str(obj), '234811111111')
+
+
 class TestClinicStatistic(TestCase):
     Model = models.ClinicStatistic
     Factory = factories.ClinicStatistic

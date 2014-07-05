@@ -73,6 +73,13 @@ class Visit(factory.django.DjangoModelFactory):
     service = factory.SubFactory('myvoice.core.tests.factories.Service')
 
 
+class GenericFeedback(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.GenericFeedback
+
+    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
+    sender = factory.fuzzy.FuzzyText()
+
+
 class ClinicStatistic(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.ClinicStatistic
 
@@ -107,7 +114,7 @@ class Statistic(factory.django.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'Statistic {0}'.format(n))
     slug = factory.Sequence(lambda n: 'statistic-{0}'.format(n))
     group = factory.SubFactory('myvoice.core.tests.factories.StatisticGroup')
-    
+
     @factory.lazy_attribute
     def statistic_type(self):
         choices = [k for k, _ in statistics.Statistic.STATISTIC_TYPES]
@@ -116,6 +123,6 @@ class Statistic(factory.django.DjangoModelFactory):
 
 class StatisticGroup(factory.django.DjangoModelFactory):
     FACTORY_FOR = statistics.StatisticGroup
-    
+
     name = factory.Sequence(lambda n: 'Stat Group {0}'.format(n))
     slug = factory.Sequence(lambda n: 'stat-group-{0}'.format(n))
