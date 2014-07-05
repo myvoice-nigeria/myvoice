@@ -98,8 +98,8 @@ class TestClinicStatistic(TestCase):
             clinic__name='Hello',
             month=datetime.date(2012, 10, 1),
             statistic__statistic_type=statistics.Statistic.TEXT,
-            statistic__name='Income',)
-        self.assertEqual(str(obj), 'Income for Hello for October 2012')
+            statistic__name='Test Stat',)
+        self.assertEqual(str(obj), 'Test Stat for Hello for October 2012')
 
     def test_get_month_display(self):
         """Smoke test for month display method."""
