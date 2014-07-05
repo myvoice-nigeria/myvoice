@@ -15,6 +15,23 @@ user-{{ pillar['project_name'] }}:
     - require:
       - service: postgresql
 
+user-{{ pillar['project_name'] }}-readonly:
+  postgres_user.present:
+    - name: {{ pillar['project_name'] }}_{{ pillar['environment'] }}_readonly
+    - createdb: False
+    - createuser: False
+    - superuser: False
+    - password: {{ pillar['secrets']['DB_READONLY_PASSWORD'] }}
+    - encrypted: True
+    - require:
+      - service: postgresql
+
+grant-user-{{ pillar['project_name'] }}-readonly:
+  cmd.wait:
+    - name: sudo -u postgres psql {{ pillar['project_name'] }}_{{ pillar['environment'] }} -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO {{ pillar['project_name'] }}_{{ pillar['environment'] }}_readonly; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO {{ pillar['project_name'] }}_{{ pillar['environment'] }}_readonly;"
+    - watch:
+      - postgres_user: user-{{ pillar['project_name'] }}-readonly
+
 database-{{ pillar['project_name'] }}:
   postgres_database.present:
     - name: {{ pillar['project_name'] }}_{{ pillar['environment'] }}
