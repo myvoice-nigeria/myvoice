@@ -99,9 +99,9 @@ class TestClinicStatisticAdminForm(TestCase):
 class TestFeedbackForm(TestCase):
     """
     Requirements from TextIt Generic feedback flow
-    Clinic ID comes as numeric category with label "clinicid".
-    Clinic name (if clinic is not one of the options) comes as text with label "clinictext".
-    Complaint message comes as text with label "complaint".
+    Clinic ID comes as numeric category with label "Clinic".
+    Clinic name (if clinic is not one of the options) comes as text with label "Which Clinic".
+    General Feedback message comes as text with label "General Feedback".
     Any message that comes with category "Other" is ignored.
 
     More Assumptions:
@@ -116,22 +116,22 @@ class TestFeedbackForm(TestCase):
                 "category": "1",
                 "text": "1",
                 "value": "1",
-                "label": "clinicid"
+                "label": "Clinic"
             },
             {
                 "category": "All Responses",
                 "text": "text",
                 "value": "text",
-                "label": "complaint"
+                "label": "General Feedback"
             }
         ]
 
-    def test_clinicid(self):
-        """Test that with clinicid and a numeric category, we return the Clinic
-        and the complaint message."""
+    def test_Clinic(self):
+        """Test that with Clinic and a numeric category, we return the Clinic
+        and the General Feedback message."""
         values = [
-            {"category": "1", "value": "1", "label": "clinicid"},
-            {"category": "All Responses", "value": "text", "label": "complaint"},
+            {"category": "1", "value": "1", "label": "Clinic"},
+            {"category": "All Responses", "value": "text", "label": "General Feedback"},
         ]
         json_data = json.dumps(values)
         data = {"phone": self.phone, "values": json_data}
@@ -142,14 +142,14 @@ class TestFeedbackForm(TestCase):
         self.assertEqual(form.cleaned_data['values']['message'], 'text')
         self.assertEqual(form.cleaned_data['phone'], '+12065551212')
 
-    def test_clinictext(self):
-        """Test that with clinictext, we return None for Clinic and a concat
-        of clinictext value and message value."""
+    def test_which_clinic(self):
+        """Test that with "Which Clinic", we return None for Clinic and a concat
+        of Which Clinic value and message value."""
         values = [
-            {"category": "Other", "value": "1", "label": "clinicid"},
-            {"category": "Other", "value": "9", "label": "clinicid"},
-            {"category": "All Responses", "value": "9", "label": "clinictext"},
-            {"category": "All Responses", "value": "no", "label": "complaint"},
+            {"category": "Other", "value": "1", "label": "Clinic"},
+            {"category": "Other", "value": "9", "label": "Clinic"},
+            {"category": "All Responses", "value": "9", "label": "Which Clinic"},
+            {"category": "All Responses", "value": "no", "label": "General Feedback"},
         ]
         json_data = json.dumps(values)
         data = {"phone": self.phone, "values": json_data}

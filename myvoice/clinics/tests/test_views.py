@@ -238,8 +238,8 @@ class TestFeedbackView(TestCase):
         self.clinic = factories.Clinic.create(code=1)
         self.phone = '+12065551212'
         self.values = [
-            {"category": "1", "value": "1", "label": "clinicid"},
-            {"category": "All Responses", "value": "text", "label": "complaint"},
+            {"category": "1", "value": "1", "label": "Clinic"},
+            {"category": "All Responses", "value": "text", "label": "General Feedback"},
         ]
 
     def make_request(self, data):
@@ -273,10 +273,10 @@ class TestFeedbackView(TestCase):
         """Test that feedback without clinic is saved with the clinic name
         in message field."""
         values = [
-            {"category": "Other", "value": "none", "label": "clinicid"},
-            {"category": "Other", "value": "none", "label": "clinicid"},
-            {"category": "All Responses", "value": "none", "label": "clinictext"},
-            {"category": "All Responses", "value": "no", "label": "complaint"},
+            {"category": "Other", "value": "none", "label": "Clinic"},
+            {"category": "Other", "value": "none", "label": "Clinic"},
+            {"category": "All Responses", "value": "none", "label": "Which Clinic"},
+            {"category": "All Responses", "value": "no", "label": "General Feedback"},
         ]
 
         feedback = {

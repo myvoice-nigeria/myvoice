@@ -95,9 +95,9 @@ class SelectClinicForm(forms.Form):
 class FeedbackForm(forms.Form):
     """
     Requirements from TextIt Generic feedback flow
-    Clinic ID response come as numeric category with label "clinicid".
-    Clinic name (if clinic is not sent) comes as text with label "clinictext".
-    Complaint message comes as text with label "complaint".
+    Clinic ID response come as numeric category with label "Clinic".
+    Clinic name (if clinic is not sent) comes as text with label "Which Clinic".
+    Complaint message comes as text with label "General Feedback".
     Any message that comes with category "Other" is ignored.
 
     More:
@@ -122,11 +122,11 @@ class FeedbackForm(forms.Form):
 
             if category == 'other':
                 continue
-            elif label == 'complaint':
+            elif label == 'general feedback':
                 message = value
-            elif label == 'clinicid':
+            elif label == 'clinic':
                 clinic = models.Clinic.objects.get(code=category)
-            elif label == 'clinictext':
+            elif label == 'which clinic':
                 clinic_text = value
 
         if clinic_text:
