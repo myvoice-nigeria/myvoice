@@ -1,7 +1,10 @@
 import datetime
 import logging
+import random
 
 from celery.task import task
+
+from django.utils import timezone
 
 from myvoice.clinics.models import Visit
 
@@ -24,32 +27,70 @@ def import_responses():
 
 
 @task
-def start_surveys():
-    """Initiate the feedback survey for recent visits."""
+def start_feedback_survey(visit_pk):
+    """Initiate the patient feedback survey for a Visit."""
+
     try:
         survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
     except Survey.DoesNotExist:
         logger.error("No patient feedback survey is registered.")
         return
 
-    # Only send a survey if it hasn't been sent before.
-    visits = Visit.objects.filter(survey_sent=False)
-
-    # FIXME - for testing purposes we'll send the surveys immediately but
-    # we'll need to add delays before the pilot launches.
-    # Wait at least one hour from the visit registration time.
-    # FIXME - add timezone.
-    # max_visit_time = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
-    # max_visit_time = datetime.datetime.utcnow()
-    # visits = visits.filter(visit_time__lte=max_visit_time)
-
-    # Grab the phone numbers of all patients from applicable visits.
-    phones = list(set(visits.values_list('patient__mobile', flat=True)))
-    phones = [survey_utils.convert_to_international_format(p) for p in phones]
+    try:
+        visit = Visit.objects.get(pk=visit_pk)
+    except Visit.DoesNotExist:
+        logger.error("Unable to find visit with pk {}.".format(visit_pk))
+        return
 
     try:
-        TextItApi().start_flow(survey.flow_id, phones)
+        TextItApi().start_flow(survey.flow_id, visit.patient.mobile)
     except:
-        logger.exception("Error sending surveys to users.")
+        logger.exception("Error sending survey for visit {}.".format(visit.pk))
     else:
-        visits.update(survey_sent=True)
+        visit.survey_sent = timezone.now()
+        visit.save()
+        logger.debug("Initiated survey for visit {} "
+                     "at {}.".format(visit.pk, visit.survey_sent))
+
+
+@task
+def handle_new_visits():
+    """
+    Sends a welcome message to all new visitors and schedules when to start
+    the feedback survey.
+    """
+
+    # Look for visits for which we haven't sent a welcome message.
+    visits = Visit.objects.filter(welcome_sent__isnull=True)
+
+    # Send a "welcome" message immediately.
+    phones = list(set(visits.values_list('patient__mobile', flat=True)))
+    phones = [survey_utils.convert_to_international_format(p) for p in phones]
+    try:
+        welcome_message = ("Hi, thank you for your visit to the hospital. "
+                           "We care about your health. Help us make this "
+                           "hospital better. Please reply to the texts we "
+                           "will send you shortly.")
+        TextItApi().send_message(welcome_message, phones)
+    except:
+        logger.exception("Error sending welcome message to {}".format(phones))
+    else:
+        visits.update(welcome_sent=True)
+
+    # Schedule when to initiate the flow.
+    now = timezone.now()  # UTC
+    for visit in visits:
+        if now.hour > 20:  # 8pm UTC / 9pm WAT
+            # Don't send overnight. Send tomorrow at 7am UTC / 8am WAT.
+            eta = now.replace(day=now.day + 1, hour=7, minute=0, second=0,
+                              microsecond=0)
+        elif visit.patient.clinic.code == 7:
+            # Wamba General Hospital is a special case - their surveys
+            # should begin 4 or 24 hours later, randomly chosen.
+            eta = now + datetime.timedelta(hours=random.choice([4, 24]))
+        else:
+            # For all other clinics, send the survey 3 hours later.
+            eta = now + datetime.timedelta(hours=3)
+        start_feedback_survey.apply_async(args=[visit.pk], eta=eta)
+        logger.debug("Scheduled survey to start for visit "
+                     "{} at {}.".format(visit.pk, eta))
