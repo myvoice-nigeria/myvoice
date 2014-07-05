@@ -279,9 +279,6 @@ class ClinicStatistic(models.Model):
     value = property(_get_value, _set_value,
                      doc="The value of this statistic.")
 
-    def get_statistic_display(self):
-        return self.statistic.name
-
     def clean_value(self):
         """
         Ensures that an appropriate value is being used for the statistic's
