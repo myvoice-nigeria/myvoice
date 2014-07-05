@@ -108,7 +108,7 @@ class FeedbackForm(forms.Form):
 
     def clean_values(self):
         """Return Clinic and Message."""
-        data = self.cleaned_data['values']
+        data = self.cleaned_data['values'].replace('+', ' ')
         values = json.loads(data)
 
         clinic = None

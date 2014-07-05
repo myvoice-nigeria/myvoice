@@ -240,6 +240,10 @@ class RegionReport(DetailView):
 class FeedbackView(View):
     form_class = forms.FeedbackForm
 
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(FeedbackView, self).dispatch(*args, **kwargs)
+
     def post(self, request):
         form = self.form_class(request.POST)
         if form.is_valid():

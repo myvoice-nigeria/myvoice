@@ -16,5 +16,5 @@ urlpatterns = [
         views.ClinicReport.as_view(),
         name='clinic_report'),
     url(r'^visit/$', views.VisitView.as_view(), name='visit'),
-    url(r'^feedback/$', views.VisitView.as_view(), name='visit'),
+    url(r'^feedback/$', views.FeedbackView.as_view(), name='visit'),
 ]
