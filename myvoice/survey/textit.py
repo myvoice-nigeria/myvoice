@@ -96,6 +96,14 @@ class TextItApi(object):
             runs = runs + run_data['results']
         return runs
 
+    def start_flow(self, flow_id, phones):
+        data = {
+            'flow': flow_id,
+            'phone': phones,
+        }
+        run_data = self.client.post('runs', data=data)
+        return run_data
+
     def get_flow_export(self, flow_id):
         """One-off method to get flow export data. Does NOT use the API.
 

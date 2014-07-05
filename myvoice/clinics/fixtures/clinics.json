@@ -59,8 +59,8 @@
         "model": "clinics.Clinic",
         "pk": 5,
         "fields": {
-            "name": "Maraba Gongon PHC",
-            "slug": "maraba-gongon-phc",
+            "name": "Mararaba Gongon PHC",
+            "slug": "mararaba-gongon-phc",
             "town": "Town",
             "ward": "Ward",
             "lga": "Wamba",
@@ -87,7 +87,7 @@
         "model": "clinics.Clinic",
         "pk": 7,
         "fields": {
-            "name": "Wama General Hospital",
+            "name": "Wamba General Hospital",
             "slug": "wamba-general-hospital",
             "town": "Town",
             "ward": "Ward",

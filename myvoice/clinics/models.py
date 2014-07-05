@@ -138,7 +138,7 @@ class Patient(models.Model):
     serial = models.PositiveIntegerField()
 
     def __unicode__(self):
-        return self.get_name_display()
+        return '{0} at {1}'.format(self.serial, self.clinic.name)
 
     def get_name_display(self):
         """Prefer the associated Contact's name to the name here."""
@@ -150,7 +150,8 @@ class Visit(models.Model):
     patient = models.ForeignKey('Patient')
     service = models.ForeignKey('Service', blank=True, null=True)
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
-    visit_time = models.DateTimeField(auto_now_add=True)
+    visit_time = models.DateTimeField(default=datetime.datetime.now)
+    survey_sent = models.BooleanField(default=False)
 
     def __unicode__(self):
         return unicode(self.patient)
@@ -160,6 +161,7 @@ class VisitRegistrationError(models.Model):
     """Keeps current state of errors in Visit registration SMS.
 
     Right now, only "wrong clinic" is useful."""
+
     WRONG_CLINIC = 0
     WRONG_MOBILE = 1
     WRONG_SERIAL = 2
@@ -204,8 +206,7 @@ class ClinicStatistic(models.Model):
     regularly scrape, extract, and analyze this data, and store it using this
     model.
     """
-    clinic = models.ForeignKey('Clinic', null=True, blank=True)
-    service = models.ForeignKey('Service', null=True, blank=True)
+    clinic = models.ForeignKey('Clinic')
     month = models.DateField()
 
     # NOTE: Take care when changing the statistic or its type - the stored
@@ -220,10 +221,6 @@ class ClinicStatistic(models.Model):
     text_value = models.CharField(
         max_length=255, null=True, blank=True, editable=False)
 
-    n = models.IntegerField(
-        default=0,
-        help_text="Number of data points used for this statistic.")
-
     # In general, this will be calculated programatically.
     rank = models.IntegerField(
         blank=True, null=True, editable=False,
@@ -234,7 +231,7 @@ class ClinicStatistic(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = [('clinic', 'service', 'statistic', 'month')]
+        unique_together = [('clinic', 'statistic', 'month')]
         verbose_name = 'statistic'
 
     def __unicode__(self):

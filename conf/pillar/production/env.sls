@@ -4,7 +4,7 @@ domain: myvoicenigeria.com
 
 repo:
   url: git@github.com:caktus/myvoice.git
-  branch: develop
+  branch: master
 
 # Addtional public environment variables to set for the project
 env:

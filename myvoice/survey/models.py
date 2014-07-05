@@ -153,11 +153,12 @@ class SurveyQuestionResponse(models.Model):
         default=datetime.datetime.now,
         help_text="When this response was received.")
 
-    # Add these data points to give some context to the response.
-    # Since each survey is used for patients receiving any service from
-    # any health clinic, these are fields on the responses rather than, say,
-    # the Questions themselves.
     # This data will be collected during the patient registration process.
+    visit = models.ForeignKey('clinics.Visit', null=True, blank=True)
+
+    # FIXME - For now these fields are set based on the value of the visit's
+    # service and the visit's patient's clinic. It should be possible to use
+    # the visit's values directly.
     clinic = models.ForeignKey(
         'clinics.Clinic', null=True, blank=True,
         help_text="The clinic this response is about, if any.")
