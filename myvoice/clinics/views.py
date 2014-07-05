@@ -1,9 +1,7 @@
-from collections import Counter, defaultdict
 from itertools import groupby
 import json
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 
-from django.db.models import Min, Max
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -106,6 +104,8 @@ class ClinicReport(DetailView):
 
     def _get_patient_satisfaction(self, responses):
         """Patient satisfaction is gauged on their answers to 3 questions."""
+        if not responses:
+            return None  # Avoid divide-by-zero error.
         grouped = groupby(sorted(responses, key=attrgetter('phone')), lambda r: r.phone)
         grouped = [(l, dict([(rr.question.label, rr.response) for rr in r]))
                    for l, r in grouped]
@@ -126,7 +126,7 @@ class ClinicReport(DetailView):
                 if answers.get(wait_time.label) == wait_time.get_categories()[-1]:
                     unsatisfied_count += 1
                     continue
-        return int(float(unsatisfied_count) / len(grouped) * 100)
+        return 100 - int(float(unsatisfied_count) / len(grouped) * 100)
 
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
@@ -200,30 +200,35 @@ class ClinicReport(DetailView):
             })
         return data
 
+    def get_date_range(self):
+        if self.responses:
+            min_date = min(self.responses, key=attrgetter('datetime')).datetime
+            max_date = max(self.responses, key=attrgetter('datetime')).datetime
+            return get_week_start(min_date), get_week_end(max_date)
+        return None, None
+
+    def get_num_registered(self):
+        """Return the number patients that should have received this survey."""
+        return Visit.objects.filter(patient__clinic=self.object).count()
+
+    def get_num_completed(self):
+        """Return the number of surveys which have been completed."""
+        labels = ['Open Facility', 'Respectful Staff Treatment',
+                  'Clean Hospital Materials', 'Charged Fairly',
+                  'Wait Time']
+        results = groupby(self.responses, attrgetter('phone'))
+        results = [[r.question.label for r in list(i[1])] for i in results]
+        return len([r for r in results if all([l in r for l in labels])])
+
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
-
-        if self.responses:
-            min_date = min(self.responses, key=attrgetter('datetime')).datetime
-            kwargs['min_date'] = get_week_start(min_date)
-            max_date = max(self.responses, key=attrgetter('datetime')).datetime
-            kwargs['max_date'] = get_week_end(max_date)
-        else:
-            kwargs['min_date'] = kwargs['max_date'] = None
-
-        # Count the number of visits we have for this clinic.
-        kwargs['num_registered'] = Visit.objects.filter(patient__clinic=self.object).count()
-
-        # For now, count the number of individuals who have answered at least
-        # one question. It's harder to answer who's completed a survey, as
-        # not all questions need to be answered to get through a survey.
-        kwargs['num_completed'] = len(set([r.phone for r in self.responses]))
-
+        kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
+        kwargs['num_registered'] = self.get_num_registered()
+        kwargs['num_completed'] = self.get_num_completed()
         # TODO - participation rank amongst other clinics.
-
         return super(ClinicReport, self).get_context_data(**kwargs)
 
 
