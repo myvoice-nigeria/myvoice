@@ -29,7 +29,6 @@ class TestClinicStatisticAdminForm(TestCase):
 
     def test_edit_initial_value(self):
         """Initial value should be populated when editing a statistic."""
-        #statistic = factories.Statistic.create(statistic_type='text')
         instance = self.Factory(
             clinic=factories.Clinic(),
             statistic__statistic_type='text')
@@ -125,7 +124,7 @@ class TestFeedbackForm(TestCase):
             }
         ]
 
-    def test_Clinic(self):
+    def test_clinic(self):
         """Test that with Clinic and a numeric category, we return the Clinic
         and the General Feedback message."""
         values = [
