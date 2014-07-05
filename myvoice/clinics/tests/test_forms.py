@@ -6,7 +6,7 @@ from django.test import TestCase
 from myvoice.core.tests import factories
 
 from .. import forms
-from .. import statistics
+#from .. import statistics
 
 
 class TestClinicStatisticAdminForm(TestCase):
@@ -17,7 +17,8 @@ class TestClinicStatisticAdminForm(TestCase):
         super(TestClinicStatisticAdminForm, self).setUp()
         self.data = {
             'clinic': factories.Clinic().pk,
-            'statistic': statistics.INCOME,  # statistics.INTEGER
+            'statistic': factories.Statistic(),
+            #'statistic': statistics.INCOME,  # statistics.INTEGER
             'month': datetime.date.today().isoformat(),
             'value': 123,
         }
@@ -29,7 +30,10 @@ class TestClinicStatisticAdminForm(TestCase):
 
     def test_edit_initial_value(self):
         """Initial value should be populated when editing a statistic."""
-        instance = self.Factory()
+        statistic = factories.Statistic.create(statistic_type='text')
+        instance = self.Factory(
+            clinic=factories.Clinic(),
+            statistic=statistic)
         form = self.Form(instance=instance)
         self.assertEqual(form.fields['value'].initial, instance.value)
 

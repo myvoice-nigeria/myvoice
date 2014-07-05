@@ -8,7 +8,7 @@ import factory.fuzzy
 
 from django.contrib.auth import models as auth
 
-from myvoice.clinics import statistics
+from myvoice.statistics import models as statistics
 from myvoice.clinics import models as clinics
 
 from rapidsms import models as rapidsms
@@ -80,33 +80,50 @@ class GenericFeedback(factory.django.DjangoModelFactory):
     sender = factory.fuzzy.FuzzyText()
 
 
+class StatisticGroup(factory.django.DjangoModelFactory):
+    FACTORY_FOR = statistics.StatisticGroup
+
+    name = factory.fuzzy.FuzzyText()
+    slug = factory.fuzzy.FuzzyText()
+
+
+class Statistic(factory.django.DjangoModelFactory):
+    FACTORY_FOR = statistics.Statistic
+
+    name = factory.fuzzy.FuzzyText()
+    slug = factory.fuzzy.FuzzyText()
+    group = factory.SubFactory('myvoice.core.tests.factories.StatisticGroup')
+
+
 class ClinicStatistic(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.ClinicStatistic
 
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
     month = factory.LazyAttribute(lambda o: datetime.datetime.today())
+    statistic = factory.SubFactory('myvoice.core.tests.factories.Statistic')
+    service = factory.SubFactory('myvoice.core.tests.factories.Service')
 
-    @factory.lazy_attribute
-    def statistic(self):
-        choices = [c[0] for c in statistics.get_statistic_choices()]
-        return random.choice(choices)
+    #@factory.lazy_attribute
+    #def statistic(self):
+    #    choices = [c[0] for c in statistics.get_statistic_choices()]
+    #    return random.choice(choices)
 
-    @factory.post_generation
-    def value(self, create, extracted, **kwargs):
-        if kwargs:
-            raise Exception("value property does not support __")
-        if extracted is None:
-            statistic_type = self.get_statistic_type()
-            if statistic_type == statistics.INTEGER:
-                value = random.randint(0, 100)
-            elif statistic_type in (statistics.FLOAT, statistics.PERCENTAGE):
-                value = random.random() * 100
-            elif statistic_type == statistics.TEXT:
-                value = ''.join([random.choice(string.letters) for i in range(12)])
-            else:
-                value = None
-        else:
-            value = extracted
-        self.value = value
-        if create:
-            self.save()
+    #@factory.post_generation
+    #def value(self, create, extracted, **kwargs):
+    #    if kwargs:
+    #        raise Exception("value property does not support __")
+    #    if extracted is None:
+    #        statistic_type = self.get_statistic_type()
+    #        if statistic_type == statistics.INTEGER:
+    #            value = random.randint(0, 100)
+    #        elif statistic_type in (statistics.FLOAT, statistics.PERCENTAGE):
+    #            value = random.random() * 100
+    #        elif statistic_type == statistics.TEXT:
+    #            value = ''.join([random.choice(string.letters) for i in range(12)])
+    #        else:
+    #            value = None
+    #    else:
+    #        value = extracted
+    #    self.value = value
+    #    if create:
+    #        self.save()

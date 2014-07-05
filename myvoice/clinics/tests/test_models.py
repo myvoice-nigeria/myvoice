@@ -104,10 +104,11 @@ class TestClinicStatistic(TestCase):
 
     def test_unicode(self):
         """Smoke test for ClinicStatistic string representation."""
+        statistic = factories.Statistic.create(name='Income')
         obj = self.Factory.create(
             clinic__name='Hello',
             month=datetime.date(2012, 10, 1),
-            statistic=statistics.INCOME)
+            statistic=statistic)
         self.assertEqual(str(obj), 'Income for Hello for October 2012')
 
     def test_get_month_display(self):
@@ -126,25 +127,32 @@ class TestClinicStatistic(TestCase):
         obj = self.Factory.create()
         with self.assertRaises(IntegrityError):
             self.Factory.create(statistic=obj.statistic, clinic=obj.clinic,
-                                month=obj.month)
+                                month=obj.month, service=obj.service)
 
-    @mock.patch.object(models.ClinicStatistic, 'get_statistic_type')
-    def test_no_value(self, get_statistic_type):
+    def test_no_value(self):
+        clinic_code = 0
         for statistic_type in [statistics.INTEGER, statistics.FLOAT,
                                statistics.PERCENTAGE, statistics.TEXT]:
-            get_statistic_type.return_value = statistics.INTEGER
-            obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1))
+            clinic_code += 1
+            statistic = factories.Statistic(statistic_type='int')
+            obj = self.Model(
+                clinic=factories.Clinic(code='{}'.format(clinic_code)),
+                month=datetime.date(2012, 10, 1),
+                statistic=statistic)
             self.assertEqual(obj.int_value, None)
             self.assertEqual(obj.float_value, None)
             self.assertEqual(obj.text_value, None)
             self.assertEqual(obj.value, None)
             self.assertRaises(ValidationError, obj.clean_value)
 
-    @mock.patch.object(models.ClinicStatistic, 'get_statistic_type')
-    def test_statistic_int(self, get_statistic_type):
+    def test_statistic_int(self):
         # Manually construct object to have more control over statistic type.
-        get_statistic_type.return_value = statistics.INTEGER
-        obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1))
+        #get_statistic_type.return_value = statistics.INTEGER
+        statistic = factories.Statistic(statistic_type='int')
+        obj = self.Model(
+            clinic=factories.Clinic(),
+            month=datetime.date(2012, 10, 1),
+            statistic=statistic)
 
         # Value in float_value should not validate.
         obj.float_value = 1
@@ -180,11 +188,13 @@ class TestClinicStatistic(TestCase):
         obj = self.Model.objects.get(pk=obj.pk)
         self.assertEqual(obj.value, 1)
 
-    @mock.patch.object(models.ClinicStatistic, 'get_statistic_type')
-    def test_statistic_float(self, get_statistic_type):
+    def test_statistic_float(self):
         # Manually construct object to have more control over statistic type.
-        get_statistic_type.return_value = statistics.FLOAT
-        obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1))
+        statistic = factories.Statistic(statistic_type='float')
+        obj = self.Model(
+            clinic=factories.Clinic(),
+            month=datetime.date(2012, 10, 1),
+            statistic=statistic)
 
         # Value in int_value should not validate.
         obj.int_value = 1
@@ -220,11 +230,13 @@ class TestClinicStatistic(TestCase):
         obj = self.Model.objects.get(pk=obj.pk)
         self.assertEqual(obj.value, 1.5)
 
-    @mock.patch.object(models.ClinicStatistic, 'get_statistic_type')
-    def test_statistic_percentage(self, get_statistic_type):
+    def test_statistic_percentage(self):
         # Manually construct object to have more control over statistic type.
-        get_statistic_type.return_value = statistics.PERCENTAGE
-        obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1))
+        statistic = factories.Statistic(statistic_type='percentage')
+        obj = self.Model(
+            clinic=factories.Clinic(),
+            month=datetime.date(2012, 10, 1),
+            statistic=statistic)
 
         # Value in int_value should not validate.
         obj.int_value = 1
@@ -260,11 +272,13 @@ class TestClinicStatistic(TestCase):
         obj = self.Model.objects.get(pk=obj.pk)
         self.assertEqual(obj.value, 1.5)
 
-    @mock.patch.object(models.ClinicStatistic, 'get_statistic_type')
-    def test_statistic_text(self, get_statistic_type):
+    def test_statistic_text(self):
         # Manually construct object to have more control over statistic type.
-        get_statistic_type.return_value = statistics.TEXT
-        obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1))
+        statistic = factories.Statistic(statistic_type='text')
+        obj = self.Model(
+            clinic=factories.Clinic(),
+            month=datetime.date(2012, 10, 1),
+            statistic=statistic)
 
         # Value in int_value should not validate.
         obj.int_value = 1
