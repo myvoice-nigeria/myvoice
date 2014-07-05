@@ -92,8 +92,6 @@ class TestClinicStatistic(TestCase):
 
     def test_unicode(self):
         """Smoke test for ClinicStatistic string representation."""
-        # Manually construct object to have more control over statistic type.
-        #statistic = factories.Statistic.create(statistic_type=statistics.Statistic.TEXT)
         obj = self.Factory.create(
             clinic__name='Hello',
             month=datetime.date(2012, 10, 1),
