@@ -4,9 +4,9 @@ import json
 from django.test import TestCase
 
 from myvoice.core.tests import factories
+from myvoice.statistics.models import Statistic
 
 from .. import forms
-#from .. import statistics
 
 
 class TestClinicStatisticAdminForm(TestCase):
@@ -17,8 +17,7 @@ class TestClinicStatisticAdminForm(TestCase):
         super(TestClinicStatisticAdminForm, self).setUp()
         self.data = {
             'clinic': factories.Clinic().pk,
-            'statistic': factories.Statistic(),
-            #'statistic': statistics.INCOME,  # statistics.INTEGER
+            'statistic': factories.Statistic(statistic_type=Statistic.INTEGER).pk,
             'month': datetime.date.today().isoformat(),
             'value': 123,
         }
@@ -44,7 +43,7 @@ class TestClinicStatisticAdminForm(TestCase):
 
         obj = form.save()
         self.assertEqual(obj.clinic.pk, self.data['clinic'])
-        self.assertEqual(obj.statistic, self.data['statistic'])
+        self.assertEqual(obj.statistic.pk, self.data['statistic'])
         self.assertEqual(obj.month.isoformat(), self.data['month'])
         self.assertEqual(obj.value, self.data['value'])
 
@@ -57,7 +56,7 @@ class TestClinicStatisticAdminForm(TestCase):
         obj = form.save()
         self.assertEqual(obj.pk, instance.pk)
         self.assertEqual(obj.clinic.pk, self.data['clinic'])
-        self.assertEqual(obj.statistic, self.data['statistic'])
+        self.assertEqual(obj.statistic.pk, self.data['statistic'])
         self.assertEqual(obj.month.isoformat(), self.data['month'])
         self.assertEqual(obj.value, self.data['value'])
 

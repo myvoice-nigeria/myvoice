@@ -8,20 +8,18 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'GenericFeedback'
-        db.create_table(u'clinics_genericfeedback', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('sender', self.gf('django.db.models.fields.CharField')(max_length=20)),
-            ('clinic', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'])),
-            ('message', self.gf('django.db.models.fields.CharField')(max_length=200, blank=True)),
-            ('message_date', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-        ))
-        db.send_create_signal(u'clinics', ['GenericFeedback'])
-
+        # the unique constraint probably doesn't exist due to the column
+        # being removed in migration 0005, but attempt to remove it just in case
+        # (and to make South happy)
+        try:
+            # Removing unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
+            db.delete_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
+        except:
+            pass
 
     def backwards(self, orm):
-        # Deleting model 'GenericFeedback'
-        db.delete_table(u'clinics_genericfeedback')
+        # Adding unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
+        db.create_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
 
 
     models = {
@@ -87,7 +85,7 @@ class Migration(SchemaMigration):
             'year_started': ('django.db.models.fields.CharField', [], {'max_length': '4', 'blank': 'True'})
         },
         u'clinics.clinicstatistic': {
-            'Meta': {'unique_together': "[('clinic', 'statistic', 'month')]", 'object_name': 'ClinicStatistic'},
+            'Meta': {'object_name': 'ClinicStatistic'},
             'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']"}),
             'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'float_value': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
@@ -98,14 +96,6 @@ class Migration(SchemaMigration):
             'statistic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['statistics.Statistic']"}),
             'text_value': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
-        },
-        u'clinics.genericfeedback': {
-            'Meta': {'object_name': 'GenericFeedback'},
-            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
-            'message_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'sender': ('django.db.models.fields.CharField', [], {'max_length': '20'})
         },
         u'clinics.patient': {
             'Meta': {'object_name': 'Patient'},

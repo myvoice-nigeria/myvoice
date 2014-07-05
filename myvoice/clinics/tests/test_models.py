@@ -6,9 +6,9 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from myvoice.core.tests import factories
+from myvoice.statistics import models as statistics
 
 from .. import models
-from .. import statistics
 
 
 class TestClinic(TestCase):
@@ -58,8 +58,8 @@ class TestPatient(TestCase):
 
     def test_unicode(self):
         """Smoke test for Patient string representation."""
-        obj = self.Factory.create(name='test')
-        self.assertEqual(str(obj), 'test')
+        obj = self.Factory.create(serial=5, clinic__name='Hello')
+        self.assertEqual(str(obj), '5 at Hello')
 
     def test_get_name_display(self):
         """Contact name should be preferred to 'name' field on patient."""
@@ -81,9 +81,9 @@ class TestVisit(TestCase):
     def test_unicode(self):
         """Smoke test for Visit string representation."""
         obj = self.Factory.create(
-            patient=factories.Patient(name='test_patient'),
+            patient=factories.Patient(serial=5, clinic__name='Hello'),
             service=factories.Service(name='test_service'))
-        self.assertEqual(str(obj), 'test_patient')
+        self.assertEqual(str(obj), '5 at Hello')
 
 
 class TestGenericFeedback(TestCase):
@@ -104,12 +104,14 @@ class TestClinicStatistic(TestCase):
 
     def test_unicode(self):
         """Smoke test for ClinicStatistic string representation."""
-        statistic = factories.Statistic.create(name='Income')
+        # Manually construct object to have more control over statistic type.
+        #statistic = factories.Statistic.create(statistic_type=statistics.Statistic.TEXT)
         obj = self.Factory.create(
             clinic__name='Hello',
             month=datetime.date(2012, 10, 1),
-            statistic=statistic)
-        self.assertEqual(str(obj), 'Income for Hello for October 2012')
+            statistic__statistic_type=statistics.Statistic.TEXT,
+            statistic__name='Test Stat',)
+        self.assertEqual(str(obj), 'Test Stat for Hello for October 2012')
 
     def test_get_month_display(self):
         """Smoke test for month display method."""
@@ -127,18 +129,13 @@ class TestClinicStatistic(TestCase):
         obj = self.Factory.create()
         with self.assertRaises(IntegrityError):
             self.Factory.create(statistic=obj.statistic, clinic=obj.clinic,
-                                month=obj.month, service=obj.service)
+                                month=obj.month)
 
     def test_no_value(self):
-        clinic_code = 0
-        for statistic_type in [statistics.INTEGER, statistics.FLOAT,
-                               statistics.PERCENTAGE, statistics.TEXT]:
-            clinic_code += 1
-            statistic = factories.Statistic(statistic_type='int')
-            obj = self.Model(
-                clinic=factories.Clinic(code='{}'.format(clinic_code)),
-                month=datetime.date(2012, 10, 1),
-                statistic=statistic)
+        for statistic_type, _ in statistics.Statistic.STATISTIC_TYPES:
+            statistic = factories.Statistic(statistic_type=statistic_type)
+            obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1),
+                             statistic=statistic)
             self.assertEqual(obj.int_value, None)
             self.assertEqual(obj.float_value, None)
             self.assertEqual(obj.text_value, None)
@@ -147,12 +144,9 @@ class TestClinicStatistic(TestCase):
 
     def test_statistic_int(self):
         # Manually construct object to have more control over statistic type.
-        #get_statistic_type.return_value = statistics.INTEGER
-        statistic = factories.Statistic(statistic_type='int')
-        obj = self.Model(
-            clinic=factories.Clinic(),
-            month=datetime.date(2012, 10, 1),
-            statistic=statistic)
+        statistic = factories.Statistic.create(statistic_type=statistics.Statistic.INTEGER)
+        obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1),
+                         statistic=statistic)
 
         # Value in float_value should not validate.
         obj.float_value = 1
@@ -190,11 +184,9 @@ class TestClinicStatistic(TestCase):
 
     def test_statistic_float(self):
         # Manually construct object to have more control over statistic type.
-        statistic = factories.Statistic(statistic_type='float')
-        obj = self.Model(
-            clinic=factories.Clinic(),
-            month=datetime.date(2012, 10, 1),
-            statistic=statistic)
+        statistic = factories.Statistic.create(statistic_type=statistics.Statistic.FLOAT)
+        obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1),
+                         statistic=statistic)
 
         # Value in int_value should not validate.
         obj.int_value = 1
@@ -232,11 +224,9 @@ class TestClinicStatistic(TestCase):
 
     def test_statistic_percentage(self):
         # Manually construct object to have more control over statistic type.
-        statistic = factories.Statistic(statistic_type='percentage')
-        obj = self.Model(
-            clinic=factories.Clinic(),
-            month=datetime.date(2012, 10, 1),
-            statistic=statistic)
+        statistic = factories.Statistic.create(statistic_type=statistics.Statistic.PERCENTAGE)
+        obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1),
+                         statistic=statistic)
 
         # Value in int_value should not validate.
         obj.int_value = 1
@@ -274,11 +264,9 @@ class TestClinicStatistic(TestCase):
 
     def test_statistic_text(self):
         # Manually construct object to have more control over statistic type.
-        statistic = factories.Statistic(statistic_type='text')
-        obj = self.Model(
-            clinic=factories.Clinic(),
-            month=datetime.date(2012, 10, 1),
-            statistic=statistic)
+        statistic = factories.Statistic.create(statistic_type=statistics.Statistic.TEXT)
+        obj = self.Model(clinic=factories.Clinic(), month=datetime.date(2012, 10, 1),
+                         statistic=statistic)
 
         # Value in int_value should not validate.
         obj.int_value = 1

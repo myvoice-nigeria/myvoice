@@ -300,7 +300,7 @@ class ClinicStatistic(models.Model):
             except (ValueError, TypeError):
                 error_msg = '{0} requires a non-null float value.'
                 raise ValidationError({
-                    'value': [error_msg.format(self.get_statistic_display())],
+                    'value': [error_msg.format(self.statistic)],
                 })
         elif statistic_type in (Statistic.INTEGER,):
             try:
@@ -308,13 +308,13 @@ class ClinicStatistic(models.Model):
             except (ValueError, TypeError):
                 error_msg = '{0} requires a non-null integer value.'
                 raise ValidationError({
-                    'value': [error_msg.format(self.get_statistic_display())],
+                    'value': [error_msg.format(self.statistic)],
                 })
         elif statistic_type in (Statistic.TEXT,):
             if self.text_value is None:
                 error_msg = '{0} requires a non-null text value.'
                 raise ValidationError({
-                    'value': [error_msg.format(self.get_statistic_display())],
+                    'value': [error_msg.format(self.statistic)],
                 })
             self.text_value = str(self.text_value)
         else:

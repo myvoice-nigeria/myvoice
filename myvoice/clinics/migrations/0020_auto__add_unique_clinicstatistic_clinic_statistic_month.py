@@ -8,14 +8,14 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
+        db.create_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
 
-        # Changing field 'GenericFeedback.clinic'
-        db.alter_column(u'clinics_genericfeedback', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'], null=True))
 
     def backwards(self, orm):
+        # Removing unique constraint on 'ClinicStatistic', fields ['clinic', 'statistic', 'month']
+        db.delete_unique(u'clinics_clinicstatistic', ['clinic_id', 'statistic_id', 'month'])
 
-        # Changing field 'GenericFeedback.clinic'
-        db.alter_column(u'clinics_genericfeedback', 'clinic_id', self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['clinics.Clinic']))
 
     models = {
         u'auth.group': {
@@ -91,14 +91,6 @@ class Migration(SchemaMigration):
             'statistic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['statistics.Statistic']"}),
             'text_value': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
-        },
-        u'clinics.genericfeedback': {
-            'Meta': {'object_name': 'GenericFeedback'},
-            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
-            'message_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'sender': ('django.db.models.fields.CharField', [], {'max_length': '20'})
         },
         u'clinics.patient': {
             'Meta': {'object_name': 'Patient'},
