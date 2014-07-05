@@ -15,3 +15,7 @@ users:
   bayo:
     public_key:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCgtI3pI0H3XfBBsacHwJWb76MKstfnu9tgU4BFTV9B0bs4w9215cxYtLB/+QGXJotDxx6zCoHuQtU9xBgT8ncq6eCMM6+oh/MwSAaaJcRgepwOHiON/J7YN5e3w5HTZnYnmC9f5D8XvsMt3Jt+xp1nOIrN4mVIys5IBM9zrKyvVcDpjm3nZvMc/94iaM0VpcW9qDJfH701801jZTNxmV5P0GgxZKGp2Hwh0TVKVkhsqb509RXawF5H70wiBOeOTkNCs0TaVj3hBS4ZgjjYWju9B/Lt0qGzgl9qrcjKDQyyNLlCDyrJ8cvexyMoeFjsB7k1lwmiTJRez95YQ3LM0yi9 bayo@bayos-MacBook-Pro.local
+
+  priyanka:
+    public_key:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQCx9KRxYb649VZeM072nh7gUcuF/Xi5DfVHWODS2winfG3aVG4Z+tzfhv2GTMOd7PeUchwfdJ3I9QVlWmR0vVoxhsGTazVxkQB7ibi43D20qNlJVky4aNzxqK+hSV83C9tf9TeqzWfQr1PILZxZUOf10sXVlthciSp8bhIeqXyKdw== priyanka@Priyanka-Macbook-Air
