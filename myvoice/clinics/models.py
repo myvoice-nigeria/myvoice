@@ -194,6 +194,9 @@ class GenericFeedback(models.Model):
     message = models.CharField(max_length=200, blank=True)
     message_date = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name_plural = 'Generic Feedback'
+
     def __unicode__(self):
         return self.sender
 
