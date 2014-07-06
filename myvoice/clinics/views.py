@@ -65,7 +65,7 @@ class VisitView(View):
                 output_msg = 'Clinic code does not seem correct, but patient was registered. '\
                              'Thank you.'
 
-            models.Visit.objects.create(patient=patient, service=serv)
+            models.Visit.objects.create(patient=patient, service=serv, mobile=mobile)
             data = json.dumps({'text': output_msg})
         else:
             data = json.dumps({'text': self.get_error_msg(form)})

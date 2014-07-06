@@ -42,7 +42,7 @@ def start_feedback_survey(visit_pk):
         return
 
     try:
-        TextItApi().start_flow(survey.flow_id, visit.patient.mobile)
+        TextItApi().start_flow(survey.flow_id, visit.mobile)
     except TextItException:
         logger.exception("Error sending survey for visit {}.".format(visit.pk))
     else:
@@ -66,7 +66,8 @@ def handle_new_visits():
                                   
 
     # Send a "welcome" message immediately.
-    phones = list(set(visits.values_list('patient__mobile', flat=True)))
+    # Grab the phone numbers of all patients from applicable visits.
+    phones = list(set(visits.values_list('mobile', flat=True)))
     phones = [survey_utils.convert_to_international_format(p) for p in phones]
     try:
         welcome_message = ("Hi, thank you for your visit to the hospital. "
