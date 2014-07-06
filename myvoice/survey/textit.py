@@ -97,12 +97,22 @@ class TextItApi(object):
         return runs
 
     def start_flow(self, flow_id, phones):
-        data = {
-            'flow': flow_id,
-            'phone': phones,
-        }
+        """Initiate a survey flow for all phone numbers.
+
+        phones should be a list of international-format phone numbers.
+        """
+        data = {'flow': flow_id, 'phone': phones}
         run_data = self.client.post('runs', data=data)
         return run_data
+
+    def send_message(self, message, phones):
+        """Send the message to all phone numbers.
+
+        phones should be a list of international-format phone numbers.
+        """
+        data = {'text': message, 'phone': phones}
+        sms_data = self.client.post('sms', data=data)
+        return sms_data
 
     def get_flow_export(self, flow_id):
         """One-off method to get flow export data. Does NOT use the API.
