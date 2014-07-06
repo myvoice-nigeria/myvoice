@@ -88,12 +88,12 @@ class TestHandleNewVisits(TestCase):
         We should send a welcome message and schedule the survey to be started
         for a new visit.
         """
-        self.visit = factories.Visit(welcome_sent=None)
+        visit = factories.Visit(welcome_sent=None)
         tasks.handle_new_visits()
         self.assertEqual(send_message.call_count, 1)
-        self.assertEqual(send_message.call_args, ((self.visit.patient.mobile,),))
-        self.visit = Visit.objects.get(pk=self.visit.pk)
-        self.assertIsNotNone(self.visit.welcome_sent)
+        self.assertEqual(send_message.call_args, ((visit.patient.mobile,),))
+        visit = Visit.objects.get(pk=visit.pk)
+        self.assertIsNotNone(visit.welcome_sent)
         self.assertEqual(start_feedback_survey.call_count, 1)
 
     def test_past_visit(self, send_message, start_feedback_survey):
@@ -102,10 +102,10 @@ class TestHandleNewVisits(TestCase):
         welcome message sent.
         """
         welcome_sent = timezone.now()
-        self.visit = factories.Visit(welcome_sent=welcome_sent)
+        visit = factories.Visit(welcome_sent=welcome_sent)
         tasks.handle_new_visits()
         self.assertEqual(send_message.call_count, 0)
         self.assertEqual(start_feedback_survey.call_count, 0)
-        self.visit = Visit.objects.get(pk=self.visit.pk)
-        self.assertEqual(self.visit.welcome_sent, welcome_sent)
-        self.assertIsNone(self.visit.survey_sent)
+        visit = Visit.objects.get(pk=visit.pk)
+        self.assertEqual(visit.welcome_sent, welcome_sent)
+        self.assertIsNone(visit.survey_sent)
