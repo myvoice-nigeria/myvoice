@@ -70,7 +70,7 @@ class VisitView(View):
         else:
             data = json.dumps({'text': self.get_error_msg(form)})
 
-        response = HttpResponse(data, mimetype='text/json')
+        response = HttpResponse(data, content_type='text/json')
 
         # This is to test webhooks from localhost
         # response['Access-Control-Allow-Origin'] = '*'
