@@ -133,8 +133,21 @@ class StatisticGroup(factory.django.DjangoModelFactory):
 
 class Survey(factory.django.DjangoModelFactory):
     FACTORY_FOR = survey.Survey
-
+    
     flow_id = factory.Sequence(lambda n: n)
     name = factory.fuzzy.FuzzyText()
     active = True
     role = survey.Survey.PATIENT_FEEDBACK
+
+
+class SurveyQuestion(factory.django.DjangoModelFactory):
+    FACTORY_FOR = survey.SurveyQuestion
+    
+    survey = factory.SubFactory('myvoice.core.tests.factories.Survey')
+    question_id = factory.fuzzy.FuzzyText()
+    label = factory.fuzzy.FuzzyText()
+    
+    @factory.lazy_attribute
+    def question_type(self):
+        choices = [k for k, _ in survey.SurveyQuestion.QUESTION_TYPES]
+        return random.choice(choices)

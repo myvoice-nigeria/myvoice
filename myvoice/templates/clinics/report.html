@@ -64,12 +64,18 @@
       <div class="date">{{ min_date.date|date:"F j, Y" }} - {{ max_date.date|date:"F j, Y" }}</div>
         <div class="content">
           <h2>FEEDBACK PARTICIPATION</h2>
-          <div class="col-xs-{#4#}6">
-            <h1>{{ num_registered }}</h1> Patients registered for survey
-          </div>
-          <div class="col-xs-{#4#}6">
-            <h1>{{ num_completed }}</h1> Completed surveys
-          </div>
+          {% if num_registered %}
+            <div class="col-xs-6">
+              <h1>{{ num_registered }}</h1> Patients registered for survey
+            </div>
+            <div class="col-xs-6">
+              <h1>{{ percent_completed }}%</h1> Completed surveys
+            </div>
+          {% else %}
+            <div class="col-xs-12">
+              <h1>0</h1> Patients registered for survey
+            </div>
+          {% endif %}
           {% comment %}
           {# TODO #}
           <div class="col-xs-4">

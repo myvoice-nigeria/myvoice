@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 
 from myvoice.clinics.models import Visit
-from myvoice.core.utils import get_week_start, get_week_end
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import SurveyQuestion, Survey
 
@@ -126,7 +126,7 @@ class ClinicReport(DetailView):
                 if answers.get(wait_time.label) == wait_time.get_categories()[-1]:
                     unsatisfied_count += 1
                     continue
-        return 100 - int(float(unsatisfied_count) / len(grouped) * 100)
+        return 100 - make_percentage(unsatisfied_count, len(grouped))
 
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
@@ -226,8 +226,14 @@ class ClinicReport(DetailView):
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
-        kwargs['num_registered'] = self.get_num_registered()
-        kwargs['num_completed'] = self.get_num_completed()
+        num_registered = self.get_num_registered()
+        num_completed = self.get_num_completed()
+        if num_registered:
+            percent_completed = make_percentage(num_completed, num_registered)
+        else:
+            percent_completed = None
+        kwargs['num_registered'] = num_registered
+        kwargs['percent_completed'] = percent_completed
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
 
