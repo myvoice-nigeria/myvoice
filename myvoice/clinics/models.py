@@ -156,7 +156,8 @@ class Visit(models.Model):
     service = models.ForeignKey('Service', blank=True, null=True)
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
     visit_time = models.DateTimeField(default=get_current_datetime)
-    survey_sent = models.BooleanField(default=False)
+    welcome_sent = models.DateTimeField(blank=True, null=True)
+    survey_sent = models.DateTimeField(blank=True, null=True)
     mobile = models.CharField(max_length=11, blank=True)
 
     def __unicode__(self):
