@@ -37,7 +37,7 @@ class TestStartFeedbackSurvey(TestCase):
     def setUp(self):
         super(TestStartFeedbackSurvey, self).setUp()
         self.survey = factories.Survey(role=models.Survey.PATIENT_FEEDBACK)
-        self.visit = factories.Visit()
+        self.visit = factories.Visit(mobile='01234567890')
 
     def test_no_such_survey(self, start_flow):
         """No flow should be started if there is no patient feedback survey."""
@@ -83,26 +83,26 @@ class TestHandleNewVisits(TestCase):
         super(TestHandleNewVisits, self).setUp()
         self.survey = factories.Survey(role=models.Survey.PATIENT_FEEDBACK)
 
-    def test_new_visit(self, send_message, start_feedback_survey):
+    def test_new_visit(self, start_feedback_survey, send_message):
         """
         We should send a welcome message and schedule the survey to be started
         for a new visit.
         """
-        visit = factories.Visit(welcome_sent=None)
+        visit = factories.Visit(welcome_sent=None, mobile='01234567890')
         tasks.handle_new_visits()
         self.assertEqual(send_message.call_count, 1)
-        self.assertEqual(send_message.call_args, ((visit.mobile,),))
+        self.assertEqual(send_message.call_args[0][1], [u'+2341234567890'])
         visit = Visit.objects.get(pk=visit.pk)
         self.assertIsNotNone(visit.welcome_sent)
         self.assertEqual(start_feedback_survey.call_count, 1)
 
-    def test_past_visit(self, send_message, start_feedback_survey):
+    def test_past_visit(self, start_feedback_survey, send_message):
         """
         We should not do anything for visits that have already had the
         welcome message sent.
         """
         welcome_sent = timezone.now()
-        visit = factories.Visit(welcome_sent=welcome_sent)
+        visit = factories.Visit(welcome_sent=welcome_sent, mobile='01234567890')
         tasks.handle_new_visits()
         self.assertEqual(send_message.call_count, 0)
         self.assertEqual(start_feedback_survey.call_count, 0)

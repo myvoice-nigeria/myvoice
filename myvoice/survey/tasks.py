@@ -61,9 +61,10 @@ def handle_new_visits():
 
     # Look for visits for which we haven't sent a welcome message.
     visits = Visit.objects.filter(welcome_sent__isnull=True,
-                                  patient__mobile__isnull=False)\
-                          .exclude(patient__mobile='')
-                                  
+                                  mobile__isnull=False)
+    # Don't bother continuing if there aren't any new visits
+    if not visits.exists():
+        return
 
     # Send a "welcome" message immediately.
     # Grab the phone numbers of all patients from applicable visits.
@@ -77,8 +78,8 @@ def handle_new_visits():
         TextItApi().send_message(welcome_message, phones)
     except TextItException:
         logger.exception("Error sending welcome message to {}".format(phones))
-    else:
-        visits.update(welcome_sent=timezone.now())
+        # re-raise the exception so Celery knows the task failed
+        raise
 
     # Schedule when to initiate the flow.
     now = timezone.now()  # UTC
@@ -95,3 +96,6 @@ def handle_new_visits():
         start_feedback_survey.apply_async(args=[visit.pk], eta=eta)
         logger.debug("Scheduled survey to start for visit "
                      "{} at {}.".format(visit.pk, eta))
+    # update visists at the end, since adding a value for welcome_sent prevents
+    # us from finding the values we were originally interested in
+    visits.update(welcome_sent=timezone.now())
