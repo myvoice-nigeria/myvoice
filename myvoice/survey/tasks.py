@@ -42,7 +42,7 @@ def start_feedback_survey(visit_pk):
         return
 
     try:
-        TextItApi().start_flow(survey.flow_id, visit.patient.mobile)
+        TextItApi().start_flow(survey.flow_id, visit.mobile)
     except TextItException:
         logger.exception("Error sending survey for visit {}.".format(visit.pk))
     else:
