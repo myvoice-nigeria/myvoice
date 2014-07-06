@@ -2,7 +2,6 @@ import mock
 
 from django.test import TestCase
 from django.utils import timezone
-from django.test.utils import override_settings
 
 from myvoice.clinics.models import Visit
 from myvoice.core.tests import factories
@@ -12,7 +11,6 @@ from .. import models
 from ..textit import TextItException
 
 
-@override_settings(TEXTIT_API_TOKEN='dummy test token')
 @mock.patch('myvoice.survey.tasks.importer.import_responses')
 class TestImportResponses(TestCase):
 
@@ -30,7 +28,6 @@ class TestImportResponses(TestCase):
         self.assertEqual(import_responses.call_count, 0)
 
 
-@override_settings(TEXTIT_API_TOKEN='dummy test token')
 @mock.patch.object(tasks.TextItApi, 'start_flow')
 class TestStartFeedbackSurvey(TestCase):
 
@@ -74,7 +71,6 @@ class TestStartFeedbackSurvey(TestCase):
         self.assertIsNone(self.visit.survey_sent)
 
 
-@override_settings(TEXTIT_API_TOKEN='dummy test token')
 @mock.patch.object(tasks.TextItApi, 'send_message')
 @mock.patch('myvoice.survey.tasks.start_feedback_survey.apply_async')
 class TestHandleNewVisits(TestCase):
