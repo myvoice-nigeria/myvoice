@@ -96,6 +96,6 @@ def handle_new_visits():
         start_feedback_survey.apply_async(args=[visit.pk], eta=eta)
         logger.debug("Scheduled survey to start for visit "
                      "{} at {}.".format(visit.pk, eta))
-    # update visists at the end, since adding a value for welcome_sent prevents
+    # update visits at the end, since adding a value for welcome_sent prevents
     # us from finding the values we were originally interested in
     visits.update(welcome_sent=timezone.now())
