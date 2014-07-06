@@ -2,6 +2,7 @@ import mock
 
 from django.test import TestCase
 from django.utils import timezone
+from django.test.utils import override_settings
 
 from myvoice.clinics.models import Visit
 from myvoice.core.tests import factories
@@ -11,6 +12,7 @@ from .. import models
 from ..textit import TextItException
 
 
+@override_settings(TEXTIT_API_TOKEN='dummy test token')
 @mock.patch('myvoice.survey.tasks.importer.import_responses')
 class TestImportResponses(TestCase):
 
@@ -19,7 +21,7 @@ class TestImportResponses(TestCase):
         self.survey = factories.Survey(active=True)
         tasks.import_responses()
         self.assertEqual(import_responses.call_count, 1)
-        self.assertEqual(import_responses.call_args, (self.survey.flow_id,))
+        self.assertEqual(import_responses.call_args, ((self.survey.flow_id,),))
 
     def test_inactive_survey(self, import_responses):
         """We should not try to import responses for inactive surveys."""
@@ -28,6 +30,7 @@ class TestImportResponses(TestCase):
         self.assertEqual(import_responses.call_count, 0)
 
 
+@override_settings(TEXTIT_API_TOKEN='dummy test token')
 @mock.patch.object(tasks.TextItApi, 'start_flow')
 class TestStartFeedbackSurvey(TestCase):
 
@@ -55,7 +58,7 @@ class TestStartFeedbackSurvey(TestCase):
         """When survey is sent, survey_sent field should be updated."""
         tasks.start_feedback_survey(self.visit.pk)
         self.assertEqual(start_flow.call_count, 1)
-        expected = (self.survey.flow_id, self.visit.patient.mobile)
+        expected = ((self.survey.flow_id, self.visit.patient.mobile),)
         self.assertEqual(start_flow.call_args, expected)
         self.visit = Visit.objects.get(pk=self.visit.pk)
         self.assertIsNotNone(self.visit.survey_sent)
@@ -64,13 +67,14 @@ class TestStartFeedbackSurvey(TestCase):
         """If error occurs during start_flow, survey_sent should be null."""
         start_flow.side_effect = TextItException
         tasks.start_feedback_survey(self.visit.pk)
-        self.assertEqual(start_flow, call-count, 1)
-        expected = (self.survey.flow_id, self.visit.patient.mobile)
+        self.assertEqual(start_flow.call_count, 1)
+        expected = ((self.survey.flow_id, self.visit.patient.mobile),)
         self.assertEqual(start_flow.call_args, expected)
         self.visit = Visit.objects.get(pk=self.visit.pk)
         self.assertIsNone(self.visit.survey_sent)
 
 
+@override_settings(TEXTIT_API_TOKEN='dummy test token')
 @mock.patch.object(tasks.TextItApi, 'send_message')
 @mock.patch('myvoice.survey.tasks.start_feedback_survey.apply_async')
 class TestHandleNewVisits(TestCase):
@@ -87,7 +91,7 @@ class TestHandleNewVisits(TestCase):
         self.visit = factories.Visit(welcome_sent=None)
         tasks.handle_new_visits()
         self.assertEqual(send_message.call_count, 1)
-        self.assertEqual(send_message.call_args[1], [self.visit.patient.mobile])
+        self.assertEqual(send_message.call_args, ((self.visit.patient.mobile,),))
         self.visit = Visit.objects.get(pk=self.visit.pk)
         self.assertIsNotNone(self.visit.welcome_sent)
         self.assertEqual(start_feedback_survey.call_count, 1)
