@@ -12,7 +12,8 @@ before_script:
   - psql myvoice -c "CREATE EXTENSION postgis;" -U postgres
   - python manage.py syncdb --migrate --noinput
 script:
-  - python manage.py test
+  - coverage run manage.py test
+  - coverage report -m
 notifications:
   email:
     - myvoice-team@caktusgroup.com
