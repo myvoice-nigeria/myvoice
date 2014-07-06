@@ -6,7 +6,8 @@ import json
 from myvoice.core.tests import factories
 
 from myvoice.clinics import views as clinics
-from myvoice.clinics import models
+from myvoice.clinics import models 
+from myvoice.survey import models as survey_models
 
 
 class TestVisitView(TestCase):
@@ -306,3 +307,32 @@ class TestFeedbackView(TestCase):
         obj = models.GenericFeedback.objects.get(sender=self.phone)
         self.assertEqual('no (none)', obj.message)
         self.assertIsNone(obj.clinic)
+
+
+class TestClinicReportView(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.clinic = factories.Clinic.create(code=1)
+        self.service = factories.Service.create(code=5)
+        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
+        self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
+        self.questions = []
+        for l in ['Open Facility', 'Respectful Staff Treatment',
+                  'Clean Hospital Materials', 'Charged Fairly',
+                  'Wait Time']:
+            self.questions.append(factories.SurveyQuestion.create(label=l, survey=self.survey))
+
+    def make_request(self, data=None):
+        """Make Test request with POST data."""
+        if data is None:
+            data = {}
+        url = '/reports/facility/{}/'.format(self.clinic.slug)
+        request = self.factory.get(url, data=data)
+        return clinics.ClinicReport.as_view()(request, slug=self.clinic.slug)
+
+    def test_clinic_report_page_loads(self):
+        """Smoke test to make sure the page loads and returns some content."""
+        response = self.make_request()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(bool(response.render()))
