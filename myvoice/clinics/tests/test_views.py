@@ -242,7 +242,7 @@ class TestVisitView(TestCase):
         # Test the values are correctly saved
         obj = models.Visit.objects.all()[0]
         self.assertEqual(obj.patient.clinic, self.clinic)
-        self.assertEqual('08122233301', obj.patient.mobile)
+        self.assertEqual('08122233301', obj.mobile)
         self.assertEqual(401, obj.patient.serial)
 
         # Test that correct mobile is saved
