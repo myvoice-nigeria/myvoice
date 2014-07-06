@@ -11,7 +11,7 @@ from .. import models
 from ..textit import TextItException
 
 
-@mock.patch(tasks.importer.import_responses)
+@mock.patch('myvoice.survey.tasks.importer.import_responses')
 class TestImportResponses(TestCase):
 
     def test_active_survey(self, import_responses):
@@ -72,7 +72,7 @@ class TestStartFeedbackSurvey(TestCase):
 
 
 @mock.patch.object(tasks.TextItApi, 'send_message')
-@mock.patch(tasks.start_feedback_survey.apply_async)
+@mock.patch('myvoice.survey.tasks.start_feedback_survey.apply_async')
 class TestHandleNewVisits(TestCase):
 
     def setUp(self):
