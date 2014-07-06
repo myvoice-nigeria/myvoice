@@ -5,12 +5,13 @@ import string
 import factory
 import factory.django
 import factory.fuzzy
-from pytz import UTC
 
 from django.contrib.auth import models as auth
+from django.utils import timezone
 
 from myvoice.clinics import models as clinics
 from myvoice.statistics import models as statistics
+from myvoice.survey import models as survey
 
 from rapidsms import models as rapidsms
 
@@ -72,7 +73,7 @@ class Visit(factory.django.DjangoModelFactory):
 
     patient = factory.SubFactory('myvoice.core.tests.factories.Patient')
     service = factory.SubFactory('myvoice.core.tests.factories.Service')
-    visit_time = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=UTC))
+    visit_time = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
 
 
 class GenericFeedback(factory.django.DjangoModelFactory):
@@ -128,3 +129,12 @@ class StatisticGroup(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'Stat Group {0}'.format(n))
     slug = factory.Sequence(lambda n: 'stat-group-{0}'.format(n))
+
+
+class Survey(factory.django.DjangoModelFactory):
+    FACTORY_FOR = survey.Survey
+
+    flow_id = factory.Sequence(lambda n: n)
+    name = factory.fuzzy.FuzzyText()
+    active = True
+    role = survey.Survey.PATIENT_FEEDBACK

@@ -23,6 +23,8 @@ COMPRESS_ENABLED = False
 
 # Special test settings
 if 'test' in sys.argv:
+    TEXTIT_API_TOKEN='dummy test token'
+
     COMPRESS_PRECOMPILERS = ()
 
     PASSWORD_HASHERS = (
