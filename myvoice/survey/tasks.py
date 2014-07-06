@@ -44,7 +44,7 @@ def start_surveys():
     # visits = visits.filter(visit_time__lte=max_visit_time)
 
     # Grab the phone numbers of all patients from applicable visits.
-    phones = list(set(visits.values_list('patient__mobile', flat=True)))
+    phones = list(set(visits.values_list('mobile', flat=True)))
     phones = [survey_utils.convert_to_international_format(p) for p in phones]
 
     try:
