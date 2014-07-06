@@ -1,6 +1,5 @@
 import datetime
 import logging
-import random
 
 from celery.task import task
 
@@ -10,7 +9,7 @@ from myvoice.clinics.models import Visit
 
 from . import importer, utils as survey_utils
 from .models import Survey
-from .textit import TextItApi
+from .textit import TextItApi, TextItException
 
 
 logger = logging.getLogger(__name__)
@@ -33,18 +32,18 @@ def start_feedback_survey(visit_pk):
     try:
         survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
     except Survey.DoesNotExist:
-        logger.error("No patient feedback survey is registered.")
+        logger.exception("No patient feedback survey is registered.")
         return
 
     try:
         visit = Visit.objects.get(pk=visit_pk)
     except Visit.DoesNotExist:
-        logger.error("Unable to find visit with pk {}.".format(visit_pk))
+        logger.exception("Unable to find visit with pk {}.".format(visit_pk))
         return
 
     try:
         TextItApi().start_flow(survey.flow_id, visit.patient.mobile)
-    except:
+    except TextItException:
         logger.exception("Error sending survey for visit {}.".format(visit.pk))
     else:
         visit.survey_sent = timezone.now()
@@ -73,10 +72,10 @@ def handle_new_visits():
                            "hospital better. Please reply to the texts we "
                            "will send you shortly.")
         TextItApi().send_message(welcome_message, phones)
-    except:
+    except TextItException:
         logger.exception("Error sending welcome message to {}".format(phones))
     else:
-        visits.update(welcome_sent=True)
+        visits.update(welcome_sent=timezone.now())
 
     # Schedule when to initiate the flow.
     now = timezone.now()  # UTC
