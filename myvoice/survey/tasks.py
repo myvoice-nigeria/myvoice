@@ -80,17 +80,22 @@ def handle_new_visits():
     # Schedule when to initiate the flow.
     now = timezone.now()  # UTC
     for visit in visits:
-        if now.hour > 20:  # 8pm UTC / 9pm WAT
-            # Don't send overnight. Send tomorrow at 7am UTC / 8am WAT.
-            eta = now.replace(day=now.day + 1, hour=7, minute=0, second=0,
-                              microsecond=0)
-        elif visit.patient.clinic.code == 7:
+        if visit.patient.clinic.code == 7:
             # Wamba General Hospital is a special case - their surveys
             # should begin 4 or 24 hours later, randomly chosen.
             eta = now + datetime.timedelta(hours=random.choice([4, 24]))
         else:
             # For all other clinics, send the survey 3 hours later.
             eta = now + datetime.timedelta(hours=3)
+
+        if eta.hour > 20:
+            # It's past 8pm UTC / 9pm WAT. Send tomorrow morning at 8am WAT.
+            eta = eta.replace(day=now.day + 1, hour=7, minute=0, second=0,
+                              microsecond=0)
+        elif eta.hour < 7:
+            # It's before 7am UTC / 8am WAT. Send at 8am WAT.
+            eta = eta.replace(hour=7, minute=0, second=0, microsecond=0)
+
         start_feedback_survey.apply_async(args=[visit.pk], eta=eta)
         logger.debug("Scheduled survey to start for visit "
                      "{} at {}.".format(visit.pk, eta))
