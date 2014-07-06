@@ -142,6 +142,9 @@ class Patient(models.Model):
         blank=True, null=True)
     serial = models.PositiveIntegerField()
 
+    class Meta:
+        unique_together = [('clinic', 'serial')]
+
     def __unicode__(self):
         return '{0} at {1}'.format(self.serial, self.clinic.name)
 
