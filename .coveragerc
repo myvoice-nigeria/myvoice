@@ -1,0 +1,3 @@
+[run]
+source = myvoice 
+omit = myvoice/*/tests*,myvoice/*/urls.py,myvoice/urls.py,myvoice/*/migrations/*
