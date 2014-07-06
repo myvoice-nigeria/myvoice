@@ -60,7 +60,10 @@ def handle_new_visits():
     """
 
     # Look for visits for which we haven't sent a welcome message.
-    visits = Visit.objects.filter(welcome_sent__isnull=True)
+    visits = Visit.objects.filter(welcome_sent__isnull=True,
+                                  patient__mobile__isnull=False)\
+                          .exclude(patient__mobile='')
+                                  
 
     # Send a "welcome" message immediately.
     phones = list(set(visits.values_list('patient__mobile', flat=True)))
