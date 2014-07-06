@@ -192,7 +192,7 @@ def import_responses(flow_id):
 
             # Find visits we've registered for this phone number that
             # were registered before this response was received.
-            visits = Visit.objects.filter(patient__mobile=local_phone)
+            visits = Visit.objects.filter(mobile=local_phone)
             visits = visits.filter(visit_time__lte=response_time)
 
             try:
