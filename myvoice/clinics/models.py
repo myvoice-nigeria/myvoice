@@ -9,7 +9,6 @@ from myvoice.core.validators import validate_year
 from myvoice.statistics.models import Statistic
 
 
-
 class Region(gis.Model):
     """Geographical regions"""
     TYPE_CHIOCES = (
