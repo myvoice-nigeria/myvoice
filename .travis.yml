@@ -13,7 +13,7 @@ before_script:
   - python manage.py syncdb --migrate --noinput
 script:
   - coverage run manage.py test
-  - coverage report -m
+  - coverage report -m --fail-under 40
 notifications:
   email:
     - myvoice-team@caktusgroup.com
