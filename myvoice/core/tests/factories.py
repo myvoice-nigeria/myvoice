@@ -11,6 +11,7 @@ from django.contrib.auth import models as auth
 
 from myvoice.clinics import models as clinics
 from myvoice.statistics import models as statistics
+from myvoice.survey import models as survey
 
 from rapidsms import models as rapidsms
 
@@ -128,3 +129,12 @@ class StatisticGroup(factory.django.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'Stat Group {0}'.format(n))
     slug = factory.Sequence(lambda n: 'stat-group-{0}'.format(n))
+
+
+class Survey(factory.django.DjangoModelFactory):
+    FACTORY_FOR = survey.Survey
+
+    flow_id = factory.Sequence(lambda n: n)
+    name = factory.fuzzy.FuzzyText()
+    active = True
+    role = survey.Survey.PATIENT_FEEDBACK
