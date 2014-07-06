@@ -1,4 +1,5 @@
 import datetime
+from pytz import UTC
 
 from django.contrib.gis.db import models as gis
 from django.core.exceptions import ValidationError
@@ -6,6 +7,10 @@ from django.db import models
 
 from myvoice.core.validators import validate_year
 from myvoice.statistics.models import Statistic
+
+
+def get_current_datetime():
+    return datetime.datetime.now().replace(tzinfo=UTC)
 
 
 class Region(gis.Model):
@@ -150,7 +155,7 @@ class Visit(models.Model):
     patient = models.ForeignKey('Patient')
     service = models.ForeignKey('Service', blank=True, null=True)
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
-    visit_time = models.DateTimeField(default=datetime.datetime.now)
+    visit_time = models.DateTimeField(default=get_current_datetime)
 
     welcome_sent = models.DateTimeField(blank=True, null=True)
     survey_sent = models.DateTimeField(blank=True, null=True)

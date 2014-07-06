@@ -5,6 +5,7 @@ import string
 import factory
 import factory.django
 import factory.fuzzy
+from pytz import UTC
 
 from django.contrib.auth import models as auth
 
@@ -71,6 +72,7 @@ class Visit(factory.django.DjangoModelFactory):
 
     patient = factory.SubFactory('myvoice.core.tests.factories.Patient')
     service = factory.SubFactory('myvoice.core.tests.factories.Service')
+    visit_time = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=UTC))
 
 
 class GenericFeedback(factory.django.DjangoModelFactory):

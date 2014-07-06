@@ -70,7 +70,7 @@ class VisitView(View):
         else:
             data = json.dumps({'text': self.get_error_msg(form)})
 
-        response = HttpResponse(data, mimetype='text/json')
+        response = HttpResponse(data, content_type='text/json')
 
         # This is to test webhooks from localhost
         # response['Access-Control-Allow-Origin'] = '*'
@@ -239,6 +239,10 @@ class RegionReport(DetailView):
 
 class FeedbackView(View):
     form_class = forms.FeedbackForm
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super(FeedbackView, self).dispatch(*args, **kwargs)
 
     def post(self, request):
         form = self.form_class(request.POST)
