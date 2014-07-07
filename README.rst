@@ -21,9 +21,13 @@ forwarding if it is not already by adding ``ForwardAgent yes`` to your SSH confi
 Getting Started
 ------------------------
 
-MyVoice uses PostGIS, so first install the necessary PostgreSQL extensions::
+MyVoice uses PostGIS, so first install the necessary PostgreSQL extensions,
+adjusting the Ubuntu release (precise) PostgreSQL version (9.1) if needed::
 
-    ./scripts/postgres-extensions.sh
+    wget -O - http://apt.postgresql.org/pub/repos/apt/ACCC4CF8.asc | sudo apt-key add -
+    sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ precise-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+    sudo apt-get update
+    sudo apt-get install pgdg-keyring postgresql-9.1-postgis-2.1
 
 To setup your local environment you should create a virtualenv and install the
 necessary requirements::
@@ -46,8 +50,7 @@ Create the Postgres database and run the initial syncdb/migrate::
 
     createdb -E UTF-8 myvoice
     psql myvoice -c "CREATE EXTENSION postgis;"
-    python manage.py syncdb
-    python manage.py migrate
+    python manage.py syncdb --migrate
 
 You should now be able to run the development server::
 
