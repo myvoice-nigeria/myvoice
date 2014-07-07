@@ -7,10 +7,9 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 
-from myvoice.clinics.models import Visit
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
-from myvoice.survey.models import SurveyQuestion, Survey
+from myvoice.survey.models import Survey
 
 from . import forms
 from . import models
@@ -145,16 +144,6 @@ class ClinicReport(DetailView):
         self._check_assumptions()
         return obj
 
-    def get_detailed_comments(self):
-        """
-        Return all open-ended responses. Ordered by question, so that we can
-        use {% regroup %} in the template.
-        """
-        comments = self.responses.filter(
-            question__question_type=SurveyQuestion.OPEN_ENDED)
-        comments = comments.order_by('question', 'datetime')
-        return comments
-
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
@@ -217,27 +206,14 @@ class ClinicReport(DetailView):
             return get_week_start(min_date), get_week_end(max_date)
         return None, None
 
-    def get_num_registered(self):
-        """Return the number patients that should have received this survey."""
-        return Visit.objects.filter(patient__clinic=self.object).count()
-
-    def get_num_completed(self):
-        """Return the number of surveys which have been completed."""
-        labels = ['Open Facility', 'Respectful Staff Treatment',
-                  'Clean Hospital Materials', 'Charged Fairly',
-                  'Wait Time']
-        results = survey_utils.group_responses(self.responses, 'visit')
-        results = [[r.question.label for r in list(i[1])] for i in results]
-        return len([r for r in results if all([l in r for l in labels])])
-
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
-        kwargs['detailed_comments'] = self.get_detailed_comments()
+        kwargs['detailed_comments'] = survey_utils.get_detailed_comments(self.responses)
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
-        num_registered = self.get_num_registered()
-        num_completed = self.get_num_completed()
+        num_registered = survey_utils.get_registration_count(self.object)
+        num_completed = survey_utils.get_completion_count(self.responses)
         if num_registered:
             percent_completed = make_percentage(num_completed, num_registered)
         else:

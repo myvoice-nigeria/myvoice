@@ -5,6 +5,12 @@ from operator import attrgetter, itemgetter
 from myvoice.core.utils import make_percentage
 
 
+# Labels of questions which must be answered to complete a survey.
+REQUIRED_QUESTIONS = ['Open Facility', 'Respectful Staff Treatment',
+                      'Clean Hospital Materials', 'Charged Fairly',
+                      'Wait Time']
+
+
 def analyze(responses, answer):
     """
     Returns the percentage (out of 100) of responses with the given answer, or
@@ -56,3 +62,29 @@ def convert_to_international_format(phone):
     elif phone.startswith('0') and len(phone) == 11:
         return '+234' + phone[1:]
     raise Exception("Unable to convert {0}".format(phone))
+
+
+def get_detailed_comments(responses):
+    """Returns all responses which are open-ended.
+
+    Ordered by question, in order to use {% regroup %} in a template.
+    """
+    from .models import SurveyQuestion
+    open_ended = responses.filter(question__question_type=SurveyQuestion.OPEN_ENDED)
+    return open_ended.order_by('question', 'datetime')
+
+
+def get_completion_count(responses):
+    """Returns the count of responses which are completed.
+
+    Assumes that responses all belong to the same survey.
+    """
+    by_visit = group_responses(responses, 'visit')
+    results = [[r.question.label for r in list(rlist)] for _, rlist in by_visit]
+    return len([r for r in results if all([l in r for l in REQUIRED_QUESTIONS])])
+
+
+def get_registration_count(clinic):
+    """Returns the count of patients who should have received this survey."""
+    from myvoice.clinics.models import Visit
+    return Visit.objects.filter(patient__clinic=clinic).count()
