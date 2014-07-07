@@ -121,6 +121,6 @@ def handle_new_visits():
         # us from finding the values we were originally interested in
         welcomed_ids = [v.pk for v in welcomed_visits]
         Visit.objects.filter(pk__in=welcomed_ids).update(welcome_sent=timezone.now())
-    except Exception as e:
+    except:
         logger.exception("Encountered unexpected error while handling new visits.")
         raise
