@@ -3,6 +3,7 @@ import logging
 
 from celery.task import task
 
+from django.conf import settings
 from django.utils import timezone
 
 from myvoice.clinics.models import Visit
@@ -18,15 +19,13 @@ logger = logging.getLogger(__name__)
 def _get_survey_start_time():
     # Schedule the survey to be sent in the future.
     now = timezone.now()
-    # eta = now + datetime.timedelta(hours=3)
-    eta = now + datetime.timedelta(minutes=5)
-    if eta.hour > 20:
-        # It's past 8pm UTC / 9pm WAT. Send tomorrow morning at 8am WAT.
-        eta = eta.replace(day=now.day + 1, hour=7, minute=0, second=0,
+    eta = now + settings.DEFAULT_SURVEY_DELAY
+    earliest, latest = settings.SURVEY_TIME_WINDOW
+    if eta.hour > latest:  # It's too late in the day - send tomorrow.
+        eta = eta.replace(day=now.day + 1, hour=earliest, minute=0, second=0,
                           microsecond=0)
-    elif eta.hour < 7:
-        # It's before 7am UTC / 8am WAT. Send at 8am WAT.
-        eta = eta.replace(hour=7, minute=0, second=0, microsecond=0)
+    elif eta.hour < earliest:  # It's too early in the day - send later.
+        eta = eta.replace(hour=earliest, minute=0, second=0, microsecond=0)
     return eta
 
 
