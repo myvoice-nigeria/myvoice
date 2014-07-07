@@ -255,13 +255,19 @@ def deploy():
 def copy_prod_db_to_staging():
     """ quick hack to copy prod db to staging server """
     import yaml
-    config = yaml.load(open(os.path.join(os.path.dirname(__file__), 'conf', 'pillar', 'staging', 'secrets.sls')))
+    config = yaml.load(open(os.path.join(os.path.dirname(__file__), 'conf',
+                                         'pillar', 'staging', 'secrets.sls')))
     dbpass = config['secrets']['DB_PASSWORD']
-    local('ssh myvoice-staging.caktusgroup.com "sudo -u postgres dropdb myvoice_staging"')
-    local('ssh myvoice-staging.caktusgroup.com "sudo -u postgres createdb -E UTF8 -O myvoice_staging myvoice_staging"')
-    local('ssh myvoice-staging.caktusgroup.com "sudo -u postgres psql myvoice_staging -c \'CREATE EXTENSION postgis;\'"')
-    local('ssh -C myvoicenigeria.com "sudo -u postgres pg_dump -Ox myvoice_production" | '
-          'ssh -C myvoice-staging.caktusgroup.com "PGPASSWORD={dbpass} psql -U myvoice_staging myvoice_staging"'.format(dbpass=dbpass))
+    local('ssh myvoice-staging.caktusgroup.com '
+          '"sudo -u postgres dropdb myvoice_staging"')
+    local('ssh myvoice-staging.caktusgroup.com '
+          '"sudo -u postgres createdb -E UTF8 -O myvoice_staging myvoice_staging"')
+    local('ssh myvoice-staging.caktusgroup.com '
+          '"sudo -u postgres psql myvoice_staging -c \'CREATE EXTENSION postgis;\'"')
+    local('ssh -C myvoicenigeria.com '
+          '"sudo -u postgres pg_dump -Ox myvoice_production" | '
+          'ssh -C myvoice-staging.caktusgroup.com '
+          '"PGPASSWORD={dbpass} psql -U myvoice_staging myvoice_staging"'.format(dbpass=dbpass))
 
 
 @task
@@ -274,4 +280,5 @@ def download_prod_db(filename):
     createdb -E UTF8 myvoice
     psql myvoice < prod.sql
     """
-    local('ssh -C myvoicenigeria.com "sudo -u postgres pg_dump -Ox myvoice_production" > {}'.format(filename))
+    local('ssh -C myvoicenigeria.com '
+          '"sudo -u postgres pg_dump -Ox myvoice_production" > {}'.format(filename))

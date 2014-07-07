@@ -6,7 +6,7 @@ import json
 from myvoice.core.tests import factories
 
 from myvoice.clinics import views as clinics
-from myvoice.clinics import models 
+from myvoice.clinics import models
 from myvoice.survey import models as survey_models
 
 
