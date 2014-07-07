@@ -88,6 +88,12 @@ def handle_new_visits():
     # Schedule when to initiate the flow.
     now = timezone.now()  # UTC
     for visit in visits:
+        if visit.survey_sent is not None:
+            logger.debug("Somehow a survey has already been sent for "
+                         "visit {} even though we hadn't sent the welcome "
+                         "message.".format(visit.pk))
+            continue
+
         # Schedule the survey to be sent 3 hours later.
         eta = now + datetime.timedelta(hours=3)
         if eta.hour > 20:
