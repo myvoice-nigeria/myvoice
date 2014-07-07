@@ -62,7 +62,6 @@ def handle_new_visits():
     Sends a welcome message to all new visitors and schedules when to start
     the feedback survey.
     """
-
     # Look for visits for which we haven't sent a welcome message.
     visits = Visit.objects.filter(welcome_sent__isnull=True,
                                   mobile__isnull=False)
@@ -72,8 +71,19 @@ def handle_new_visits():
 
     # Send a "welcome" message immediately.
     # Grab the phone numbers of all patients from applicable visits.
-    phones = list(set(visits.values_list('mobile', flat=True)))
-    phones = [survey_utils.convert_to_international_format(p) for p in phones]
+    welcomed_visits = []
+    phones = []
+    for visit in visits:
+        # Only send a welcome message and schedule the survey to be started if
+        # the phone number can be converted to valid international format.
+        international = survey_utils.convert_to_international_format('mobile')
+        if international:
+            welcomed_visits.append(visit)
+            phones.append(international)
+        else:
+            logger.debug("Unable to send welcome message to "
+                         "visit {}.".format(visit.pk))
+
     try:
         welcome_message = ("Hi, thank you for your visit to the hospital. "
                            "We care about your health. Help us make this "
@@ -86,8 +96,9 @@ def handle_new_visits():
         raise
 
     # Schedule when to initiate the flow.
+    # Only schedule flows for visits which we were able to welcome.
     now = timezone.now()  # UTC
-    for visit in visits:
+    for visit in welcomed_visits:
         if visit.survey_sent is not None:
             logger.debug("Somehow a survey has already been sent for "
                          "visit {} even though we hadn't sent the welcome "
@@ -106,6 +117,8 @@ def handle_new_visits():
         start_feedback_survey.apply_async(args=[visit.pk], eta=eta)
         logger.debug("Scheduled survey to start for visit "
                      "{} at {}.".format(visit.pk, eta))
+
     # update visits at the end, since adding a value for welcome_sent prevents
     # us from finding the values we were originally interested in
-    visits.update(welcome_sent=timezone.now())
+    welcomed_ids = [v.pk for v in welcomed_visits]
+    Visit.objects.filter(pk__in=welcomed_ids).update(welcome_sent=timezone.now())
