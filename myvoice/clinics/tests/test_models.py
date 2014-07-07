@@ -55,18 +55,6 @@ class TestPatient(TestCase):
         obj = self.Factory.create(serial=5, clinic__name='Hello')
         self.assertEqual(str(obj), '5 at Hello')
 
-    def test_get_name_display(self):
-        """Contact name should be preferred to 'name' field on patient."""
-        obj = self.Factory.create(
-            name='test',
-            contact=factories.Contact(name='test contact'))
-        self.assertEqual(obj.get_name_display(), "test contact")
-
-    def test_get_name_no_contact(self):
-        """Show name if no contact attached to patient."""
-        obj = self.Factory.create(name='test')
-        self.assertEqual(obj.get_name_display(), 'test')
-
 
 class TestVisit(TestCase):
     Model = models.Visit

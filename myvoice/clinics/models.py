@@ -40,25 +40,14 @@ class Clinic(models.Model):
     lga = models.CharField(max_length=100, verbose_name='LGA')
     location = gis.PointField(null=True, blank=True)
 
-    category = models.CharField(
-        max_length=32, blank=True, verbose_name='PBF category')
-    contact = models.ForeignKey(
-        'rapidsms.Contact', blank=True, null=True,
-        verbose_name='Preferred contact')
-    year_opened = models.CharField(
-        max_length=4, blank=True, validators=[validate_year],
-        help_text="Please enter a four-digit year.")
-    last_renovated = models.CharField(
-        max_length=4, blank=True, validators=[validate_year],
-        help_text="Please enter a four-digit year.")
-
     lga_rank = models.IntegerField(
         blank=True, null=True, verbose_name='LGA rank', editable=False)
     pbf_rank = models.IntegerField(
         blank=True, null=True, verbose_name='PBF rank', editable=False)
 
-    # Code of Clinic to be used in SMS registration
-    code = models.PositiveIntegerField(unique=True)
+    code = models.PositiveIntegerField(
+        verbose_name='SMS Code', unique=True,
+        help_text="Code of Clinic to be used in SMS registration.")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -116,9 +105,9 @@ class Service(models.Model):
     """A medical service offered by a Clinic."""
     name = models.CharField(max_length=128)
     slug = models.SlugField(unique=True)
-
-    # Code of Service to be used in SMS registration
-    code = models.PositiveIntegerField()
+    code = models.PositiveIntegerField(
+        verbose_name='SMS Code', unique=True,
+        help_text="Code of Service to be used in SMS registration.")
 
     def __unicode__(self):
         return self.name
@@ -129,9 +118,6 @@ class Patient(models.Model):
     name = models.CharField(max_length=50, blank=True)
     clinic = models.ForeignKey('Clinic', blank=True, null=True)
     mobile = models.CharField(max_length=11, blank=True)
-    contact = models.ForeignKey(
-        'rapidsms.Contact', verbose_name='Preferred contact',
-        blank=True, null=True)
     serial = models.PositiveIntegerField()
 
     class Meta:
@@ -139,10 +125,6 @@ class Patient(models.Model):
 
     def __unicode__(self):
         return '{0} at {1}'.format(self.serial, self.clinic.name)
-
-    def get_name_display(self):
-        """Prefer the associated Contact's name to the name here."""
-        return self.contact.name if self.contact else self.name
 
 
 class Visit(models.Model):
