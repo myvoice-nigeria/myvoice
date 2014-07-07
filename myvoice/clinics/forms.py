@@ -1,8 +1,23 @@
 from django import forms
 
 import json
+import re
 
 from . import models
+
+
+VISIT_EXPR = '''
+^                               # Start
+(i|I|\d+)                       # Numbers as clinic
+(\s|\*)+                        # Whitespace or '*'
+((1|i|I)|((i|I|o|O|[0-9])+))    # Either 1 or numbers as mobile
+(\s|\*)+                        # Whitespace or '*'
+(i|I|o|O|[0-9])+                # Numbers as serial
+(\s|\*)+                        # Whitespace or '*'
+(i|I|o|O|[0-9])+                # Numbers as Service
+$                               # End
+'''
+VISIT_PATT = re.compile(VISIT_EXPR, re.VERBOSE)
 
 
 class ClinicStatisticAdminForm(forms.ModelForm):
@@ -41,10 +56,8 @@ class ClinicStatisticAdminForm(forms.ModelForm):
 
 class VisitForm(forms.Form):
     phone = forms.CharField(max_length=20)
-    text = forms.RegexField(
-        '''^(i|I|\d+)(\s|\*)+((1|i|I)|((i|I|o|O|[0-9])+))(\s|\*)+(i|I|o|O|[0-9])+(\s|\*)+(i|I|o|O|[0-9])+$''',
-        max_length=50,
-        error_messages={'invalid': 'Your message is invalid. Please retry'})
+    text = forms.RegexField(VISIT_PATT, max_length=50, error_messages={
+        'invalid': 'Your message is invalid. Please retry'})
 
     def replace_alpha(self, text):
         """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
