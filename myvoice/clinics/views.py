@@ -140,14 +140,15 @@ class ClinicReport(DetailView):
         self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
-        self.responses = self.responses.select_related('question', 'service')
+        self.responses = self.responses.select_related('question', 'service', 'visit')
         self._check_assumptions()
         return obj
 
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
-        by_service = survey_utils.group_responses(self.responses, 'service.id', 'service')
+        responses = self.responses.exclude(service=None)
+        by_service = survey_utils.group_responses(responses, 'service.id', 'service')
         for service, service_responses in by_service:
             by_question = survey_utils.group_responses(service_responses, 'question.label')
             responses_by_question = dict(by_question)
