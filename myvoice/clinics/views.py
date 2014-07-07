@@ -111,9 +111,14 @@ class ClinicReport(DetailView):
         wait_time = self.questions['Wait Time']
         unsatisfied_count = 0
         grouped = survey_utils.group_responses(responses, 'visit')
+        required = ['Respectful Staff Treatment', 'Clean Hospital Materials',
+                    'Charged Fairly', 'Wait Time']
+        count = 0  # Number of runs that contain at least one required question.
         for visit, visit_responses in grouped:
             # Map question label to the response given for that question.
             answers = dict([(r.question.label, r.response) for r in visit_responses])
+            if any([r in answers for r in required]):
+                count += 1
             if treatment.label in answers:
                 if answers.get(treatment.label) != treatment.primary_answer:
                     unsatisfied_count += 1
@@ -126,7 +131,9 @@ class ClinicReport(DetailView):
                 if answers.get(wait_time.label) == wait_time.get_categories()[-1]:
                     unsatisfied_count += 1
                     continue
-        return 100 - make_percentage(unsatisfied_count, len(grouped))
+        if not count:
+            return None
+        return 100 - make_percentage(unsatisfied_count, count)
 
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
@@ -151,7 +158,7 @@ class ClinicReport(DetailView):
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
-        by_service = survey_utils.group_responses(self.responses, 'service')
+        by_service = survey_utils.group_responses(self.responses, 'service.id', 'service')
         for service, service_responses in by_service:
             by_question = survey_utils.group_responses(service_responses, 'question.label')
             responses_by_question = dict(by_question)
