@@ -204,7 +204,7 @@ LOGGING = {
             'propagate': True,
         },
         'myvoice': {
-            'handlers': ['file'],
+            'handlers': ['mail_admins', 'file'],
             'level': 'DEBUG',
         },
     }
