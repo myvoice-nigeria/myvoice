@@ -54,7 +54,7 @@ def convert_to_local_format(phone):
     elif phone.startswith('234') and len(phone) == 13:
         return '0' + phone[3:]
     else:
-        logger.debug("Unable to convert {} to Nigerian format.".format(phone))
+        logger.warning("Unable to convert {} to Nigerian format.".format(phone))
         return None
 
 
@@ -67,7 +67,7 @@ def convert_to_international_format(phone):
     elif phone.startswith('0') and len(phone) == 11:
         return '+234' + phone[1:]
     else:
-        logger.debug("Unable to convert {} to international format.".format(phone))
+        logger.warning("Unable to convert {} to international format.".format(phone))
         return None
 
 
