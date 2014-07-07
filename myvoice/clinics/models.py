@@ -1,7 +1,4 @@
-import datetime
-
 from django.contrib.gis.db import models as gis
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 

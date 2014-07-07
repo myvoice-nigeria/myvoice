@@ -1,6 +1,5 @@
 import datetime
 import random
-import string
 
 import factory
 import factory.django

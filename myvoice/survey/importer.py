@@ -1,9 +1,6 @@
 import logging
-import re
 
 import dateutil.parser
-
-from django.utils.text import slugify
 
 from myvoice.clinics.models import Visit
 
@@ -99,7 +96,7 @@ def import_survey(flow_id, role=None):
         question_id = question['uuid']
         question_text = _guess_question_text(question_id, flow['definition']['action_sets'])
         question_type, categories = _guess_type_and_categories(question)
-        survey_question = SurveyQuestion.objects.create(
+        SurveyQuestion.objects.create(
             survey=survey,
             question_id=question_id,
             question=question_text,
