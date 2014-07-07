@@ -15,6 +15,21 @@ from .textit import TextItApi, TextItException
 logger = logging.getLogger(__name__)
 
 
+def _get_survey_start_time():
+    # Schedule the survey to be sent in the future.
+    now = timezone.now()
+    # eta = now + datetime.timedelta(hours=3)
+    eta = now + datetime.timedelta(minutes=5)
+    if eta.hour > 20:
+        # It's past 8pm UTC / 9pm WAT. Send tomorrow morning at 8am WAT.
+        eta = eta.replace(day=now.day + 1, hour=7, minute=0, second=0,
+                          microsecond=0)
+    elif eta.hour < 7:
+        # It's before 7am UTC / 8am WAT. Send at 8am WAT.
+        eta = eta.replace(hour=7, minute=0, second=0, microsecond=0)
+    return eta
+
+
 @task
 def import_responses():
     """Periodically check for new responses for each survey."""
@@ -96,23 +111,13 @@ def handle_new_visits():
 
         # Schedule when to initiate the flow.
         # Only schedule flows for visits which we were able to welcome.
-        now = timezone.now()  # UTC
+        eta = _get_survey_start_time()
         for visit in welcomed_visits:
             if visit.survey_sent is not None:
                 logger.debug("Somehow a survey has already been sent for "
                              "visit {} even though we hadn't sent the welcome "
                              "message.".format(visit.pk))
                 continue
-
-            # Schedule the survey to be sent 3 hours later.
-            eta = now + datetime.timedelta(hours=3)
-            if eta.hour > 20:
-                # It's past 8pm UTC / 9pm WAT. Send tomorrow morning at 8am WAT.
-                eta = eta.replace(day=now.day + 1, hour=7, minute=0, second=0,
-                                  microsecond=0)
-            elif eta.hour < 7:
-                # It's before 7am UTC / 8am WAT. Send at 8am WAT.
-                eta = eta.replace(hour=7, minute=0, second=0, microsecond=0)
             start_feedback_survey.apply_async(args=[visit.pk], eta=eta)
             logger.debug("Scheduled survey to start for visit "
                          "{} at {}.".format(visit.pk, eta))
