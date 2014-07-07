@@ -162,13 +162,14 @@ def import_responses(flow_id):
             # were registered before this response was received.
             visits = Visit.objects.filter(mobile=local_phone)
             visits = visits.filter(visit_time__lte=response_time)
-            if not visits:
+            visits = visits.order_by('-visit_time')
+            try:
+                # Choose the visit closest in time to this response.
+                visit = visits[0]
+            except IndexError:
                 logger.debug("Discarding answer because we cannot determine "
                              "which visit it should be associated with.")
                 continue
-
-            # Choose the visit closest in time to this response.
-            visit = visits[0]
 
             # Determine whether we've seen this response before (or another
             # response to the same question).
