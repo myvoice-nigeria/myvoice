@@ -1,15 +1,19 @@
-from collections import defaultdict, Counter
-from operator import itemgetter
+from collections import Counter
+from itertools import groupby
+from operator import attrgetter, itemgetter
+
+from myvoice.core.utils import make_percentage
 
 
 def analyze(responses, answer):
     """
-    Return the percentage (out of 100) of responses with the given answer, or
+    Returns the percentage (out of 100) of responses with the given answer, or
     None if there are no responses.
     """
     if responses:
         count = len([r for r in responses if r.response == answer])
-        return int(float(count) / len(responses) * 100)
+        return make_percentage(count, len(responses))
+    return None
 
 
 def get_mode(responses):
@@ -20,18 +24,14 @@ def get_mode(responses):
     return None
 
 
-def group_by_question(responses):
-    """Return a dictionary of question labels to associated responses.
+def group_responses(responses, *attrs):
+    """Returns a grouped list of responses.
 
-    responses should use .prefetch('question') or .select_related('question')
-    for fastest results.
+    responses should use prefetch_related or select_related with the
+    given attributes for the best performance.
     """
-    # FIXME - unsure why this isn't working for Feedback by Week.
-    # return dict([(l, list(r)) for l, r in groupby(responses, key=attrgetter('question.label'))])
-    grouped = defaultdict(list)
-    for r in responses:
-        grouped[r.question.label].append(r)
-    return grouped
+    ordered = [r for r in sorted(responses, key=attrgetter(*attrs))]
+    return [(l, list(r)) for l, r in groupby(ordered, key=attrgetter(*attrs))]
 
 
 def convert_to_local_format(phone):

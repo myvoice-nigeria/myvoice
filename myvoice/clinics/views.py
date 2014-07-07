@@ -106,14 +106,14 @@ class ClinicReport(DetailView):
         """Patient satisfaction is gauged on their answers to 3 questions."""
         if not responses:
             return None  # Avoid divide-by-zero error.
-        grouped = groupby(sorted(responses, key=attrgetter('phone')), lambda r: r.phone)
-        grouped = [(l, dict([(rr.question.label, rr.response) for rr in r]))
-                   for l, r in grouped]
         treatment = self.questions['Respectful Staff Treatment']
         overcharge = self.questions['Charged Fairly']
         wait_time = self.questions['Wait Time']
         unsatisfied_count = 0
-        for phone, answers in grouped:
+        grouped = survey_utils.group_responses(responses, 'visit')
+        for visit, visit_responses in grouped:
+            # Map question label to the response given for that question.
+            answers = dict([(r.question.label, r.response) for r in visit_responses])
             if treatment.label in answers:
                 if answers.get(treatment.label) != treatment.primary_answer:
                     unsatisfied_count += 1
@@ -151,9 +151,10 @@ class ClinicReport(DetailView):
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
-        responses = self.responses.order_by('service', 'question')
-        for service, service_responses in groupby(responses, lambda r: r.service):
-            responses_by_question = survey_utils.group_by_question(service_responses)
+        by_service = survey_utils.group_responses(self.responses, 'service')
+        for service, service_responses in by_service:
+            by_question = survey_utils.group_responses(service_responses, 'question.label')
+            responses_by_question = dict(by_question)
             service_data = []
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
@@ -175,11 +176,13 @@ class ClinicReport(DetailView):
         return data
 
     def get_feedback_by_week(self):
-        responses = self.responses.order_by('datetime', 'question__label')
         data = []
-        for week_start, week_responses in groupby(responses, lambda r: get_week_start(r.datetime)):
+        responses = self.responses.order_by('datetime')
+        by_week = groupby(responses, lambda r: get_week_start(r.datetime))
+        for week_start, week_responses in by_week:
             week_responses = list(week_responses)
-            responses_by_question = survey_utils.group_by_question(week_responses)
+            by_question = survey_utils.group_responses(week_responses, 'question.label')
+            responses_by_question = dict(by_question)
             week_data = []
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
@@ -216,7 +219,7 @@ class ClinicReport(DetailView):
         labels = ['Open Facility', 'Respectful Staff Treatment',
                   'Clean Hospital Materials', 'Charged Fairly',
                   'Wait Time']
-        results = groupby(self.responses, attrgetter('phone'))
+        results = survey_utils.group_responses(self.responses, 'visit')
         results = [[r.question.label for r in list(i[1])] for i in results]
         return len([r for r in results if all([l in r for l in labels])])
 
