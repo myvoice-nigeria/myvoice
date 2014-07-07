@@ -65,9 +65,6 @@ def handle_new_visits():
         # Look for visits for which we haven't sent a welcome message.
         visits = Visit.objects.filter(welcome_sent__isnull=True,
                                       mobile__isnull=False)
-        # Don't bother continuing if there aren't any new visits
-        if not visits.exists():
-            return
 
         # Send a "welcome" message immediately.
         # Grab the phone numbers of all patients from applicable visits.
@@ -83,6 +80,11 @@ def handle_new_visits():
             else:
                 logger.debug("Unable to send welcome message to "
                              "visit {}.".format(visit.pk))
+
+        if not welcomed_visits:
+            # Don't bother continuing if there aren't any new visits.
+            return
+
         try:
             welcome_message = ("Hi, thank you for your visit to the hospital. "
                                "We care about your health. Help us make this "
