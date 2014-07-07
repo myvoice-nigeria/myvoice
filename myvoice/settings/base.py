@@ -247,6 +247,7 @@ CELERYBEAT_SCHEDULE = {
         'schedule': crontab(minute='*/2'),
     },
 }
+CELERY_SEND_TASK_ERROR_EMAILS = True
 
 # Set PostGIS version so that Django can find it.
 # See http://stackoverflow.com/questions/10584852/my-postgis-database-looks-fine-but-geodjango-thinks-otherwise-why  # noqa
