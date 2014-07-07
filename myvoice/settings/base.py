@@ -246,10 +246,6 @@ CELERYBEAT_SCHEDULE = {
         'task': 'myvoice.survey.tasks.import_responses',
         'schedule': crontab(minute='*/2'),
     },
-    'handle-new-visits': {
-        'task': 'myvoice.survey.tasks.handle_new_visits',
-        'schedule': crontab(minute='*/2'),
-    }
 }
 
 # Set PostGIS version so that Django can find it.
