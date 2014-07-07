@@ -39,14 +39,18 @@ class TestStartFeedbackSurvey(TestCase):
     def test_no_such_survey(self, start_flow):
         """No flow should be started if there is no patient feedback survey."""
         self.survey.delete()
-        tasks.start_feedback_survey(self.visit.pk)
+        self.assertRaises(models.Survey.DoesNotExist,
+                          tasks.start_feedback_survey,
+                          self.visit.pk)
         self.assertEqual(start_flow.call_count, 0)
         self.visit = Visit.objects.get(pk=self.visit.pk)
         self.assertIsNone(self.visit.survey_sent)
 
     def test_no_such_visit(self, start_flow):
         """No flow should be started if there is no associated visit."""
-        tasks.start_feedback_survey(12345)
+        self.assertRaises(Visit.DoesNotExist,
+                          tasks.start_feedback_survey,
+                          12345)
         self.assertEqual(start_flow.call_count, 0)
         self.visit = Visit.objects.get(pk=self.visit.pk)
         self.assertIsNone(self.visit.survey_sent)
@@ -63,7 +67,9 @@ class TestStartFeedbackSurvey(TestCase):
     def test_error(self, start_flow):
         """If error occurs during start_flow, survey_sent should be null."""
         start_flow.side_effect = TextItException
-        tasks.start_feedback_survey(self.visit.pk)
+        self.assertRaises(start_flow.side_effect,
+                          tasks.start_feedback_survey,
+                          self.visit.pk)
         self.assertEqual(start_flow.call_count, 1)
         expected = ((self.survey.flow_id, self.visit.mobile),)
         self.assertEqual(start_flow.call_args, expected)

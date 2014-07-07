@@ -32,22 +32,23 @@ def start_feedback_survey(visit_pk):
         survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
     except Survey.DoesNotExist:
         logger.exception("No patient feedback survey is registered.")
-        return
+        raise
 
     try:
         visit = Visit.objects.get(pk=visit_pk)
     except Visit.DoesNotExist:
         logger.exception("Unable to find visit with pk {}.".format(visit_pk))
-        return
+        raise
 
     if visit.survey_sent is not None:
-        logger.debug("Survey has already been sent for visit {}.".format(visit_pk))
+        logger.warning("Survey has already been sent for visit {}.".format(visit_pk))
         return
 
     try:
         TextItApi().start_flow(survey.flow_id, visit.mobile)
     except TextItException:
         logger.exception("Error sending survey for visit {}.".format(visit.pk))
+        raise
     else:
         visit.survey_sent = timezone.now()
         visit.save()
