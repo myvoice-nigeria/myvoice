@@ -192,8 +192,6 @@ def import_responses(flow_id):
             else:
                 value = answer['category']  # Normalized response.
 
-            response.service_id = visit.service_id
-            response.clinic_id = visit.patient.clinic_id if visit.patient else None
             response.response = value
             response.datetime = response_time
             response.save()
