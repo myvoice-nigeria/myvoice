@@ -151,7 +151,7 @@ class ClinicReport(DetailView):
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
-        by_service = survey_utils.group_responses(self.responses, 'service')
+        by_service = survey_utils.group_responses(self.responses, 'service.id', 'service')
         for service, service_responses in by_service:
             by_question = survey_utils.group_responses(service_responses, 'question.label')
             responses_by_question = dict(by_question)

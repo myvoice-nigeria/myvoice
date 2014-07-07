@@ -24,14 +24,16 @@ def get_mode(responses):
     return None
 
 
-def group_responses(responses, *attrs):
+def group_responses(responses, ordering, grouping=None):
     """Returns a grouped list of responses.
 
     responses should use prefetch_related or select_related with the
     given attributes for the best performance.
     """
-    ordered = [r for r in sorted(responses, key=attrgetter(*attrs))]
-    return [(l, list(r)) for l, r in groupby(ordered, key=attrgetter(*attrs))]
+    if grouping is None:
+        grouping = ordering
+    ordered = [r for r in sorted(responses, key=attrgetter(ordering))]
+    return [(l, list(r)) for l, r in groupby(ordered, key=attrgetter(grouping))]
 
 
 def convert_to_local_format(phone):
