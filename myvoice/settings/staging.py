@@ -46,3 +46,7 @@ BROKER_URL = ('amqp://myvoice_staging:'
               '%(BROKER_PASSWORD)s@%(BROKER_HOST)s/myvoice_staging' % os.environ)
 
 LOGGING['handlers']['file']['filename'] = '/var/www/myvoice/log/myvoice.log'
+
+# We want to avoid spamming people on staging, so we won't try to initiate
+# surveys on staging.
+CELERYBEAT_SCHEDULE.pop('handle-new-visits')
