@@ -1,6 +1,6 @@
 environment: staging
 
-domain: myvoice-staging.caktusgroup.com
+domain: staging.myvoicenigeria.com
 
 repo:
   url: git@github.com:caktus/myvoice.git
