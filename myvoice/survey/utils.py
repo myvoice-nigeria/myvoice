@@ -79,7 +79,7 @@ def get_completion_count(responses):
 
     Assumes that responses all belong to the same survey.
     """
-    by_visit = group_responses(responses, 'visit')
+    by_visit = group_responses(responses, 'visit.id')
     results = [[r.question.label for r in list(rlist)] for _, rlist in by_visit]
     return len([r for r in results if all([l in r for l in REQUIRED_QUESTIONS])])
 

@@ -83,24 +83,22 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
 
     fieldsets = [
         (None, {
-            'fields': ['phone', 'question'],
-        }),
-        ('The response', {
-            'fields': ['visit', 'clinic', 'service', 'response', 'datetime'],
+            'fields': ['question', 'visit', 'clinic', 'service', 'response',
+                       'datetime'],
         }),
         ('Metadata', {
             'fields': ['created', 'updated'],
         }),
     ]
-    list_display = ['phone', 'clinic', 'service', 'survey', 'question',
-                    'question_type', 'response']
+    list_display = ['mobile', 'visit_time', 'clinic', 'service', 'survey',
+                    'question', 'question_type', 'response']
     list_filter = ['question__survey', 'clinic', 'service',
                    'question__question_type']
     list_select_related = True
-    ordering = ['phone', 'question']
-    readonly_fields = ['phone', 'question', 'response', 'datetime', 'created',
+    ordering = ['visit', 'question']
+    readonly_fields = ['question', 'response', 'datetime', 'created',
                        'updated']
-    search_fields = ['response', 'phone', 'question__label']
+    search_fields = ['response', 'question__label']
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -108,11 +106,17 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    def visit_time(self, obj):
+        return obj.visit.visit_time
+
     def question_type(self, obj):
         return obj.question.get_question_type_display()
 
     def survey(self, obj):
         return obj.question.survey
+
+    def mobile(self, obj):
+        return obj.visit.mobile
 
 
 admin.site.register(models.Survey, SurveyAdmin)

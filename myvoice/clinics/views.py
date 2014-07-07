@@ -109,7 +109,7 @@ class ClinicReport(DetailView):
         overcharge = self.questions['Charged Fairly']
         wait_time = self.questions['Wait Time']
         unsatisfied_count = 0
-        grouped = survey_utils.group_responses(responses, 'visit')
+        grouped = survey_utils.group_responses(responses, 'visit.id', 'visit')
         required = ['Respectful Staff Treatment', 'Clean Hospital Materials',
                     'Charged Fairly', 'Wait Time']
         count = 0  # Number of runs that contain at least one required question.

@@ -146,7 +146,6 @@ class SurveyQuestion(models.Model):
 class SurveyQuestionResponse(models.Model):
     """An answer to a survey question."""
 
-    phone = models.CharField(max_length=32)
     question = models.ForeignKey('survey.SurveyQuestion')
     response = models.CharField(max_length=255)
     datetime = models.DateTimeField(
@@ -171,7 +170,7 @@ class SurveyQuestionResponse(models.Model):
 
     class Meta:
         verbose_name = 'Response'
-        unique_together = [('phone', 'question')]
+        unique_together = [('visit', 'question')]
 
     def __unicode__(self):
         return self.response
