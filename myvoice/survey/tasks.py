@@ -35,6 +35,10 @@ def start_feedback_survey(visit_pk):
         logger.exception("No patient feedback survey is registered.")
         return
 
+    if survey.survey_sent is not None:
+        logger.debug("Survey has already been sent for visit {}.".format(visit_pk))
+        return
+
     try:
         visit = Visit.objects.get(pk=visit_pk)
     except Visit.DoesNotExist:
