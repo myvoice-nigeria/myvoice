@@ -6,6 +6,10 @@ from django.db import models
 
 
 class Migration(SchemaMigration):
+    depends_on = [
+        ('survey', '0005_auto__del_field_surveyquestion_statistic'),
+        ('clinics', '0028_auto__del_clinicstatistic__del_unique_clinicstatistic_clinic_statistic'),
+    ]
 
     def forwards(self, orm):
         # Deleting model 'Statistic'
@@ -36,7 +40,7 @@ class Migration(SchemaMigration):
 
 
     models = {
-        
+
     }
 
     complete_apps = ['statistics']
