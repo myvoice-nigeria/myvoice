@@ -42,21 +42,22 @@ class ClinicStatisticAdminForm(forms.ModelForm):
 class VisitForm(forms.Form):
     phone = forms.CharField(max_length=20)
     text = forms.RegexField(
-        '^(i|I|\d+)\s+((1|i|I)|((i|I|o|O|[0-9])+))\s+(i|I|o|O|[0-9])+\s+(i|I|o|O|[0-9])+$',
+        '''^(i|I|\d+)(\s|\*)+((1|i|I)|((i|I|o|O|[0-9])+))(\s|\*)+(i|I|o|O|[0-9])+(\s|\*)+(i|I|o|O|[0-9])+$''',
         max_length=50,
         error_messages={'invalid': 'Your message is invalid. Please retry'})
 
     def replace_alpha(self, text):
         """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
-        return text.replace('o', '0').replace('O', '0').replace('i', '1').replace('I', '1')
+        return text.replace('o', '0').replace('O', '0').replace('i', '1').replace(
+            'I', '1').replace('*', ' ')
 
     def clean_text(self):
         """Validate input text.
 
         text is in format: CLINIC PHONE SERIAL SERVICE
         """
-        clnc, phone, serial, srvc = [
-            self.replace_alpha(i) for i in self.cleaned_data['text'].split()]
+        cleaned_data = self.replace_alpha(self.cleaned_data['text'])
+        clnc, phone, serial, srvc = cleaned_data.split()
 
         # Check if mobile is correct
         if len(phone) not in [1, 11]:

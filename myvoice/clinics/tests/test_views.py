@@ -115,7 +115,7 @@ class TestVisitView(TestCase):
         response = self.make_request(reg_data)
         self.assertEqual(response.content, self.success_msg)
 
-    def test_visit_wrong_clinic1(self):
+    def test_visit_clinic_nonumber(self):
         """Test that a non-numeric data is not registered."""
         reg_data = {'text': 'A 08122233301 4000 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
@@ -231,7 +231,7 @@ class TestVisitView(TestCase):
         obj = models.Visit.objects.all()[0]
         self.assertEqual('08122233301', obj.mobile)
 
-    def test_whitespace(self):
+    def test_newline_as_whitespace(self):
         """Test that <enter> is treated like <space>."""
         reg_data = {'text': '1\n08122233301\n401\n5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
@@ -248,6 +248,34 @@ class TestVisitView(TestCase):
 
         # Test that correct mobile is saved
         obj = models.Visit.objects.all()[0]
+        self.assertEqual('08122233301', obj.mobile)
+
+    def test_multiple_whitespace(self):
+        """Test that up to 3 whitespaces(mixed) are treated as one whitespace."""
+        reg_data = {'text': '1\n  08122233301 \n 401\n5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+        # Test the values are correctly saved
+        obj = models.Visit.objects.all()[0]
+        self.assertEqual(obj.patient.clinic, self.clinic)
+        self.assertEqual('08122233301', obj.mobile)
+
+    def test_asterisk_as_whitespace(self):
+        """Test that '*' is treated as <space>."""
+        reg_data = {'text': '1 08122233301*401*5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, self.success_msg)
+
+        # Test that visit is saved
+        self.assertEqual(1, models.Visit.objects.count())
+
+        # Test the values are correctly saved
+        obj = models.Visit.objects.all()[0]
+        self.assertEqual(obj.patient.clinic, self.clinic)
         self.assertEqual('08122233301', obj.mobile)
 
 
