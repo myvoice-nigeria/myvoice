@@ -41,6 +41,10 @@ def start_feedback_survey(visit_pk):
         logger.exception("Unable to find visit with pk {}.".format(visit_pk))
         return
 
+    if visit.survey_sent is not None:
+        logger.debug("Survey has already been sent for visit {}.".format(visit_pk))
+        return
+
     try:
         TextItApi().start_flow(survey.flow_id, visit.mobile)
     except TextItException:
@@ -84,6 +88,12 @@ def handle_new_visits():
     # Schedule when to initiate the flow.
     now = timezone.now()  # UTC
     for visit in visits:
+        if visit.survey_sent is not None:
+            logger.debug("Somehow a survey has already been sent for "
+                         "visit {} even though we hadn't sent the welcome "
+                         "message.".format(visit.pk))
+            continue
+
         # Schedule the survey to be sent 3 hours later.
         eta = now + datetime.timedelta(hours=3)
         if eta.hour > 20:

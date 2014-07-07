@@ -55,7 +55,7 @@ class PatientAdmin(admin.ModelAdmin):
 class VisitAdmin(admin.ModelAdmin):
     date_hierarchy = 'visit_time'
     list_display = ['mobile', 'patient_serial', 'clinic', 'service', 'staff',
-                    'visit_time']
+                    'visit_time', 'welcome_sent', 'survey_sent']
     list_filter = ['patient__clinic', 'service']
     list_select_related = True
 
