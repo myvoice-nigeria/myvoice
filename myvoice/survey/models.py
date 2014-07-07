@@ -2,8 +2,6 @@ import datetime
 
 from django.db import models
 
-from myvoice.statistics.models import Statistic
-
 
 class SurveyQuerySet(models.query.QuerySet):
 
@@ -105,10 +103,6 @@ class SurveyQuestion(models.Model):
         default=0,
         help_text="Manually defined. If not present, questions will be "
         "displayed in the order they were created.")
-    statistic = models.ForeignKey(
-        'statistics.Statistic', null=True, blank=True,
-        help_text="The name of the statistic that responses for this "
-        "question should be aggregated for.")
     for_display = models.BooleanField(
         default=True,
         help_text="Whether to display the responses to this question.")
@@ -132,15 +126,6 @@ class SurveyQuestion(models.Model):
         """
         categories = self.get_categories()
         return categories[0] if categories else None
-
-    def save(self, *args, **kwargs):
-        """Attempt to auto-set statistic when question is first saved."""
-        if not self.pk and not self.statistic:
-            try:
-                self.statistic = Statistic.objects.get(slug=self.label)
-            except Statistic.DoesNotExist:
-                self.statistic = None
-        return super(SurveyQuestion, self).save(*args, **kwargs)
 
 
 class SurveyQuestionResponse(models.Model):

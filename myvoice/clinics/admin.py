@@ -2,7 +2,6 @@ from django.contrib import admin
 from leaflet.admin import LeafletGeoAdmin
 
 from . import models
-from .forms import ClinicStatisticAdminForm
 
 
 class ClinicStaffInline(admin.TabularInline):
@@ -10,32 +9,12 @@ class ClinicStaffInline(admin.TabularInline):
     extra = 0
 
 
-# NOTE: This is included for early development/debugging purposes. Eventually,
-# there will be many more statistics for a clinic than a simple inline can
-# handle.
-class ClinicStatisticInline(admin.TabularInline):
-    model = models.ClinicStatistic
-    extra = 0
-    form = ClinicStatisticAdminForm
-
-
 class ClinicAdmin(LeafletGeoAdmin):
-    inlines = [ClinicStaffInline, ClinicStatisticInline]
+    inlines = [ClinicStaffInline]
     list_display = ['name', 'lga', 'code']
     prepopulated_fields = {'slug': ['name']}
     readonly_fields = ['lga_rank', 'pbf_rank']
     display_raw = True
-
-
-class ClinicStatisticAdmin(admin.ModelAdmin):
-    form = ClinicStatisticAdminForm
-    list_display = ['statistic', 'month', 'clinic', 'value', 'rank']
-    list_filter = ['statistic', 'clinic']
-    date_hierarchy = 'month'
-    readonly_fields = ['rank']
-
-    def value(self, obj):
-        return obj.get_value_display()
 
 
 class RegionAdmin(LeafletGeoAdmin):
@@ -76,7 +55,6 @@ class GenericFeedbackAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.Clinic, ClinicAdmin)
-admin.site.register(models.ClinicStatistic, ClinicStatisticAdmin)
 admin.site.register(models.Region, RegionAdmin)
 admin.site.register(models.Patient, PatientAdmin)
 admin.site.register(models.Visit, VisitAdmin)

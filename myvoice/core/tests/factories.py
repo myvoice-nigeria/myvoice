@@ -10,7 +10,6 @@ from django.contrib.auth import models as auth
 from django.utils import timezone
 
 from myvoice.clinics import models as clinics
-from myvoice.statistics import models as statistics
 from myvoice.survey import models as survey
 
 from rapidsms import models as rapidsms
@@ -82,54 +81,6 @@ class GenericFeedback(factory.django.DjangoModelFactory):
 
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
     sender = factory.fuzzy.FuzzyText()
-
-
-class ClinicStatistic(factory.django.DjangoModelFactory):
-    FACTORY_FOR = clinics.ClinicStatistic
-
-    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
-    statistic = factory.SubFactory('myvoice.core.tests.factories.Statistic')
-    month = factory.LazyAttribute(lambda o: datetime.datetime.today())
-
-    @factory.post_generation
-    def value(self, create, extracted, **kwargs):
-        if kwargs:
-            raise Exception("value property does not support __")
-        if extracted is None:
-            statistic_type = self.statistic.statistic_type
-            if statistic_type == statistics.Statistic.INTEGER:
-                value = random.randint(0, 100)
-            elif statistic_type in (statistics.Statistic.FLOAT, statistics.Statistic.PERCENTAGE):
-                value = random.random() * 100
-            elif statistic_type == statistics.Statistic.TEXT:
-                value = ''.join([random.choice(string.letters) for i in range(12)])
-            else:
-                value = None
-        else:
-            value = extracted
-        self.value = value
-        if create:
-            self.save()
-
-
-class Statistic(factory.django.DjangoModelFactory):
-    FACTORY_FOR = statistics.Statistic
-
-    name = factory.Sequence(lambda n: 'Statistic {0}'.format(n))
-    slug = factory.Sequence(lambda n: 'statistic-{0}'.format(n))
-    group = factory.SubFactory('myvoice.core.tests.factories.StatisticGroup')
-
-    @factory.lazy_attribute
-    def statistic_type(self):
-        choices = [k for k, _ in statistics.Statistic.STATISTIC_TYPES]
-        return random.choice(choices)
-
-
-class StatisticGroup(factory.django.DjangoModelFactory):
-    FACTORY_FOR = statistics.StatisticGroup
-
-    name = factory.Sequence(lambda n: 'Stat Group {0}'.format(n))
-    slug = factory.Sequence(lambda n: 'stat-group-{0}'.format(n))
 
 
 class Survey(factory.django.DjangoModelFactory):

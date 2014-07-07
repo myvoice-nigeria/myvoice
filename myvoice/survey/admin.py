@@ -14,7 +14,7 @@ class SurveyQuestionInline(admin.TabularInline):
 
     extra = 0
     fields = ['id', 'question_id', 'question', 'label', 'question_type',
-              'categories', 'designation', 'order', 'statistic', 'for_display']
+              'categories', 'designation', 'order', 'for_display']
     model = models.SurveyQuestion
     readonly_fields = ['id', 'question_id', 'label', 'question_type',
                        'categories']
