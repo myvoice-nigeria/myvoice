@@ -76,14 +76,13 @@ def handle_new_visits():
         for visit in visits:
             # Only send a welcome message and schedule the survey to be started if
             # the phone number can be converted to valid international format.
-            international = survey_utils.convert_to_international_format('mobile')
+            international = survey_utils.convert_to_international_format(visit.mobile)
             if international:
                 welcomed_visits.append(visit)
                 phones.append(international)
             else:
                 logger.debug("Unable to send welcome message to "
                              "visit {}.".format(visit.pk))
-
         try:
             welcome_message = ("Hi, thank you for your visit to the hospital. "
                                "We care about your health. Help us make this "
