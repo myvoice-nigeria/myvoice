@@ -246,8 +246,8 @@ CELERYBEAT_SCHEDULE = {
         'task': 'myvoice.survey.tasks.import_responses',
         'schedule': crontab(minute='*/2'),
     },
-    'start-surveys': {
-        'task': 'myvoice.survey.tasks.start_surveys',
+    'handle-new-visits': {
+        'task': 'myvoice.survey.tasks.handle_new_visits',
         'schedule': crontab(minute='*/2'),
     }
 }
