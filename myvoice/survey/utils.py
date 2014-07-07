@@ -1,9 +1,12 @@
 from collections import Counter
 from itertools import groupby
+import logging
 from operator import attrgetter, itemgetter
 
 from myvoice.core.utils import make_percentage
 
+
+logger = logging.getLogger(__name__)
 
 # Labels of questions which must be answered to complete a survey.
 REQUIRED_QUESTIONS = ['Open Facility', 'Respectful Staff Treatment',
@@ -50,7 +53,9 @@ def convert_to_local_format(phone):
         return '0' + phone[4:]
     elif phone.startswith('234') and len(phone) == 13:
         return '0' + phone[3:]
-    raise Exception("Unable to understand {0}".format(phone))
+    else:
+        logger.warning("Unable to convert {} to Nigerian format.".format(phone))
+        return None
 
 
 def convert_to_international_format(phone):
@@ -61,7 +66,9 @@ def convert_to_international_format(phone):
         return '+' + phone
     elif phone.startswith('0') and len(phone) == 11:
         return '+234' + phone[1:]
-    raise Exception("Unable to convert {0}".format(phone))
+    else:
+        logger.warning("Unable to convert {} to international format.".format(phone))
+        return None
 
 
 def get_detailed_comments(responses):

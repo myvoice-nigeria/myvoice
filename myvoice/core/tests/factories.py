@@ -50,7 +50,8 @@ class ClinicStaff(factory.django.DjangoModelFactory):
 class Service(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.Service
 
-    name = factory.fuzzy.FuzzyText()
+    name = factory.Sequence(lambda n: 'Service {0}'.format(n))
+    slug = factory.Sequence(lambda n: 'service-{0}'.format(n))
     code = factory.fuzzy.FuzzyInteger(0)
 
 

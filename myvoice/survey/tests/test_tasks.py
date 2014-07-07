@@ -92,6 +92,22 @@ class TestHandleNewVisits(TestCase):
         self.assertIsNotNone(visit.welcome_sent)
         self.assertEqual(start_feedback_survey.call_count, 1)
 
+    def test_mixed_valid_invalid_phones(self, start_feedback_survey, send_message):
+        """
+        We should send a welcome message and schedule the survey to be started
+        for a new visit.
+        """
+        visit1 = factories.Visit(welcome_sent=None, mobile='invalid')
+        visit2 = factories.Visit(welcome_sent=None, mobile='01234567890')
+        tasks.handle_new_visits()
+        self.assertEqual(send_message.call_count, 1)
+        self.assertEqual(send_message.call_args[0][1], [u'+2341234567890'])
+        visit1 = Visit.objects.get(pk=visit1.pk)
+        self.assertIsNone(visit1.welcome_sent)
+        visit2 = Visit.objects.get(pk=visit2.pk)
+        self.assertIsNotNone(visit2.welcome_sent)
+        self.assertEqual(start_feedback_survey.call_count, 1)
+
     def test_past_visit(self, start_feedback_survey, send_message):
         """
         We should not do anything for visits that have already had the
