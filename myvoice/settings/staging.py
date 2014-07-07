@@ -46,3 +46,18 @@ BROKER_URL = ('amqp://myvoice_staging:'
               '%(BROKER_PASSWORD)s@%(BROKER_HOST)s/myvoice_staging' % os.environ)
 
 LOGGING['handlers']['file']['filename'] = '/var/www/myvoice/log/myvoice.log'
+
+CELERYBEAT_SCHEDULE = {
+    'import-responses': {
+        'task': 'myvoice.survey.tasks.import_responses',
+        'schedule': crontab(minute='*/2'),
+    },
+    # We want to avoid spamming people on staging, so we won't try to initiate
+    # surveys on staging.
+    # 'handle-new-visits': {
+    #     'task': 'myvoice.survey.tasks.handle_new_visits',
+    #     'schedule': crontab(minute='*/2'),
+    # }
+}
+
+

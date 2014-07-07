@@ -7,10 +7,9 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 
-from myvoice.clinics.models import Visit
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
-from myvoice.survey.models import SurveyQuestion, Survey
+from myvoice.survey.models import Survey
 
 from . import forms
 from . import models
@@ -106,14 +105,19 @@ class ClinicReport(DetailView):
         """Patient satisfaction is gauged on their answers to 3 questions."""
         if not responses:
             return None  # Avoid divide-by-zero error.
-        grouped = groupby(sorted(responses, key=attrgetter('phone')), lambda r: r.phone)
-        grouped = [(l, dict([(rr.question.label, rr.response) for rr in r]))
-                   for l, r in grouped]
         treatment = self.questions['Respectful Staff Treatment']
         overcharge = self.questions['Charged Fairly']
         wait_time = self.questions['Wait Time']
         unsatisfied_count = 0
-        for phone, answers in grouped:
+        grouped = survey_utils.group_responses(responses, 'visit.id', 'visit')
+        required = ['Respectful Staff Treatment', 'Clean Hospital Materials',
+                    'Charged Fairly', 'Wait Time']
+        count = 0  # Number of runs that contain at least one required question.
+        for visit, visit_responses in grouped:
+            # Map question label to the response given for that question.
+            answers = dict([(r.question.label, r.response) for r in visit_responses])
+            if any([r in answers for r in required]):
+                count += 1
             if treatment.label in answers:
                 if answers.get(treatment.label) != treatment.primary_answer:
                     unsatisfied_count += 1
@@ -126,7 +130,9 @@ class ClinicReport(DetailView):
                 if answers.get(wait_time.label) == wait_time.get_categories()[-1]:
                     unsatisfied_count += 1
                     continue
-        return 100 - make_percentage(unsatisfied_count, len(grouped))
+        if not count:
+            return None
+        return 100 - make_percentage(unsatisfied_count, count)
 
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
@@ -134,26 +140,18 @@ class ClinicReport(DetailView):
         self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
-        self.responses = self.responses.select_related('question', 'service')
+        self.responses = self.responses.select_related('question', 'service', 'visit')
         self._check_assumptions()
         return obj
-
-    def get_detailed_comments(self):
-        """
-        Return all open-ended responses. Ordered by question, so that we can
-        use {% regroup %} in the template.
-        """
-        comments = self.responses.filter(
-            question__question_type=SurveyQuestion.OPEN_ENDED)
-        comments = comments.order_by('question', 'datetime')
-        return comments
 
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
-        responses = self.responses.order_by('service', 'question')
-        for service, service_responses in groupby(responses, lambda r: r.service):
-            responses_by_question = survey_utils.group_by_question(service_responses)
+        responses = self.responses.exclude(service=None)
+        by_service = survey_utils.group_responses(responses, 'service.id', 'service')
+        for service, service_responses in by_service:
+            by_question = survey_utils.group_responses(service_responses, 'question.label')
+            responses_by_question = dict(by_question)
             service_data = []
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
@@ -175,11 +173,13 @@ class ClinicReport(DetailView):
         return data
 
     def get_feedback_by_week(self):
-        responses = self.responses.order_by('datetime', 'question__label')
         data = []
-        for week_start, week_responses in groupby(responses, lambda r: get_week_start(r.datetime)):
+        responses = self.responses.order_by('datetime')
+        by_week = groupby(responses, lambda r: get_week_start(r.datetime))
+        for week_start, week_responses in by_week:
             week_responses = list(week_responses)
-            responses_by_question = survey_utils.group_by_question(week_responses)
+            by_question = survey_utils.group_responses(week_responses, 'question.label')
+            responses_by_question = dict(by_question)
             week_data = []
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
@@ -196,7 +196,7 @@ class ClinicReport(DetailView):
                 'week_end': get_week_end(week_start),
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
-                'wait_time_mode': survey_utils.get_mode(responses_by_question['Wait Time']),
+                'wait_time_mode': survey_utils.get_mode(responses_by_question.get('Wait Time', [])),
             })
         return data
 
@@ -207,27 +207,14 @@ class ClinicReport(DetailView):
             return get_week_start(min_date), get_week_end(max_date)
         return None, None
 
-    def get_num_registered(self):
-        """Return the number patients that should have received this survey."""
-        return Visit.objects.filter(patient__clinic=self.object).count()
-
-    def get_num_completed(self):
-        """Return the number of surveys which have been completed."""
-        labels = ['Open Facility', 'Respectful Staff Treatment',
-                  'Clean Hospital Materials', 'Charged Fairly',
-                  'Wait Time']
-        results = groupby(self.responses, attrgetter('phone'))
-        results = [[r.question.label for r in list(i[1])] for i in results]
-        return len([r for r in results if all([l in r for l in labels])])
-
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
-        kwargs['detailed_comments'] = self.get_detailed_comments()
+        kwargs['detailed_comments'] = survey_utils.get_detailed_comments(self.responses)
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
-        num_registered = self.get_num_registered()
-        num_completed = self.get_num_completed()
+        num_registered = survey_utils.get_registration_count(self.object)
+        num_completed = survey_utils.get_completion_count(self.responses)
         if num_registered:
             percent_completed = make_percentage(num_completed, num_registered)
         else:

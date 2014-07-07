@@ -158,16 +158,29 @@ def import_responses(flow_id):
                              "the survey.")
                 continue
 
+            # Find visits we've registered for this phone number that
+            # were registered before this response was received.
+            visits = Visit.objects.filter(mobile=local_phone)
+            visits = visits.filter(visit_time__lte=response_time)
+            visits = visits.order_by('-visit_time')
+            try:
+                # Choose the visit closest in time to this response.
+                visit = visits[0]
+            except IndexError:
+                logger.debug("Discarding answer because we cannot determine "
+                             "which visit it should be associated with.")
+                continue
+
             # Determine whether we've seen this response before (or another
             # response to the same question).
             try:
                 response = SurveyQuestionResponse.objects.get(
-                    phone=local_phone, question=questions.get(label))
+                    visit=visit, question=questions.get(label))
             except SurveyQuestionResponse.DoesNotExist:
                 # Create a new object - this is the first answer we've seen to
                 # this question.
                 response = SurveyQuestionResponse(
-                    phone=local_phone, question=questions.get(label))
+                    visit=visit, question=questions.get(label))
             else:
                 # The user has already answered this question. Either we've
                 # imported this answer before, or the user has answered the
@@ -190,24 +203,8 @@ def import_responses(flow_id):
             else:
                 value = answer['category']  # Normalized response.
 
-            # Find visits we've registered for this phone number that
-            # were registered before this response was received.
-            visits = Visit.objects.filter(mobile=local_phone)
-            visits = visits.filter(visit_time__lte=response_time)
-
-            try:
-                # Choose the visit closets in time to this response.
-                visit = visits.order_by('-visit_time')[0]
-                response.visit = visit
-                response.service_id = visit.service_id
-                response.clinic_id = visit.patient.clinic_id if visit.patient else None
-            except IndexError:
-                # Save the response, but we don't have a visit to associate
-                # with.
-                response.visit = None
-                response.service = None
-                response.clinic = None
-
+            response.service_id = visit.service_id
+            response.clinic_id = visit.patient.clinic_id if visit.patient else None
             response.response = value
             response.datetime = response_time
             response.save()
