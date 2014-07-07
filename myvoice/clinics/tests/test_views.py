@@ -278,6 +278,16 @@ class TestVisitView(TestCase):
         self.assertEqual(obj.patient.clinic, self.clinic)
         self.assertEqual('08122233301', obj.mobile)
 
+    def test_clinic_error_removed(self):
+        """Test that when 2nd clinic error is sent, VisitRegistrationError is cleared."""
+        reg_data = {'text': '21 08122233301*401*5', 'phone': '+2348022112211'}
+        self.make_request(reg_data)
+        self.assertEqual(1, models.VisitRegistrationError.objects.count())
+
+        # 2nd time
+        self.make_request(reg_data)
+        self.assertEqual(0, models.VisitRegistrationError.objects.count())
+
 
 class TestFeedbackView(TestCase):
 
