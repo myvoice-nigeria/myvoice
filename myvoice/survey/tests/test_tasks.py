@@ -92,6 +92,15 @@ class TestHandleNewVisits(TestCase):
         self.assertIsNotNone(visit.welcome_sent)
         self.assertEqual(start_feedback_survey.call_count, 1)
 
+    def test_only_invalid(self, start_feedback_survey, send_message):
+        """Nothing should happen if all phone numbers are invalid."""
+        visit = factories.Visit(welcome_sent=None, mobile='invalid')
+        tasks.handle_new_visits()
+        self.assertEqual(send_message.call_count, 0)
+        visit = Visit.objects.get(pk=visit.pk)
+        self.assertIsNone(visit.welcome_sent)
+        self.assertEqual(start_feedback_survey.call_count, 0)
+
     def test_mixed_valid_invalid_phones(self, start_feedback_survey, send_message):
         """
         We should send a welcome message and schedule the survey to be started
