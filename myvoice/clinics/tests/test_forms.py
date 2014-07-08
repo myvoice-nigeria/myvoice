@@ -211,3 +211,10 @@ class TestVisitForm(TestCase):
         self.assertTrue(self.clinic, form.cleaned_data['text'][0])
         self.assertTrue('401', form.cleaned_data['text'][2])
         self.assertTrue('5', form.cleaned_data['text'][3])
+
+    def _test_long_text(self):
+        """Test how the form handles long text (160 characters)."""
+        # Not particularly useful
+        data = {'text': '1'*160, 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertFalse(form.is_valid())

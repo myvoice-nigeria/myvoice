@@ -24,7 +24,7 @@ VISIT_PATT = re.compile(VISIT_EXPR, re.VERBOSE)
 
 class VisitForm(forms.Form):
     phone = forms.CharField(max_length=20)
-    text = forms.RegexField(VISIT_PATT, max_length=50, error_messages={
+    text = forms.RegexField(VISIT_PATT, max_length=200, error_messages={
         'invalid': 'Your message is invalid. Please retry'})
 
     def replace_alpha(self, text):
