@@ -288,6 +288,12 @@ class TestVisitView(TestCase):
         self.make_request(reg_data)
         self.assertEqual(0, models.VisitRegistrationError.objects.count())
 
+    def test_serial_startswith_0(self):
+        """Test that serials starting with '0' are valid."""
+        reg_data = {'text': '1 08122233301 0401 5', 'phone': '+2348022112211'}
+        self.make_request(reg_data)
+        self.assertEqual(1, models.Visit.objects.count())
+
 
 class TestFeedbackView(TestCase):
 

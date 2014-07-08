@@ -212,6 +212,16 @@ class TestVisitForm(TestCase):
         self.assertTrue('401', form.cleaned_data['text'][2])
         self.assertTrue('5', form.cleaned_data['text'][3])
 
+    def test_serial_startwith_0(self):
+        """Test that serials starting with '0' are valid."""
+        data = {'text': '1 08122233301 0401 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('0401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])
+
     def _test_long_text(self):
         """Test how the form handles long text (160 characters)."""
         # Not particularly useful
