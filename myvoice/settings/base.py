@@ -1,7 +1,8 @@
-# Django settings for myvoice project.
+import datetime
 import os
 
 from celery.schedules import crontab
+
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, os.pardir))
@@ -256,3 +257,11 @@ POSTGIS_VERSION = (2, 1)
 TEXTIT_API_TOKEN = os.environ.get('TEXTIT_API_TOKEN', '')
 TEXTIT_USERNAME = os.environ.get('TEXTIT_USERNAME', '')
 TEXTIT_PASSWORD = os.environ.get('TEXTIT_PASSWORD', '')
+
+# Amount of time that should elapse between when we first process a visit
+# and when we send a survey to the patient.
+DEFAULT_SURVEY_DELAY = datetime.timedelta(minutes=5)
+
+# Hours, in UTC, between which we can send surveys. Send dates outside of this
+# window will be sent the next day.
+SURVEY_TIME_WINDOW = (7, 20)  # 7am (8am WAT) to 8pm (9pm WAT)
