@@ -191,3 +191,23 @@ class TestVisitForm(TestCase):
         self.assertTrue(self.clinic, form.cleaned_data['text'][0])
         self.assertTrue('401', form.cleaned_data['text'][2])
         self.assertTrue('5', form.cleaned_data['text'][3])
+
+    def test_leading_whitespace(self):
+        """Test that leading whitespace is removed."""
+        data = {'text': ' 1 * 08122233301\n* 401\n*\n5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])
+
+    def test_trailing_whitespace(self):
+        """Test that trailing whitespace is removed."""
+        data = {'text': '1 * 08122233301\n* 401\n*\n5\n ', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])

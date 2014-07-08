@@ -8,6 +8,7 @@ from . import models
 
 VISIT_EXPR = '''
 ^                               # Start
+\s*                             # Leading whitespace
 (i|I|\d)+                       # Numbers as clinic
 (\s|\*)+                        # Whitespace or '*'
 ((1|i|I)|((i|I|o|O|[0-9])+))    # Either 1 or numbers as mobile
@@ -15,6 +16,7 @@ VISIT_EXPR = '''
 (i|I|o|O|[0-9])+                # Numbers as serial
 (\s|\*)+                        # Whitespace or '*'
 (i|I|o|O|[0-9])+                # Numbers as Service
+\s*                             # Trailing whitespace
 $                               # End
 '''
 VISIT_PATT = re.compile(VISIT_EXPR, re.VERBOSE)
@@ -35,7 +37,7 @@ class VisitForm(forms.Form):
 
         text is in format: CLINIC PHONE SERIAL SERVICE
         """
-        cleaned_data = self.replace_alpha(self.cleaned_data['text'])
+        cleaned_data = self.replace_alpha(self.cleaned_data['text'].strip())
         clnc, phone, serial, srvc = cleaned_data.split()
 
         # Check if mobile is correct
