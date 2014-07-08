@@ -14,7 +14,7 @@ class SurveyQuestionInline(admin.TabularInline):
 
     extra = 0
     fields = ['id', 'question_id', 'question', 'label', 'question_type',
-              'categories', 'designation', 'order', 'statistic', 'for_display']
+              'categories']
     model = models.SurveyQuestion
     readonly_fields = ['id', 'question_id', 'label', 'question_type',
                        'categories']
@@ -43,7 +43,8 @@ class SurveyAdmin(admin.ModelAdmin):
         }),
     ]
     fields = ['flow_id', 'name', 'role', 'active']
-    list_display = ['name', 'flow_id', 'role', 'question_count']
+    list_display = ['name', 'flow_id', 'role', 'active']
+    list_filter = ['active']
     save_on_top = True
 
     def add_view(self, *args, **kwargs):
@@ -53,16 +54,13 @@ class SurveyAdmin(admin.ModelAdmin):
 
     def change_view(self, *args, **kwargs):
         self.inlines = [SurveyQuestionInline]
-        self.readonly_fields = ['flow_id', 'name']
+        self.readonly_fields = ['flow_id']
         return super(SurveyAdmin, self).change_view(*args, **kwargs)
 
     def get_fieldsets(self, request, obj=None):
         if not obj:
             return self.add_fieldsets
         return super(SurveyAdmin, self).get_fieldsets(request, obj)
-
-    def question_count(self, obj):
-        return obj.surveyquestion_set.count()
 
     def save_model(self, request, obj, form, change):
         """If we're adding the survey, import its name and questions."""
@@ -96,9 +94,9 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
                    'question__question_type']
     list_select_related = True
     ordering = ['visit', 'question']
-    readonly_fields = ['question', 'response', 'datetime', 'created',
-                       'updated']
-    search_fields = ['response', 'question__label']
+    readonly_fields = ['question', 'response', 'datetime', 'visit', 'clinic',
+                       'service', 'created', 'updated']
+    search_fields = ['visit__mobile', 'response', 'question__label']
 
     def has_add_permission(self, request, obj=None):
         return False

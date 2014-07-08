@@ -2,59 +2,41 @@ from django.contrib import admin
 from leaflet.admin import LeafletGeoAdmin
 
 from . import models
-from .forms import ClinicStatisticAdminForm
 
 
 class ClinicStaffInline(admin.TabularInline):
     model = models.ClinicStaff
     extra = 0
-
-
-# NOTE: This is included for early development/debugging purposes. Eventually,
-# there will be many more statistics for a clinic than a simple inline can
-# handle.
-class ClinicStatisticInline(admin.TabularInline):
-    model = models.ClinicStatistic
-    extra = 0
-    form = ClinicStatisticAdminForm
+    readonly_fields = ['created', 'updated']
 
 
 class ClinicAdmin(LeafletGeoAdmin):
-    inlines = [ClinicStaffInline, ClinicStatisticInline]
-    list_display = ['name', 'lga', 'code']
-    prepopulated_fields = {'slug': ['name']}
-    readonly_fields = ['lga_rank', 'pbf_rank']
     display_raw = True
-
-
-class ClinicStatisticAdmin(admin.ModelAdmin):
-    form = ClinicStatisticAdminForm
-    list_display = ['statistic', 'month', 'clinic', 'value', 'rank']
-    list_filter = ['statistic', 'clinic']
-    date_hierarchy = 'month'
-    readonly_fields = ['rank']
-
-    def value(self, obj):
-        return obj.get_value_display()
+    inlines = [ClinicStaffInline]
+    list_display = ['name', 'lga', 'code']
+    ordering = ['name']
+    prepopulated_fields = {'slug': ['name']}
+    readonly_fields = ['lga_rank', 'pbf_rank', 'created', 'updated']
 
 
 class RegionAdmin(LeafletGeoAdmin):
-    search_fields = ['name', 'alternate_name', 'external_id']
     list_display = ['name', 'alternate_name', 'type']
     list_filter = ['type']
     ordering = ['type', 'name']
+    search_fields = ['name', 'alternate_name', 'external_id']
 
 
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ['name', 'clinic', 'mobile', 'serial']
+    list_display = ['serial', 'clinic', 'mobile']
     list_filter = ['clinic']
+    list_select_related = True
     order_by = ['mobile']
     search_fields = ['name', 'mobile', 'serial']
 
 
 class VisitAdmin(admin.ModelAdmin):
     date_hierarchy = 'visit_time'
-    list_display = ['mobile', 'patient_serial', 'clinic', 'service', 'staff',
+    list_display = ['patient_serial', 'mobile', 'clinic', 'service',
                     'visit_time', 'welcome_sent', 'survey_sent']
     list_filter = ['patient__clinic', 'service']
     list_select_related = True
@@ -67,7 +49,7 @@ class VisitAdmin(admin.ModelAdmin):
 
 
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug']
+    list_display = ['name', 'slug', 'code']
     ordering = ['name']
 
 
@@ -76,7 +58,6 @@ class GenericFeedbackAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.Clinic, ClinicAdmin)
-admin.site.register(models.ClinicStatistic, ClinicStatisticAdmin)
 admin.site.register(models.Region, RegionAdmin)
 admin.site.register(models.Patient, PatientAdmin)
 admin.site.register(models.Visit, VisitAdmin)

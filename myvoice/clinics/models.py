@@ -1,12 +1,8 @@
-import datetime
-
 from django.contrib.gis.db import models as gis
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
 from myvoice.core.validators import validate_year
-from myvoice.statistics.models import Statistic
 
 
 class Region(gis.Model):
@@ -44,25 +40,14 @@ class Clinic(models.Model):
     lga = models.CharField(max_length=100, verbose_name='LGA')
     location = gis.PointField(null=True, blank=True)
 
-    category = models.CharField(
-        max_length=32, blank=True, verbose_name='PBF category')
-    contact = models.ForeignKey(
-        'rapidsms.Contact', blank=True, null=True,
-        verbose_name='Preferred contact')
-    year_opened = models.CharField(
-        max_length=4, blank=True, validators=[validate_year],
-        help_text="Please enter a four-digit year.")
-    last_renovated = models.CharField(
-        max_length=4, blank=True, validators=[validate_year],
-        help_text="Please enter a four-digit year.")
-
     lga_rank = models.IntegerField(
         blank=True, null=True, verbose_name='LGA rank', editable=False)
     pbf_rank = models.IntegerField(
         blank=True, null=True, verbose_name='PBF rank', editable=False)
 
-    # Code of Clinic to be used in SMS registration
-    code = models.PositiveIntegerField(unique=True)
+    code = models.PositiveIntegerField(
+        verbose_name='SMS Code', unique=True,
+        help_text="Code of Clinic to be used in SMS registration.")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -120,9 +105,9 @@ class Service(models.Model):
     """A medical service offered by a Clinic."""
     name = models.CharField(max_length=128)
     slug = models.SlugField(unique=True)
-
-    # Code of Service to be used in SMS registration
-    code = models.PositiveIntegerField()
+    code = models.PositiveIntegerField(
+        verbose_name='SMS Code', unique=True,
+        help_text="Code of Service to be used in SMS registration.")
 
     def __unicode__(self):
         return self.name
@@ -133,9 +118,6 @@ class Patient(models.Model):
     name = models.CharField(max_length=50, blank=True)
     clinic = models.ForeignKey('Clinic', blank=True, null=True)
     mobile = models.CharField(max_length=11, blank=True)
-    contact = models.ForeignKey(
-        'rapidsms.Contact', verbose_name='Preferred contact',
-        blank=True, null=True)
     serial = models.PositiveIntegerField()
 
     class Meta:
@@ -143,10 +125,6 @@ class Patient(models.Model):
 
     def __unicode__(self):
         return '{0} at {1}'.format(self.serial, self.clinic.name)
-
-    def get_name_display(self):
-        """Prefer the associated Contact's name to the name here."""
-        return self.contact.name if self.contact else self.name
 
 
 class Visit(models.Model):
@@ -205,143 +183,3 @@ class GenericFeedback(models.Model):
 
     def __unicode__(self):
         return self.sender
-
-
-class ClinicStatistic(models.Model):
-    """
-    A statistic about a Clinic, valid in a given month.
-
-    Each month, data about clinics is posted at nphcda.thenewtechs.com. We
-    regularly scrape, extract, and analyze this data, and store it using this
-    model.
-    """
-    clinic = models.ForeignKey('Clinic')
-    month = models.DateField()
-
-    # NOTE: Take care when changing the statistic or its type - the stored
-    # value associated with this instance will have to be updated if the type
-    # changes.
-    statistic = models.ForeignKey('statistics.Statistic')
-
-    # In general, do not access these directly - use the `value` property and
-    # `get_value_display()` instead.
-    float_value = models.FloatField(null=True, blank=True, editable=False)
-    int_value = models.IntegerField(null=True, blank=True, editable=False)
-    text_value = models.CharField(
-        max_length=255, null=True, blank=True, editable=False)
-
-    # In general, this will be calculated programatically.
-    rank = models.IntegerField(
-        blank=True, null=True, editable=False,
-        help_text="The rank of this clinic against others for the same "
-        "statistic and month.")
-
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = [('clinic', 'statistic', 'month')]
-        verbose_name = 'statistic'
-
-    def __unicode__(self):
-        return '{statistic} for {clinic} for {month}'.format(
-            statistic=self.statistic, clinic=self.clinic.name,
-            month=self.get_month_display())
-
-    def _get_value(self):
-        """Retrieve this statistic's value based on its type."""
-        statistic_type = self.statistic.statistic_type
-        if statistic_type in (Statistic.FLOAT, Statistic.PERCENTAGE):
-            return self.float_value
-        elif statistic_type in (Statistic.INTEGER,):
-            return self.int_value
-        elif statistic_type in (Statistic.TEXT,):
-            return self.text_value
-        else:
-            raise Exception("Attempted to retrieve value before statistic "
-                            "type was set.")
-
-    def _set_value(self, value):
-        """Set this statistic's value based on its type.
-
-        Also clears the non-relevant value fields. No validation is done
-        here - just like with a normal Django field, it will be validated
-        when the model is cleaned.
-        """
-        statistic_type = self.statistic.statistic_type
-        if statistic_type in (Statistic.FLOAT, Statistic.PERCENTAGE):
-            self.float_value = value
-            self.int_value = None
-            self.text_value = None
-        elif statistic_type in (Statistic.INTEGER,):
-            self.float_value = None
-            self.int_value = value
-            self.text_value = None
-        elif statistic_type in (Statistic.TEXT,):
-            self.float_value = None
-            self.int_value = None
-            self.text_value = value
-        else:
-            raise Exception("Attempted to set value before statistic type "
-                            "was set.")
-
-    value = property(_get_value, _set_value,
-                     doc="The value of this statistic.")
-
-    def clean_value(self):
-        """
-        Ensures that an appropriate value is being used for the statistic's
-        type.
-
-        NOTE: This must be called and handled before saving a statistic,
-        to avoid storing values that are inappropriate for the statistic type.
-        It is not called by default during save(). For an example of how to
-        incorporate this into a model form, see
-        myvoice.clinics.forms.ClinicStatisticAdminForm.
-        """
-        statistic_type = self.statistic.statistic_type
-        if statistic_type in (Statistic.FLOAT, Statistic.PERCENTAGE):
-            try:
-                self.float_value = float(self.float_value)
-            except (ValueError, TypeError):
-                error_msg = '{0} requires a non-null float value.'
-                raise ValidationError({
-                    'value': [error_msg.format(self.statistic.name)],
-                })
-        elif statistic_type in (Statistic.INTEGER,):
-            try:
-                self.int_value = int(self.int_value)
-            except (ValueError, TypeError):
-                error_msg = '{0} requires a non-null integer value.'
-                raise ValidationError({
-                    'value': [error_msg.format(self.statistic.name)],
-                })
-        elif statistic_type in (Statistic.TEXT,):
-            if self.text_value is None:
-                error_msg = '{0} requires a non-null text value.'
-                raise ValidationError({
-                    'value': [error_msg.format(self.statistic.name)],
-                })
-            self.text_value = str(self.text_value)
-        else:
-            raise ValidationError({
-                'statistic': ["Unable to determine statistic type."],
-            })
-
-    def get_month_display(self, frmt='%B %Y'):
-        return self.month.strftime(frmt)
-
-    def get_value_display(self):
-        statistic_type = self.statistic.statistic_type
-        if statistic_type == Statistic.PERCENTAGE:
-            return '{0}%'.format(round(self.value * 100, 1))
-        elif statistic_type == Statistic.FLOAT:
-            return '{0}'.format(round(self.value, 1))
-        return self.value
-
-    def save(self, *args, **kwargs):
-        # Normalize 'month' field so that it is the first day of the month.
-        if isinstance(self.month, datetime.datetime):
-            self.month = self.month.date()
-        self.month.replace(day=1)
-        return super(ClinicStatistic, self).save(*args, **kwargs)

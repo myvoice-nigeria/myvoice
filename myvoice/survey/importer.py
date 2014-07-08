@@ -1,12 +1,8 @@
 import logging
-import re
 
 import dateutil.parser
 
-from django.utils.text import slugify
-
 from myvoice.clinics.models import Visit
-from myvoice.statistics.models import Statistic, StatisticGroup
 
 from . import utils as survey_utils
 from .models import Survey, SurveyQuestion, SurveyQuestionResponse
@@ -100,7 +96,7 @@ def import_survey(flow_id, role=None):
         question_id = question['uuid']
         question_text = _guess_question_text(question_id, flow['definition']['action_sets'])
         question_type, categories = _guess_type_and_categories(question)
-        survey_question = SurveyQuestion(
+        SurveyQuestion.objects.create(
             survey=survey,
             question_id=question_id,
             question=question_text,
@@ -108,16 +104,6 @@ def import_survey(flow_id, role=None):
             question_type=question_type,
             categories=categories,
         )
-        if question_type == SurveyQuestion.MULTIPLE_CHOICE:
-            # Guess the statistic to display this question.
-            statistic_label = re.sub('([a-z])([A-Z])', '\g<1> \g<2>', label).title()
-            statistic, _ = Statistic.objects.get_or_create(name=statistic_label, defaults={
-                'slug': slugify(statistic_label),
-                'group': StatisticGroup.objects.get(slug='survey-results'),
-                'statistic_type': Statistic.PERCENTAGE,
-            })
-            survey_question.statistic = statistic
-        survey_question.save()
     return survey
 
 
@@ -203,8 +189,6 @@ def import_responses(flow_id):
             else:
                 value = answer['category']  # Normalized response.
 
-            response.service_id = visit.service_id
-            response.clinic_id = visit.patient.clinic_id if visit.patient else None
             response.response = value
             response.datetime = response_time
             response.save()
