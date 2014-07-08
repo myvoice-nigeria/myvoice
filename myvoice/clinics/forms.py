@@ -8,7 +8,7 @@ from . import models
 
 VISIT_EXPR = '''
 ^                               # Start
-(i|I|\d+)                       # Numbers as clinic
+(i|I|\d)+                       # Numbers as clinic
 (\s|\*)+                        # Whitespace or '*'
 ((1|i|I)|((i|I|o|O|[0-9])+))    # Either 1 or numbers as mobile
 (\s|\*)+                        # Whitespace or '*'

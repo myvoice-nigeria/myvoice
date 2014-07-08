@@ -219,6 +219,19 @@ class TestVisitForm(TestCase):
         self.assertTrue(form.is_valid())
         self.assertEqual(self.clinic, form.cleaned_data['text'][0])
 
+    def test_double_alpha_clinics(self):
+        """Test that 'ii' and 'II' are interpreted as 11 in clinic."""
+        clinic = factories.Clinic.create(code=11)
+        data = {'text': 'ii 08122233301 4 5', 'phone': '+2348022112211'}
+        form1 = forms.VisitForm(data)
+        self.assertTrue(form1.is_valid())
+        self.assertEqual(clinic, form1.cleaned_data['text'][0])
+
+        data = {'text': 'II 08122233301 4 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(clinic, form.cleaned_data['text'][0])
+
     def test_valid_alpha_mobile(self):
         """Test that 'i' and 'I' are interpreted as 1 in mobile."""
         data = {'text': '1 08i2223330I 4 5', 'phone': '+2348022112211'}

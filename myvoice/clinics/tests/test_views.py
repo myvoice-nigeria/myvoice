@@ -374,3 +374,8 @@ class TestClinicReportView(TestCase):
         response = self.make_request()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render()))
+
+    def test_check_assumptions(self):
+        """Test that if hard-coded assumptions are not met, exception is raised."""
+        survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
+        self.assertRaises(Exception, self.make_request)
