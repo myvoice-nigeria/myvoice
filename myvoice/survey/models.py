@@ -2,8 +2,6 @@ import datetime
 
 from django.db import models
 
-from myvoice.statistics.models import Statistic
-
 
 class SurveyQuerySet(models.query.QuerySet):
 
@@ -25,12 +23,8 @@ class Survey(models.Model):
     """Contains TextIt flow metadata."""
 
     PATIENT_FEEDBACK = 'patient-feedback'
-    GENERIC_FEEDBACK = 'generic-feedback'
-    PATIENT_REGISTRATION = 'patient-registration'
     SURVEY_ROLES = (
         (PATIENT_FEEDBACK, 'Patient Feedback'),
-        (GENERIC_FEEDBACK, 'Generic Feedback'),
-        (PATIENT_REGISTRATION, 'Patient Registration'),
     )
 
     flow_id = models.IntegerField(
@@ -42,7 +36,6 @@ class Survey(models.Model):
     active = models.BooleanField(
         default=True,
         help_text="We will only try to import responses for active surveys.")
-
     role = models.CharField(
         unique=True, max_length=32, null=True, blank=True,
         choices=SURVEY_ROLES, help_text="If given, must be unique.")
@@ -66,15 +59,6 @@ class SurveyQuestion(models.Model):
         (MULTIPLE_CHOICE, 'Multiple Choice'),
     )
 
-    POSITIVE = 'positive'
-    NEGATIVE = 'negative'
-    UNKNOWN = 'unknown'
-    DESIGNATIONS = (
-        (UNKNOWN, 'Neutral/Unknown'),
-        (POSITIVE, 'Positive'),
-        (NEGATIVE, 'Negative'),
-    )
-
     survey = models.ForeignKey('Survey')
     question_id = models.CharField(
         max_length=128,
@@ -93,30 +77,11 @@ class SurveyQuestion(models.Model):
         blank=True,
         help_text="For multiple-choice questions. List each category on a "
         "separate line. This field is disregarded for other question types.")
-
-    # Optional information that helps us display survey results better.
     question = models.CharField(max_length=255, blank=True)
-    designation = models.CharField(
-        max_length=8, choices=DESIGNATIONS, default=UNKNOWN,
-        help_text="For open-ended questions. Whether it asks for positive, "
-        "negative, or neutral feedback. This field is disregarded for other "
-        "question types.")
-    order = models.IntegerField(
-        default=0,
-        help_text="Manually defined. If not present, questions will be "
-        "displayed in the order they were created.")
-    statistic = models.ForeignKey(
-        'statistics.Statistic', null=True, blank=True,
-        help_text="The name of the statistic that responses for this "
-        "question should be aggregated for.")
-    for_display = models.BooleanField(
-        default=True,
-        help_text="Whether to display the responses to this question.")
 
     class Meta:
         verbose_name = 'TextIt Survey Question'
         unique_together = [('survey', 'label')]
-        ordering = ['order', 'id']
 
     def __unicode__(self):
         return self.label
@@ -133,31 +98,24 @@ class SurveyQuestion(models.Model):
         categories = self.get_categories()
         return categories[0] if categories else None
 
-    def save(self, *args, **kwargs):
-        """Attempt to auto-set statistic when question is first saved."""
-        if not self.pk and not self.statistic:
-            try:
-                self.statistic = Statistic.objects.get(slug=self.label)
-            except Statistic.DoesNotExist:
-                self.statistic = None
-        return super(SurveyQuestion, self).save(*args, **kwargs)
-
 
 class SurveyQuestionResponse(models.Model):
     """An answer to a survey question."""
 
     question = models.ForeignKey('survey.SurveyQuestion')
-    response = models.CharField(max_length=255)
+    response = models.CharField(
+        max_length=255,
+        help_text="Normalized response to the question.")
     datetime = models.DateTimeField(
         default=datetime.datetime.now,
         help_text="When this response was received.")
+    visit = models.ForeignKey(
+        'clinics.Visit', null=True, blank=True,
+        help_text="The visit this response is associated with, if any.")
 
-    # This data will be collected during the patient registration process.
-    visit = models.ForeignKey('clinics.Visit', null=True, blank=True)
-
-    # FIXME - For now these fields are set based on the value of the visit's
-    # service and the visit's patient's clinic. It should be possible to use
-    # the visit's values directly.
+    # FIXME - These fields are set in the save method based on the value of
+    # the visit's service and the visit's patient's clinic. It should be
+    # possible to use the visit's values directly.
     clinic = models.ForeignKey(
         'clinics.Clinic', null=True, blank=True,
         help_text="The clinic this response is about, if any.")
@@ -174,3 +132,12 @@ class SurveyQuestionResponse(models.Model):
 
     def __unicode__(self):
         return self.response
+
+    def save(self, *args, **kwargs):
+        """Set the associated clinic and service."""
+        self.clinic_id = self.service_id = None
+        if self.visit:
+            self.service_id = self.visit.service_id
+            if self.visit.patient:
+                self.clinic_id = self.visit.patient.clinic_id
+        super(SurveyQuestionResponse, self).save(*args, **kwargs)
