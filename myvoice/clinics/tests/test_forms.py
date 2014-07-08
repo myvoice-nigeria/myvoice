@@ -155,3 +155,126 @@ class TestFeedbackForm(TestCase):
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data['values']['clinic'], None)
         self.assertEqual(form.cleaned_data['values']['message'], 'no (9)')
+
+
+class TestVisitForm(TestCase):
+
+    def setUp(self):
+        self.service = factories.Service.create(code=5)
+        self.clinic = factories.Clinic.create(code=1)
+
+    def test_visit(self):
+        """Test that clean_text returns tuple of:
+            clinic, phone, serial, service, input text."""
+        data = {'text': '1 08122233301 4000 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(self.clinic, form.cleaned_data['text'][0])
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertEqual('4000', form.cleaned_data['text'][2])
+        self.assertEqual('5', form.cleaned_data['text'][3])
+
+    def test_wrong_clinic(self):
+        """Test that wrong clinic raises error."""
+        data = {'text': '12 08122233301 4000 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertFalse(form.is_valid())
+
+    def test_invalid_alpha_clinic(self):
+        """Test that wrong clinic raises error."""
+        data = {'text': 'A 08122233301 4000 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertFalse(form.is_valid())
+
+    def test_wrong_clinic_twice_validates(self):
+        """Test that wrong clinic after previous error validates."""
+        data = {'text': '12 08122233301 4000 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        # So first clean is run
+        form.is_valid()
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+
+    def test_wrong_mobile(self):
+        """Test that wrong mobile raises error."""
+        data = {'text': 'A 8122233301 4000 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertFalse(form.is_valid())
+
+    def test_invalid_serial_validate(self):
+        """Test that invalid serial will still validate."""
+        data = {'text': '1 08122233301 4 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+
+    def test_valid_alpha_clinic(self):
+        """Test that 'i' and 'I' are interpreted as 1 in clinic."""
+        data = {'text': 'i 08122233301 4 5', 'phone': '+2348022112211'}
+        form1 = forms.VisitForm(data)
+        self.assertTrue(form1.is_valid())
+        self.assertEqual(self.clinic, form1.cleaned_data['text'][0])
+
+        data = {'text': 'I 08122233301 4 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(self.clinic, form.cleaned_data['text'][0])
+
+    def test_double_alpha_clinics(self):
+        """Test that 'ii' and 'II' are interpreted as 11 in clinic."""
+        clinic = factories.Clinic.create(code=11)
+        data = {'text': 'ii 08122233301 4 5', 'phone': '+2348022112211'}
+        form1 = forms.VisitForm(data)
+        self.assertTrue(form1.is_valid())
+        self.assertEqual(clinic, form1.cleaned_data['text'][0])
+
+        data = {'text': 'II 08122233301 4 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual(clinic, form.cleaned_data['text'][0])
+
+    def test_valid_alpha_mobile(self):
+        """Test that 'i' and 'I' are interpreted as 1 in mobile."""
+        data = {'text': '1 08i2223330I 4 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+
+    def test_newline_as_whitespace(self):
+        """Test that \n is interpreted as <space>."""
+        data = {'text': '1\n08122233301\n401\n5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])
+
+    def test_multiple_whitespace(self):
+        """Test that up to 3 whitespaces are treated as one."""
+        data = {'text': '1\n  08122233301 \n 401   5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])
+
+    def test_asterisk_as_whitespace(self):
+        """Test that '*' is treated as whitespace."""
+        data = {'text': '1*08122233301*401*5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])
+
+    def test_asterisk_whitespace_mix(self):
+        """Test that '*' mixed with '\n' and <space> is treated as whitespace."""
+        data = {'text': '1 * 08122233301\n* 401\n*\n5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])
