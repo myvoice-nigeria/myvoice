@@ -266,7 +266,7 @@ class TestVisitView(TestCase):
 
     def test_asterisk_as_whitespace(self):
         """Test that '*' is treated as <space>."""
-        reg_data = {'text': '1 08122233301*401*5', 'phone': '+2348022112211'}
+        reg_data = {'text': '1*08122233301*401*5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
         self.assertEqual(response.content, self.success_msg)
 
@@ -287,6 +287,12 @@ class TestVisitView(TestCase):
         # 2nd time
         self.make_request(reg_data)
         self.assertEqual(0, models.VisitRegistrationError.objects.count())
+
+    def test_serial_startswith_0(self):
+        """Test that serials starting with '0' are valid."""
+        reg_data = {'text': '1 08122233301 0401 5', 'phone': '+2348022112211'}
+        self.make_request(reg_data)
+        self.assertEqual(1, models.Visit.objects.count())
 
 
 class TestFeedbackView(TestCase):
