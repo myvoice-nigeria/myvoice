@@ -17,8 +17,9 @@ from . import models
 
 class VisitView(View):
     form_class = forms.VisitForm
-    success_msg = "Entry was received. Thank you."
-    error_msg = "Your message is invalid, please retry"
+    success_msg = "Entry received for patient with serial number {}. Thank you."
+    error_msg = "1 or more of your entry are missing, please check and enter "\
+                "the registration agian."
     serial_min = 3
     serial_max = 6
 
@@ -29,9 +30,8 @@ class VisitView(View):
     def post(self, request):
         form = self.form_class(request.POST)
         if form.is_valid():
-            # Serial and Service are not validated in the form.
+
             clnc, mobile, serial, serv, txt = form.cleaned_data['text']
-            phone = form.cleaned_data['phone']
             try:
                 patient = models.Patient.objects.get(clinic=clnc, serial=serial)
             except models.Patient.DoesNotExist:
@@ -40,29 +40,7 @@ class VisitView(View):
                     serial=serial,
                     mobile=mobile)
 
-            output_msg = self.success_msg
-
-            # Check if Serial is correct, not a show-stopper.
-            if len(serial) < self.serial_min or len(serial) > self.serial_max:
-                output_msg = 'Serial number does not seem correct, but patient was registered. '\
-                             'Thank you.'
-                models.VisitRegistrationErrorLog.objects.create(
-                    sender=phone, error_type='Wrong Serial', message=txt)
-
-            # Check if Service is correct, not a show-stopper
-            try:
-                serv = models.Service.objects.get(code=serv)
-            except models.Service.DoesNotExist:
-                serv = None
-                output_msg = 'Service code does not seem correct, but patient was registered. '\
-                             'Thank you.'
-                models.VisitRegistrationErrorLog.objects.create(
-                    sender=phone, error_type='Wrong Service Code', message=txt)
-
-            # Check if Clinic is None
-            if not clnc:
-                output_msg = 'Clinic code does not seem correct, but patient was registered. '\
-                             'Thank you.'
+            output_msg = self.success_msg.format(serial)
 
             models.Visit.objects.create(patient=patient, service=serv, mobile=mobile)
             data = json.dumps({'text': output_msg})

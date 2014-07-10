@@ -85,7 +85,7 @@ class TestVisitForm(TestCase):
         self.assertEqual(self.clinic, form.cleaned_data['text'][0])
         self.assertEqual('08122233301', form.cleaned_data['text'][1])
         self.assertEqual('4000', form.cleaned_data['text'][2])
-        self.assertEqual('5', form.cleaned_data['text'][3])
+        self.assertEqual(self.service, form.cleaned_data['text'][3])
 
     def test_wrong_clinic(self):
         """Test that wrong clinic raises error."""
@@ -93,41 +93,88 @@ class TestVisitForm(TestCase):
         form = forms.VisitForm(data)
         self.assertFalse(form.is_valid())
 
+        # Check error message
+        error_msg = 'Error for serial 4000. There is a mistake in '\
+            'CLINIC. Please check and enter the whole registration code again.'
+        self.assertEqual(error_msg, form.errors['text'][0])
+
     def test_invalid_alpha_clinic(self):
-        """Test that wrong clinic raises error."""
+        """Test that alphabetical clinic raises error."""
         data = {'text': 'A 08122233301 4000 5', 'phone': '+2348022112211'}
         form = forms.VisitForm(data)
         self.assertFalse(form.is_valid())
 
-    def test_wrong_clinic_twice_validates(self):
-        """Test that wrong clinic after previous error validates."""
-        data = {'text': '12 08122233301 4000 5', 'phone': '+2348022112211'}
-        form = forms.VisitForm(data)
+        # Check error message
+        error_msg = '1 or more parts of your entry are missing, please check '\
+                    'and enter the registration again.'
+        self.assertEqual(error_msg, form.errors['text'][0])
+
+    def test_wrong_data_twice_validates(self):
+        """Test that wrong data after 2 previous error validates."""
+        # 1st time, Clinic is wrong
+        data1 = {'text': '12 08122233301 4000 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data1)
         # So first clean is run
         form.is_valid()
-        form = forms.VisitForm(data)
+        self.assertFalse(form.is_valid())
+
+        # 2nd time, Service is wrong
+        data2 = {'text': '1 08122233301 4000 50', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data2)
+        self.assertFalse(form.is_valid())
+
+        # 3rd time, Service is wrong
+        data2 = {'text': '1 08122233301 4000 50', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data2)
         self.assertTrue(form.is_valid())
 
     def test_wrong_mobile(self):
-        """Test that wrong mobile raises error."""
+        """Test that wrong mobile does not validate."""
         data = {'text': 'A 8122233301 4000 5', 'phone': '+2348022112211'}
         form = forms.VisitForm(data)
         self.assertFalse(form.is_valid())
 
-    def test_invalid_serial_validate(self):
-        """Test that invalid serial will still validate."""
+    def test_wrong_serial(self):
+        """Test that invalid serial does not validate."""
         data = {'text': '1 08122233301 4 5', 'phone': '+2348022112211'}
         form = forms.VisitForm(data)
-        self.assertTrue(form.is_valid())
+        self.assertFalse(form.is_valid())
+
+        # Check error message
+        error_msg = 'Error for serial 4. There is a mistake in '\
+            'SERIAL. Please check and enter the whole registration code again.'
+        self.assertEqual(error_msg, form.errors['text'][0])
+
+    def test_wrong_service(self):
+        """Test that invalid service does not validate."""
+        data = {'text': '1 08122233301 400 50', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertFalse(form.is_valid())
+
+        # Check error message
+        error_msg = 'Error for serial 400. There is a mistake in '\
+            'SERVICE. Please check and enter the whole registration code again.'
+        self.assertEqual(error_msg, form.errors['text'][0])
+
+    def test_wrong_service_and_clinic(self):
+        """Test that invalid service does not validate."""
+        data = {'text': '21 08122233301 400 50', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertFalse(form.is_valid())
+
+        # Check error message
+        error_msg = 'Error for serial 400. There is a mistake in '\
+            'CLINIC, SERVICE. Please check and enter the whole registration code again.'
+        self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_valid_alpha_clinic(self):
         """Test that 'i' and 'I' are interpreted as 1 in clinic."""
-        data = {'text': 'i 08122233301 4 5', 'phone': '+2348022112211'}
+        data = {'text': 'i 08122233301 400 5', 'phone': '+2348022112211'}
         form1 = forms.VisitForm(data)
         self.assertTrue(form1.is_valid())
         self.assertEqual(self.clinic, form1.cleaned_data['text'][0])
 
-        data = {'text': 'I 08122233301 4 5', 'phone': '+2348022112211'}
+        data = {'text': 'I 08122233301 400 5', 'phone': '+2348022112211'}
         form = forms.VisitForm(data)
         self.assertTrue(form.is_valid())
         self.assertEqual(self.clinic, form.cleaned_data['text'][0])
@@ -135,19 +182,19 @@ class TestVisitForm(TestCase):
     def test_double_alpha_clinics(self):
         """Test that 'ii' and 'II' are interpreted as 11 in clinic."""
         clinic = factories.Clinic.create(code=11)
-        data = {'text': 'ii 08122233301 4 5', 'phone': '+2348022112211'}
+        data = {'text': 'ii 08122233301 400 5', 'phone': '+2348022112211'}
         form1 = forms.VisitForm(data)
         self.assertTrue(form1.is_valid())
         self.assertEqual(clinic, form1.cleaned_data['text'][0])
 
-        data = {'text': 'II 08122233301 4 5', 'phone': '+2348022112211'}
+        data = {'text': 'II 08122233301 400 5', 'phone': '+2348022112211'}
         form = forms.VisitForm(data)
         self.assertTrue(form.is_valid())
         self.assertEqual(clinic, form.cleaned_data['text'][0])
 
     def test_valid_alpha_mobile(self):
         """Test that 'i' and 'I' are interpreted as 1 in mobile."""
-        data = {'text': '1 08i2223330I 4 5', 'phone': '+2348022112211'}
+        data = {'text': '1 08i2223330I 400 5', 'phone': '+2348022112211'}
         form = forms.VisitForm(data)
         self.assertTrue(form.is_valid())
         self.assertEqual('08122233301', form.cleaned_data['text'][1])
@@ -222,9 +269,11 @@ class TestVisitForm(TestCase):
         self.assertTrue('0401', form.cleaned_data['text'][2])
         self.assertTrue('5', form.cleaned_data['text'][3])
 
-    def _test_long_text(self):
-        """Test how the form handles long text (160 characters)."""
-        # Not particularly useful
-        data = {'text': '1'*160, 'phone': '+2348022112211'}
+    def test_missing_field(self):
+        """Test that missing field returns proper message."""
+        data = {'text': '08122233301 0401 5', 'phone': '+2348022112211'}
         form = forms.VisitForm(data)
         self.assertFalse(form.is_valid())
+        error_msg = '1 or more parts of your entry are missing, please check and '\
+                    'enter the registration again.'
+        self.assertEqual(error_msg, form.errors['text'][0])

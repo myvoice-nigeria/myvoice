@@ -1,7 +1,12 @@
+import csv
+
 from django.contrib import admin
+from django.http import HttpResponse
 
 from . import importer
 from . import models
+
+from myvoice.core.utils import extract_qset_data
 
 
 class SurveyQuestionInline(admin.TabularInline):
@@ -97,6 +102,7 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
     readonly_fields = ['question', 'response', 'datetime', 'visit', 'clinic',
                        'service', 'created', 'updated']
     search_fields = ['visit__mobile', 'response', 'question__label']
+    actions = ['export_to_csv']
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -115,6 +121,17 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
 
     def mobile(self, obj):
         return obj.visit.mobile
+
+    def export_to_csv(self, request, queryset):
+        headers = ['question', 'response', 'datetime', 'visit.patient.serial',
+                   'clinic', 'service', 'created', 'updated']
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=response_data.csv'
+        data = extract_qset_data(queryset, headers)
+        writer = csv.writer(response)
+        for line in data:
+            writer.writerow(line)
+        return response
 
 
 admin.site.register(models.Survey, SurveyAdmin)

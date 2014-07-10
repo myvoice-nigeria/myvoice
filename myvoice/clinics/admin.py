@@ -1,7 +1,12 @@
+import csv
+
 from django.contrib import admin
+from django.http import HttpResponse
 from leaflet.admin import LeafletGeoAdmin
 
 from . import models
+
+from myvoice.core.utils import extract_qset_data
 
 
 class ClinicStaffInline(admin.TabularInline):
@@ -40,12 +45,24 @@ class VisitAdmin(admin.ModelAdmin):
                     'visit_time', 'welcome_sent', 'survey_sent']
     list_filter = ['patient__clinic', 'service']
     list_select_related = True
+    actions = ['export_to_csv']
 
     def clinic(self, obj):
         return obj.patient.clinic
 
     def patient_serial(self, obj):
         return obj.patient.serial
+
+    def export_to_csv(self, request, queryset):
+        headers = ['patient.serial', 'patient.clinic', 'service', 'staff',
+                   'visit_time', 'welcome_sent', 'survey_sent', 'mobile']
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=visit_data.csv'
+        data = extract_qset_data(queryset, headers)
+        writer = csv.writer(response)
+        for line in data:
+            writer.writerow(line)
+        return response
 
 
 class ServiceAdmin(admin.ModelAdmin):

@@ -18,3 +18,25 @@ def make_percentage(numerator, denominator, places=0):
     """Returns a percentage out of 100 to the number of places given."""
     percentage = float(numerator) / float(denominator)
     return round(percentage * 100, places)
+
+
+def extract_attr(obj, name):
+    parts = name.split('.')
+    # Not likely
+    if not parts:
+        return None
+    if len(parts) == 1:
+        return getattr(obj, name)
+    else:
+        newobj = getattr(obj, parts[0])
+        return extract_attr(newobj, '.'.join(parts[1:]))
+
+
+def extract_qset_data(qset, fld_names):
+    """Extract data of fields in fld_names from queryset to a list."""
+    out = [[header.replace('.', ' ') for header in fld_names]]
+    for obj in qset:
+        line = [str(extract_attr(obj, fld_name)).decode('utf-8', 'ignore')
+                for fld_name in fld_names]
+        out.append(line)
+    return out
