@@ -7,6 +7,7 @@ base:
     - locale.utf8
     - project.devs
     - salt.minion
+    - project.appneta
   'precise32':
     - vagrant.user
   'roles:salt-master':

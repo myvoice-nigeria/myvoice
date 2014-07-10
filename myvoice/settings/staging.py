@@ -1,3 +1,4 @@
+import oboeware.djangoware
 from myvoice.settings.base import *  # noqa
 
 
