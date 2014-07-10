@@ -1,10 +1,29 @@
-install-appneta:
+add-appneta-source:
   cmd.run:
-    - name: cd /tmp && wget https://files.appneta.com/install_appneta.sh && sudo sh ./install_appneta.sh {{ pillar['secrets']['APPNETA_TOKEN'] }}
-    - unless: dpkg --list|grep tracelyzer
+    - name: echo "deb http://apt.appneta.com/{{ pillar['secrets']['APPNETA_TOKEN'] }} precise main" > appneta.list
+    - cwd: /etc/apt/sources.list.d/
+    - unless: sh -c "[ -f appneta.list ]"
 
-reinstall-nginx:
-  cmd.wait:
-    - name: apt-get install nginx-full
-    - watch:
-        - cmd: install-appneta
+add-appneta-key:
+  cmd.run:
+    - name: echo "tracelyzer.access_key={{ pillar['secrets']['APPNETA_TOKEN'] }}" > /etc/tracelytics.conf
+    - unless: which tracelyzer
+
+install-appneta:
+  pkg.installed:
+    - pkgs:
+        - curl
+        - ca-certificates
+        - liboboe0
+        - liboboe-dev
+        - tracelyzer
+    - require:
+        - cmd: add-appneta-key
+        - cmd: add-appneta-source
+
+update-nginx:
+  pkg.latest:
+    - pkgs:
+        - nginx-full
+    - require:
+        - pkg: install-appneta
