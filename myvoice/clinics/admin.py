@@ -54,7 +54,7 @@ class VisitAdmin(admin.ModelAdmin):
         return obj.patient.serial
 
     def export_to_csv(self, request, queryset):
-        headers = ['patient', 'service', 'staff',
+        headers = ['patient.serial', 'patient.clinic', 'service', 'staff',
                    'visit_time', 'welcome_sent', 'survey_sent', 'mobile']
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=visit_data.csv'
