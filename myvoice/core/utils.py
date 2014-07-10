@@ -21,7 +21,7 @@ def make_percentage(numerator, denominator, places=0):
 
 
 def extract_qset_data(qset, fld_names):
-    """Extract data from queryset for export to CSV file."""
+    """Extract data of fields in fld_names from queryset to a list."""
     out = [[i for i in fld_names]]
     for obj in qset:
         line = [str(getattr(obj, fld_name)).decode('utf-8', 'ignore')
