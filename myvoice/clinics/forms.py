@@ -25,7 +25,15 @@ VISIT_PATT = re.compile(VISIT_EXPR, re.VERBOSE)
 class VisitForm(forms.Form):
     phone = forms.CharField(max_length=20)
     text = forms.RegexField(VISIT_PATT, max_length=200, error_messages={
-        'invalid': 'Your message is invalid. Please retry'})
+        'invalid': '1 or more parts of your entry are missing, please check and '
+        'enter the registration again.'})
+
+    serial_min = 3
+    serial_max = 6
+
+    def __init__(self, *args, **kwargs):
+        super(VisitForm, self).__init__(*args, **kwargs)
+        self.error_list = []
 
     def replace_alpha(self, text):
         """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
@@ -35,35 +43,60 @@ class VisitForm(forms.Form):
     def clean_text(self):
         """Validate input text.
 
-        text is in format: CLINIC PHONE SERIAL SERVICE
+        text is in format: CLINIC MOBILE SERIAL SERVICE
         """
+        # How come this is available here?
+        sender = self.cleaned_data['phone']
+
         cleaned_data = self.replace_alpha(self.cleaned_data['text'].strip())
-        clnc, phone, serial, srvc = cleaned_data.split()
+        clnc, mobile, serial, srvc = cleaned_data.split()
 
         # Check if mobile is correct
-        if len(phone) not in [1, 11]:
-            error_msg = 'Mobile number incorrect for patient with serial {serial}. Must '\
-                        'be 11 digits with no spaces. Please check your instruction card '\
-                        'and re-enter the entire patient code in 1 text.'
-            raise forms.ValidationError(error_msg.format(serial=serial))
+        if len(mobile) not in [1, 11]:
+            self.error_list.append('mobile')
+
         # Check if clinic is valid
         try:
             clinic = models.Clinic.objects.get(code=clnc)
         except (models.Clinic.DoesNotExist, ValueError):
-            error_msg = 'Clinic number incorrect. Must be 1-11, please check your '\
-                        'instruction card and re-enter the entire patient code in 1 sms'
-            # If ValidationError exists don't raise error but send "empty" clinic
-            if models.VisitRegistrationError.objects.filter(sender=phone).count():
-                clinic = None
-                # Clear VisitRegistrationError
-                models.VisitRegistrationError.objects.filter(sender=phone).delete()
-            else:
-                models.VisitRegistrationError.objects.create(sender=phone)
-                raise forms.ValidationError(error_msg)
-        else:
-            models.VisitRegistrationError.objects.filter(sender=phone).delete()
+            self.error_list.append('clinic')
+            clinic = None
 
-        return clinic, phone, serial, srvc, self.cleaned_data['text']
+        # Check if serial is valid
+        if len(serial) < self.serial_min or len(serial) > self.serial_max:
+            self.error_list.append('serial')
+
+        # Check if Service is valid
+        try:
+            service = models.Service.objects.get(code=srvc)
+        except models.Service.DoesNotExist:
+            self.error_list.append('service')
+            service = None
+
+        # Check if there are errors.
+        # If 2 previous validation errors exist, allow entry to pass
+        # As long as mobile is ok.
+        if len(self.error_list) > 0:
+            fld_list = ', '.join(self.error_list).upper()
+            if models.VisitRegistrationError.objects.filter(
+                    sender=sender).count() >= 2 and 'mobile' not in self.error_list:
+                # Save error log
+                models.VisitRegistrationErrorLog.objects.create(
+                    sender=sender,
+                    error_type=fld_list,
+                    message=self.cleaned_data['text'])
+                # Clear Current Error state
+                models.VisitRegistrationError.objects.filter(
+                    sender=sender).delete()
+            else:
+                # Save error state
+                models.VisitRegistrationError.objects.create(sender=sender)
+                error_msg = 'Error for serial {0}. There is a mistake in '\
+                    '{1}. Please check and enter the whole registration '\
+                    'code again.'.format(serial, fld_list)
+                raise forms.ValidationError(error_msg)
+
+        return clinic, mobile, serial, service, self.cleaned_data['text']
 
 
 class SelectClinicForm(forms.Form):

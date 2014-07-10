@@ -17,10 +17,12 @@ class TestVisitView(TestCase):
         self.clinic = factories.Clinic.create(code=1)
         self.service = factories.Service.create(code=5)
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
-        self.success_msg = '{"text": "Entry was received. Thank you."}'
-        self.second_error = "We've noticed that some information is still incorrect, but "\
-                            "registered this patient. Please be sure to enter all information "\
-                            "as listed on your instruction card"
+        self.invalid_msg = '{"text": "1 or more parts of your entry are missing, please check '\
+                           'and enter the registration again."}'
+        self.error_msg = '{"text": "Error for serial %s. There is a mistake in '\
+                         '%s. Please check and enter the whole registration code again."}'
+        self.success_msg = '{"text": "Entry received for patient with serial number %s. '\
+                           'Thank you."}'
 
     def make_request(self, data):
         """Make Test request with POST data."""
@@ -30,15 +32,15 @@ class TestVisitView(TestCase):
     def test_visit(self):
         reg_data = {'text': '1 08122233301 4001 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        msg = self.success_msg % 4001
+        self.assertEqual(response.content, msg)
 
-    def test_visit_wrong_clinic(self):
+    def test_wrong_clinic(self):
         """Test that a wrong clinic is not registered"""
         reg_data = {'text': '2 08122233301 4001 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        error_msg = "Clinic number incorrect. Must be 1-11, please check your instruction card "\
-            "and re-enter the entire patient code in 1 sms"
-        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
+        msg = self.error_msg % (4001, 'CLINIC')
+        self.assertEqual(response.content, msg)
 
         # Test that it is not registered 1st time.
         self.assertEqual(0, models.Visit.objects.count())
@@ -47,23 +49,25 @@ class TestVisitView(TestCase):
         """Test that a wrong clinic is registered on second sms."""
         reg_data = {'text': '2 08122233301 4001 5', 'phone': '+2348022112211'}
         self.make_request(reg_data)
-        error_msg = "Clinic code does not seem correct, but patient was registered. Thank you."
+        msg = self.error_msg % (4001, 'CLINIC')
 
         # Test that it is not registered 1st time.
         self.assertEqual(0, models.Visit.objects.count())
 
         # Test 2nd attempt message.
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
+        self.assertEqual(response.content, msg)
 
-        # Test 2nd attempt is registered.
-        self.assertEqual(1, models.Visit.objects.count())
+        # Test 2nd attempt is not registered.
+        self.assertEqual(0, models.Visit.objects.count())
 
-        # Test that 3rd attempt message.
+        # Test that 3rd attempt gives success message
         response = self.make_request(reg_data)
-        error_msg = "Clinic number incorrect. Must be 1-11, please check your instruction card "\
-            "and re-enter the entire patient code in 1 sms"
-        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
+        msg = self.success_msg % 4001
+        self.assertEqual(response.content, msg)
+
+        # Test 3rd attempt is registered
+        self.assertEqual(1, models.Visit.objects.count())
 
     def test_wrong_right_wrong_clinic_entries(self):
         """Test that a right clinic entry after wrong entry clears the slate.
@@ -86,75 +90,83 @@ class TestVisitView(TestCase):
 
         # 3rd entry, Clinic is wrong
         reg_data = {'text': '2 08122233301 4001 5', 'phone': '+2348022112211'}
-        error_msg = "Clinic number incorrect. Must be 1-11, please check your instruction card "\
-            "and re-enter the entire patient code in 1 sms"
+        msg = self.error_msg % (4001, 'CLINIC')
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
+        self.assertEqual(response.content, msg)
 
-    def test_prioritize_mobile_error(self):
+    def test_multiple_invalid_entries(self):
         """Test mobile and clinic are incorrect, prioritize mobile."""
         reg_data = {'text': '15 8122233301 4000 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        error_msg = 'Mobile number incorrect for patient with serial 4000. Must be 11 digits '\
-                    'with no spaces. Please check your '\
-                    'instruction card and re-enter the entire patient code in 1 text.'
-        self.assertEqual(response.content, json.dumps({"text": "%s" % error_msg}))
+        msg = self.error_msg % (4000, 'MOBILE, CLINIC')
+        self.assertEqual(response.content, msg)
 
         # Test that it is not registered.
         self.assertEqual(0, models.Visit.objects.count())
 
-    def test_visit_registration(self):
-        """Test that the registration works."""
+    def test_incomplete_entries(self):
+        """Test that incomplete fields gives correct error message."""
         reg_data = {'text': '08122233301 4001 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "Your message is invalid. Please retry"}')
+        self.assertEqual(response.content, self.invalid_msg)
 
-    def test_visit_no_phone(self):
-        """Test that the phone number of '1' will validate."""
-        reg_data = {'text': '1 1 4000 5', 'phone': '+2348022112211'}
-        response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        # Test that it is not registered.
+        self.assertEqual(0, models.Visit.objects.count())
 
-    def test_visit_clinic_nonumber(self):
+    def test_alpha_clinic_number(self):
         """Test that a non-numeric data is not registered."""
         reg_data = {'text': 'A 08122233301 4000 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "Your message is invalid. Please retry"}')
+        self.assertEqual(response.content, self.invalid_msg)
+
+    def test_no_mobile(self):
+        """Test that the phone number of '1' will validate."""
+        reg_data = {'text': '1 1 4000 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        msg = self.success_msg % 4000
+        self.assertEqual(response.content, msg)
 
     def test_invalid_mobile(self):
-        """Test that a non 11-digit number is not registered."""
+        """Test that a non 11-digit number is not registered,
+        even after 2 wrong entries."""
         reg_data = {'text': '1 8122233301 4000 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        error_msg = 'Mobile number incorrect for patient with serial 4000. Must be 11 digits '\
-                    'with no spaces. Please check your '\
-                    'instruction card and re-enter the entire patient code in 1 text.'
-        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
+        msg = self.error_msg % (4000, 'MOBILE')
+        self.assertEqual(response.content, msg)
 
         # Test second wrong sms same message
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
+        self.assertEqual(response.content, msg)
 
         # Test that it is not registered.
         self.assertEqual(0, models.Visit.objects.count())
 
-    def test_visit_invalid_service(self):
+        # Test 3rd wrong sms not registered.
+        response = self.make_request(reg_data)
+        self.assertEqual(response.content, msg)
+
+        # Test that it is not registered.
+        self.assertEqual(0, models.Visit.objects.count())
+
+    def test_invalid_service(self):
         """Test that invalid service code gives correct message and registered."""
         reg_data = {'text': '1 08122233301 4000 3', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        error_msg = 'Service code does not seem correct, but patient was registered. Thank you.'
-        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
+        msg = self.error_msg % (4000, 'SERVICE')
+        self.assertEqual(response.content, msg)
 
-        # Test that it is registered.
-        self.assertEqual(1, models.Visit.objects.count())
+        # Test that it is not registered.
+        self.assertEqual(0, models.Visit.objects.count())
 
         # Test error is logged.
-        self.assertEqual(1, models.VisitRegistrationErrorLog.objects.count())
+        self.assertEqual(1, models.VisitRegistrationError.objects.count())
 
-    def test_visit_3digit_serial_valid(self):
+    def test_3digit_serial(self):
         """Test that 3-digit serial is valid."""
         reg_data = {'text': '1 08122233301 400 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        msg = self.success_msg % 400
+        self.assertEqual(response.content, msg)
 
         # Test that it is registered.
         self.assertEqual(1, models.Visit.objects.count())
@@ -162,18 +174,18 @@ class TestVisitView(TestCase):
         # Test error is not logged.
         self.assertEqual(0, models.VisitRegistrationErrorLog.objects.count())
 
-    def test_visit_invalid_serial(self):
-        """Test that invalid serial gives correct message and is still registered."""
+    def test_invalid_serial(self):
+        """Test that invalid serial gives correct message and is not registered."""
         reg_data = {'text': '1 08122233301 40 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        error_msg = 'Serial number does not seem correct, but patient was registered. Thank you.'
-        self.assertEqual(response.content, '{"text": "%s"}' % error_msg)
+        msg = self.error_msg % (40, 'SERIAL')
+        self.assertEqual(response.content, msg)
 
-        # Test that it is registered.
-        self.assertEqual(1, models.Visit.objects.count())
+        # Test that it is not registered.
+        self.assertEqual(0, models.Visit.objects.count())
 
         # Test error is logged.
-        self.assertEqual(1, models.VisitRegistrationErrorLog.objects.count())
+        self.assertEqual(1, models.VisitRegistrationError.objects.count())
 
     def test_save_visit(self):
         """Test that the visit information is saved."""
@@ -193,23 +205,23 @@ class TestVisitView(TestCase):
         """Test that we interprete 'i' or 'I' as 1 in clinic."""
         reg_data = {'text': 'i 08122233301 400 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        self.assertEqual(response.content, self.success_msg % 400)
 
         # Test that visit is saved
         self.assertEqual(1, models.Visit.objects.count())
 
         reg_data = {'text': 'I 08122233301 400 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        self.assertEqual(response.content, self.success_msg % 400)
 
         # Test that visit is saved
         self.assertEqual(2, models.Visit.objects.count())
 
     def test_alpha_mobile(self):
         """Test that we interprete 'i' or 'I' as 1 in mobile."""
-        reg_data = {'text': '1 08I2223330i 400 5', 'phone': '+2348022112211'}
+        reg_data = {'text': '1 08I2223330i 4000 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        self.assertEqual(response.content, self.success_msg % 4000)
 
         # Test that visit is saved
         self.assertEqual(1, models.Visit.objects.count())
@@ -222,7 +234,7 @@ class TestVisitView(TestCase):
         """Test that we interprete 'i', 'I' as 1; 'o', 'O' as 0 in serial."""
         reg_data = {'text': 'i 08I2223330i 4oI 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        self.assertEqual(response.content, self.success_msg % 401)
 
         # Test that visit is saved
         self.assertEqual(1, models.Visit.objects.count())
@@ -235,7 +247,7 @@ class TestVisitView(TestCase):
         """Test that <enter> is treated like <space>."""
         reg_data = {'text': '1\n08122233301\n401\n5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        self.assertEqual(response.content, self.success_msg % 401)
 
         # Test that visit is saved
         self.assertEqual(1, models.Visit.objects.count())
@@ -254,7 +266,7 @@ class TestVisitView(TestCase):
         """Test that up to 3 whitespaces(mixed) are treated as one whitespace."""
         reg_data = {'text': '1\n  08122233301 \n 401\n5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        self.assertEqual(response.content, self.success_msg % 401)
 
         # Test that visit is saved
         self.assertEqual(1, models.Visit.objects.count())
@@ -268,7 +280,7 @@ class TestVisitView(TestCase):
         """Test that '*' is treated as <space>."""
         reg_data = {'text': '1*08122233301*401*5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        self.assertEqual(response.content, self.success_msg)
+        self.assertEqual(response.content, self.success_msg % 401)
 
         # Test that visit is saved
         self.assertEqual(1, models.Visit.objects.count())
@@ -279,12 +291,16 @@ class TestVisitView(TestCase):
         self.assertEqual('08122233301', obj.mobile)
 
     def test_clinic_error_removed(self):
-        """Test that when 2nd clinic error is sent, VisitRegistrationError is cleared."""
+        """Test that when 3nd clinic error is sent, VisitRegistrationError is cleared."""
         reg_data = {'text': '21 08122233301*401*5', 'phone': '+2348022112211'}
         self.make_request(reg_data)
         self.assertEqual(1, models.VisitRegistrationError.objects.count())
 
         # 2nd time
+        self.make_request(reg_data)
+        self.assertEqual(2, models.VisitRegistrationError.objects.count())
+
+        # 3rd time
         self.make_request(reg_data)
         self.assertEqual(0, models.VisitRegistrationError.objects.count())
 
