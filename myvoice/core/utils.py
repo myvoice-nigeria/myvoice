@@ -18,3 +18,13 @@ def make_percentage(numerator, denominator, places=0):
     """Returns a percentage out of 100 to the number of places given."""
     percentage = float(numerator) / float(denominator)
     return round(percentage * 100, places)
+
+
+def extract_qset_data(qset, fld_names):
+    """Extract data of fields in fld_names from queryset to a list."""
+    out = [[i for i in fld_names]]
+    for obj in qset:
+        line = [str(getattr(obj, fld_name)).decode('utf-8', 'ignore')
+                for fld_name in fld_names]
+        out.append(line)
+    return out
