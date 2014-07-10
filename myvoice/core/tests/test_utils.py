@@ -47,7 +47,6 @@ class TestCSVExport(TestCase):
         self.row2.counter = 17
 
         self.header = ['name', 'address', 'counter']
-        #self.qset.side_effect = [self.row1, self.row2]
 
         def side_effect():
             for row in [self.row1, self.row2]:
