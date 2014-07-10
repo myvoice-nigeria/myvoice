@@ -46,8 +46,7 @@ class TestCSVExport(TestCase):
         self.row2.address = 'elsewhere'
         self.row2.counter = 17
 
-        self.qset.model._meta.fields.get_all_field_names.return_value = [
-            'name', 'address', 'counter']
+        self.header = ['name', 'address', 'counter']
         #self.qset.side_effect = [self.row1, self.row2]
 
         def side_effect():
@@ -58,14 +57,13 @@ class TestCSVExport(TestCase):
 
     def test_extract_qset_headers(self):
         """Test that we can get the headers of the qset."""
-        data = utils.extract_qset_data(self.qset)
+        data = utils.extract_qset_data(self.qset, self.header)
         header = data[0]
         self.assertEqual(['name', 'address', 'counter'], header)
         self.assertTrue(self.qset.assert_called_once())
 
     def test_extract_qset_data(self):
         """Test that we can get the data from the qset."""
-        data = utils.extract_qset_data(self.qset)
+        data = utils.extract_qset_data(self.qset, self.header)
         self.assertEqual(['me', 'somewhere', '5'], data[1])
         self.assertEqual(['you', 'elsewhere', '17'], data[2])
-        self.assertTrue(self.qset.assert_called_once())
