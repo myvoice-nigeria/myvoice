@@ -66,3 +66,20 @@ class TestCSVExport(TestCase):
         data = utils.extract_qset_data(self.qset, self.header)
         self.assertEqual(['me', 'somewhere', '5'], data[1])
         self.assertEqual(['you', 'elsewhere', '17'], data[2])
+
+    def test_extract_fk(self):
+        """Test that we can get attributes of a fk field using dot notation."""
+        self.row1.parent.name = 'parent 1'
+        self.row2.parent.name = 'parent 2'
+        header = ['name', 'address', 'counter', 'parent.name']
+        data = utils.extract_qset_data(self.qset, header)
+        self.assertEqual(['me', 'somewhere', '5', 'parent 1'], data[1])
+        self.assertEqual(['you', 'elsewhere', '17', 'parent 2'], data[2])
+
+    def test_extract_fk_header(self):
+        """Test that header of fk attribute is space-separated."""
+        self.row1.parent.name = 'parent 1'
+        self.row2.parent.name = 'parent 2'
+        header = ['name', 'address', 'counter', 'parent.name']
+        data = utils.extract_qset_data(self.qset, header)
+        self.assertEqual(['name', 'address', 'counter', 'parent name'], data[0])
