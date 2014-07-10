@@ -126,7 +126,7 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
         headers = ['question', 'response', 'datetime', 'visit',
                    'clinic', 'service', 'created', 'updated']
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=visit_data.csv'
+        response['Content-Disposition'] = 'attachment; filename=response_data.csv'
         data = extract_qset_data(queryset, headers)
         writer = csv.writer(response)
         for line in data:
