@@ -305,3 +305,15 @@ class TestVisitForm(TestCase):
             visit_time=timezone.now()-timedelta(minutes=31))
         form = forms.VisitForm(data)
         self.assertTrue(form.is_valid())
+
+    def test_same_patient_different_clinic(self):
+        """Test that registering 2nd visit with same mobile, serial but different
+        clinic is valid even if time difference is < 30 mins."""
+        data = {'text': '1 08122233301 4001 5', 'phone': '+2348022112211'}
+        factories.Visit.create(
+            patient=factories.Patient.create(
+                clinic=factories.Clinic.create(code=5), serial='4001'),
+            mobile='08122233301',
+            visit_time=timezone.now()-timedelta(minutes=9))
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
