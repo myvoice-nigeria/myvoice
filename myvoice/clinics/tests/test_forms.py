@@ -75,6 +75,8 @@ class TestVisitForm(TestCase):
     def setUp(self):
         self.service = factories.Service.create(code=5)
         self.clinic = factories.Clinic.create(code=1)
+        self.error_msg = 'Error for serial {}. There was a mistake in entering '\
+            '{}. Please check and enter the whole registration code again.'
 
     def test_visit(self):
         """Test that clean_text returns tuple of:
@@ -94,8 +96,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check error message
-        error_msg = 'Error for serial 4000. There is a mistake in '\
-            'CLINIC. Please check and enter the whole registration code again.'
+        error_msg = self.error_msg.format(4000, 'CLINIC')
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_invalid_alpha_clinic(self):
@@ -141,8 +142,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check error message
-        error_msg = 'Error for serial 4. There is a mistake in '\
-            'SERIAL. Please check and enter the whole registration code again.'
+        error_msg = self.error_msg.format(4, 'SERIAL')
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_wrong_service(self):
@@ -152,8 +152,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check error message
-        error_msg = 'Error for serial 400. There is a mistake in '\
-            'SERVICE. Please check and enter the whole registration code again.'
+        error_msg = self.error_msg.format(400, 'SERVICE')
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_wrong_service_and_clinic(self):
@@ -163,8 +162,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check error message
-        error_msg = 'Error for serial 400. There is a mistake in '\
-            'CLINIC, SERVICE. Please check and enter the whole registration code again.'
+        error_msg = self.error_msg.format(400, 'CLINIC, SERVICE')
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_valid_alpha_clinic(self):

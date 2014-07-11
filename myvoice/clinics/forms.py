@@ -91,7 +91,7 @@ class VisitForm(forms.Form):
             else:
                 # Save error state
                 models.VisitRegistrationError.objects.create(sender=sender)
-                error_msg = 'Error for serial {0}. There is a mistake in '\
+                error_msg = 'Error for serial {0}. There was a mistake in entering '\
                     '{1}. Please check and enter the whole registration '\
                     'code again.'.format(serial, fld_list)
                 raise forms.ValidationError(error_msg)
