@@ -19,7 +19,7 @@ class TestVisitView(TestCase):
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.invalid_msg = '{"text": "1 or more parts of your entry are missing, please check '\
                            'and enter the registration again."}'
-        self.error_msg = '{"text": "Error for serial %s. There is a mistake in '\
+        self.error_msg = '{"text": "Error for serial %s. There was a mistake in entering '\
                          '%s. Please check and enter the whole registration code again."}'
         self.success_msg = '{"text": "Entry received for patient with serial number %s. '\
                            'Thank you."}'
