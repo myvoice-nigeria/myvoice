@@ -201,8 +201,8 @@ class TestVisitView(TestCase):
         obj = models.Visit.objects.all()[0]
         self.assertEqual('08122233301', obj.mobile)
 
-    def test_alpha_clinic(self):
-        """Test that we interprete 'i' or 'I' as 1 in clinic."""
+    def test_small_alpha_clinic(self):
+        """Test that we interprete 'i' as 1 in clinic."""
         reg_data = {'text': 'i 08122233301 400 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
         self.assertEqual(response.content, self.success_msg % 400)
@@ -210,12 +210,14 @@ class TestVisitView(TestCase):
         # Test that visit is saved
         self.assertEqual(1, models.Visit.objects.count())
 
+    def test_big_alpha_clinic(self):
+        """Test that we interprete 'I' as 1 in clinic."""
         reg_data = {'text': 'I 08122233301 400 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
         self.assertEqual(response.content, self.success_msg % 400)
 
         # Test that visit is saved
-        self.assertEqual(2, models.Visit.objects.count())
+        self.assertEqual(1, models.Visit.objects.count())
 
     def test_alpha_mobile(self):
         """Test that we interprete 'i' or 'I' as 1 in mobile."""
