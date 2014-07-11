@@ -1,7 +1,9 @@
 from django import forms
+from django.utils import timezone
 
 import json
 import re
+from datetime import timedelta
 
 from . import models
 
@@ -30,6 +32,7 @@ class VisitForm(forms.Form):
 
     serial_min = 3
     serial_max = 6
+    min_wait_time = 1800  # Minimum time between visits by same patient in seconds
 
     def __init__(self, *args, **kwargs):
         super(VisitForm, self).__init__(*args, **kwargs)
@@ -95,6 +98,16 @@ class VisitForm(forms.Form):
                     '{1}. Please check and enter the whole registration '\
                     'code again.'.format(serial, fld_list)
                 raise forms.ValidationError(error_msg)
+        else:  # No errors, check if a duplicate in 30 mins
+            min_wait_time = timezone.now() - timedelta(
+                seconds=self.min_wait_time)
+            if models.Visit.objects.filter(
+                    mobile=mobile,
+                    patient__serial=int(serial),  # FIXME: serial will change to text
+                    patient__clinic=clinic,
+                    visit_time__gt=min_wait_time).count():
+                raise forms.ValidationError("This registration was "
+                                            "received before. Thank you.")
 
         return clinic, mobile, serial, service, self.cleaned_data['text']
 
