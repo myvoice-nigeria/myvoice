@@ -7,23 +7,27 @@ add-appneta-source:
 add-appneta-key:
   cmd.run:
     - name: echo "tracelyzer.access_key={{ pillar['secrets']['APPNETA_TOKEN'] }}" > /etc/tracelytics.conf
-    - unless: which tracelyzer
+    - unless: sh -c "[ -f /etc/tracelytics.conf ]"
 
-install-appneta:
+install-liboboe:
   pkg.installed:
     - pkgs:
-        - curl
-        - ca-certificates
         - liboboe0
         - liboboe-dev
-        - tracelyzer
     - require:
         - cmd: add-appneta-key
         - cmd: add-appneta-source
+
+install-tracelyzer:
+  pkg.installed:
+    - pkgs:
+        - tracelyzer
+    - require:
+        - pkg: install-liboboe
 
 update-nginx:
   pkg.latest:
     - pkgs:
         - nginx-full
     - require:
-        - pkg: install-appneta
+        - pkg: install-tracelyzer
