@@ -118,6 +118,7 @@ class ClinicReport(DetailView):
         self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
+        self.generic_feedback = obj.generic_feedback.all()
         self.responses = self.responses.select_related('question', 'service', 'visit')
         self._check_assumptions()
         return obj
@@ -188,6 +189,7 @@ class ClinicReport(DetailView):
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
         kwargs['detailed_comments'] = survey_utils.get_detailed_comments(self.responses)
+        kwargs['generic_feedback'] = self.generic_feedback
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
