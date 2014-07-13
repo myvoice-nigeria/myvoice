@@ -116,13 +116,13 @@ Getting a Copy of Production Data
 You can download a SQL file of production data by running the following fab
 command::
 
-    fab download_prod_db:local_file_name.sql
+    fab download_prod_db:myvoice_prod.sql
 
 You can then drop and recreate your local database with this data, e.g.::
 
     dropdb myvoice
     createdb -E UTF8 myvoice
-    psql myvoice < prod.sql
+    psql myvoice < myvoice_prod.sql
 
 Copying Production Data to Staging
 ++++++++++++++++++++++++++++++++++
