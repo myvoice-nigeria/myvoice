@@ -113,7 +113,7 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
         imported directly from TextIt. This is intended as a workaround for
         issues we are experiencing when a user sends a long response.
         """
-        if request.user.has_perm('survey.change_surveyquestionresponse'):
+        if request.user.has_perm('survey.change_response_text'):
             self.readonly_fields.remove('response')
         return super(SurveyQuestionResponseAdmin, self).change_view(
             request, *args, **kwargs)
