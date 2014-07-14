@@ -186,6 +186,23 @@
           <td>{{ feedback.message }}</td>
       </tr>
       {% endfor %}
+      {% comment %}
+
+        {% regroup detailed_comments by question as comments %}
+        {% for comment_group in comments %}
+          <tr>
+            <td colspan="6" class="special-table-row">
+              {{ comment_group.grouper.label|upper }}
+            </td>
+          </tr>
+          {% for comment in comment_group.list %}
+            <tr>
+              <td>{{ comment.datetime|date:"m/d/Y" }}</td>
+              <td>{{ comment.response }}</td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+        {% endcomment %}
       </tbody>
     </table>
   </div><!-- / .container#detailed-comments -->
