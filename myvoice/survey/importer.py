@@ -191,4 +191,10 @@ def import_responses(flow_id):
 
             response.response = value
             response.datetime = response_time
-            response.save()
+
+            try:
+                response.save()
+            except:  # Blanket exception in case anything goes wrong.
+                msg_args = (local_phone, rrun['run'], answer)
+                msg = "Unable to save response from {} in run {}: {}"
+                logger.exception(msg.format(*msg_args))
