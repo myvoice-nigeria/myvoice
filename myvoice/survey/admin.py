@@ -108,6 +108,11 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
                                 'clinic', 'service', 'created', 'updated']
 
     def change_view(self, request, *args, **kwargs):
+        """
+        Allow admins with a permission to edit response text that is typically
+        imported directly from TextIt. This is intended as a workaround for
+        issues we are experiencing when a user sends a long response.
+        """
         if request.user.has_perm('survey.change_surveyquestionresponse'):
             self.readonly_fields.remove('response')
         return super(SurveyQuestionResponseAdmin, self).change_view(
