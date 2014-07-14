@@ -209,6 +209,7 @@ def ClinicPDF(response):
     result = generate_pdf('clinics/report_pdf.html', file_object=resp)
     return result
 
+
 class RegionReport(DetailView):
     template_name = 'clinics/summary.html'
     model = models.Region
