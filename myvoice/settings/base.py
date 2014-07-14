@@ -204,6 +204,10 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        'celery': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+        },
         'myvoice': {
             'handlers': ['mail_admins', 'file'],
             'level': 'DEBUG',
