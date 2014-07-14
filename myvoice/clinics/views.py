@@ -209,11 +209,6 @@ def ClinicPDF(response):
     result = generate_pdf('clinics/report_pdf.html', file_object=resp)
     return result
 
-class AnalystSummary(View):
-    def dispatch(self, *args, **kwargs):
-        resp = HttpResponse("fnord")
-        return resp
-
 class RegionReport(DetailView):
     template_name = 'clinics/summary.html'
     model = models.Region
