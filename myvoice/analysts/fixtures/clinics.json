@@ -1,0 +1,156 @@
+[
+    {
+        "model": "clinics.Clinic",
+        "pk": 1,
+        "fields": {
+            "name": "Arum Chugbu PHC",
+            "slug": "arum-chugbu-phc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 1
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 2,
+        "fields": {
+            "name": "Gwagi PHC",
+            "slug": "gwagi-phc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 2
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 3,
+        "fields": {
+            "name": "Kwabe PHC",
+            "slug": "kwabe-pbc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 3
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 4,
+        "fields": {
+            "name": "Kwarra PHC",
+            "slug": "kwarra-phc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 4
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 5,
+        "fields": {
+            "name": "Mararaba Gongon PHC",
+            "slug": "mararaba-gongon-phc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 5
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 6,
+        "fields": {
+            "name": "Nakere PHC",
+            "slug": "nakere-phc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 6
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 7,
+        "fields": {
+            "name": "Wamba General Hospital",
+            "slug": "wamba-general-hospital",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 7
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 8,
+        "fields": {
+            "name": "Wamba Model Clinic",
+            "slug": "wamba-model-clinic",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 8
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 9,
+        "fields": {
+            "name": "Wayo Matti PHC",
+            "slug": "wayo-matti-phc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 9
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 10,
+        "fields": {
+            "name": "Yashi Madaki PHC",
+            "slug": "yashi-madaki-phc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 10
+        }
+    },
+    {
+        "model": "clinics.Clinic",
+        "pk": 11,
+        "fields": {
+            "name": "Zalli PHC",
+            "slug": "zalli-phc",
+            "town": "Town",
+            "ward": "Ward",
+            "lga": "Wamba",
+            "created": "2014-06-27T13:45:56.957136",
+            "updated": "2014-06-27T13:45:56.957136",
+            "code": 11
+        }
+    }
+]
