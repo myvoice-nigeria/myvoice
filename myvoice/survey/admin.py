@@ -99,10 +99,19 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
                    'question__question_type']
     list_select_related = True
     ordering = ['visit', 'question']
-    readonly_fields = ['question', 'response', 'datetime', 'visit', 'clinic',
-                       'service', 'created', 'updated']
     search_fields = ['visit__mobile', 'response', 'question__label']
     actions = ['export_to_csv']
+
+    def __init__(self, *args, **kwargs):
+        super(SurveyQuestionResponseAdmin, self).__init__(*args, **kwargs)
+        self.readonly_fields = ['question', 'response', 'datetime', 'visit',
+                                'clinic', 'service', 'created', 'updated']
+
+    def change_view(self, request, *args, **kwargs):
+        if request.user.has_perm('survey.change_surveyquestionresponse'):
+            self.readonly_fields.remove('response')
+        return super(SurveyQuestionResponseAdmin, self).change_view(
+            request, *args, **kwargs)
 
     def has_add_permission(self, request, obj=None):
         return False
