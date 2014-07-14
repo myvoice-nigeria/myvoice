@@ -33,7 +33,12 @@
       {% endblock css %}
       {% block extra-css %}{% endblock extra-css %}
 
-      {% block header-js %}{% endblock header-js %}
+      {% block header-js %}
+       <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
+       <script src="{% static 'lib/bootstrap-3.2.0/js/bootstrap.min.js' %}"></script>
+       <script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/media/js/jquery.dataTables.js' %}"></script>
+
+      {% endblock header-js %}
       {% block extra-header-js %}{% endblock extra-header-js %}
 
       {% block shims %}
@@ -124,8 +129,7 @@
       {% endblock footer %}
 
       {% block js %}
-        <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
-        <script src="{% static 'lib/bootstrap-3.2.0/js/bootstrap.min.js' %}"></script>
+       
         
         {% compress js %}
           <script src="{% static 'js/site.js' %}"></script>

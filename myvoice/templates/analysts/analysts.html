@@ -1,136 +1,15 @@
-<!DOCTYPE html>
-<!-- saved from url=(0054)https://staging.myvoicenigeria.com/reports/region/599/ -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    
-      
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="description" content="">
-        <meta name="author" content="">
-        <meta name="keywords" content="">
-      
-      <link rel="icon" href="https://staging.myvoicenigeria.com/reports/region/599/#">
+{% extends "base.html" %}
 
-      <title>Wamba LGA Summary Feedback Report</title>
+{% load static from staticfiles %}
 
-      
-        <link type="text/css" rel="stylesheet" href="./summary-mockup_files/bootstrap.min.css">
-        <link type="text/css" rel="stylesheet" href="./summary-mockup_files/myvoice.css">
-        <link type="text/css" rel="stylesheet" href="./summary-mockup_files/css">
+{% block title %}{{ object.name }} {{ object.get_type_display }} Summary Feedback Report{% endblock title %}
 
-        <!-- Added for Mockups -->
-        <link rel="stylesheet" type="text/css" href="./DataTables-1.10.0/media/css/jquery.dataTables.css">  
-        <!-- End of: Added for Mockups -->
-
-        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-        <!--[if lt IE 9]>
-          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-        <![endif]-->
-      
-    
-    
-  <style id="clearly_highlighting_css" type="text/css">/* selection */ html.clearly_highlighting_enabled ::-moz-selection { background: rgba(246, 238, 150, 0.99); } html.clearly_highlighting_enabled ::selection { background: rgba(246, 238, 150, 0.99); } /* cursor */ html.clearly_highlighting_enabled {    /* cursor and hot-spot position -- requires a default cursor, after the URL one */    cursor: url("chrome-extension://pioclpoplcdbaefihamjohnefbikjilc/clearly/images/highlight--cursor.png") 14 16, text; } /* highlight tag */ em.clearly_highlight_element {    font-style: inherit !important; font-weight: inherit !important;    background-image: url("chrome-extension://pioclpoplcdbaefihamjohnefbikjilc/clearly/images/highlight--yellow.png");    background-repeat: repeat-x; background-position: top left; background-size: 100% 100%; } /* the delete-buttons are positioned relative to this */ em.clearly_highlight_element.clearly_highlight_first { position: relative; } /* delete buttons */ em.clearly_highlight_element a.clearly_highlight_delete_element {    display: none; cursor: pointer;    padding: 0; margin: 0; line-height: 0;    position: absolute; width: 34px; height: 34px; left: -17px; top: -17px;    background-image: url("chrome-extension://pioclpoplcdbaefihamjohnefbikjilc/clearly/images/highlight--delete-sprite.png"); background-repeat: no-repeat; background-position: 0px 0px; } em.clearly_highlight_element a.clearly_highlight_delete_element:hover { background-position: -34px 0px; } /* retina */ @media (min--moz-device-pixel-ratio: 2), (-webkit-min-device-pixel-ratio: 2), (min-device-pixel-ratio: 2) {    em.clearly_highlight_element { background-image: url("chrome-extension://pioclpoplcdbaefihamjohnefbikjilc/clearly/images/highlight--yellow@2x.png"); }    em.clearly_highlight_element a.clearly_highlight_delete_element { background-image: url("chrome-extension://pioclpoplcdbaefihamjohnefbikjilc/clearly/images/highlight--delete-sprite@2x.png"); background-size: 68px 34px; } } </style><style>[touch-action="none"]{ -ms-touch-action: none; touch-action: none; }[touch-action="pan-x"]{ -ms-touch-action: pan-x; touch-action: pan-x; }[touch-action="pan-y"]{ -ms-touch-action: pan-y; touch-action: pan-y; }[touch-action="scroll"],[touch-action="pan-x pan-y"],[touch-action="pan-y pan-x"]{ -ms-touch-action: pan-x pan-y; touch-action: pan-x pan-y; }
-
-    /* summary-mockup CSS */
-    td {  padding:10px; }
-</style></head>
-  <body><div id="StayFocusd-infobar" style="display: none; top: 0px;">
-    <img src="chrome-extension://laankejkbhbdhmipfmgcngdelahlfoji/common/img/eye_19x19_red.png">
-    <span id="StayFocusd-infobar-msg"></span>
-    <span id="StayFocusd-infobar-links">
-        <a id="StayFocusd-infobar-never-show">hide forever</a>&nbsp;&nbsp;|&nbsp;&nbsp;
-        <a id="StayFocusd-infobar-hide">hide once</a>
-    </span>
-</div>
-    
-      
-        <div class="navbar navbar-fixed-top" role="navigation">
-          <div class="container">
-            <div class="navbar-header">
-              <a class="navbar-brand" href="https://staging.myvoicenigeria.com/">
-                <img src="./summary-mockup_files/myvoice-logo.png">
-              </a>
-            </div>
-
-            <ul class="nav navbar-nav pull-right">
-              <li>
-                <a href="https://staging.myvoicenigeria.com/">Home</a>
-              </li>
-              <li>
-                <a href="./summary-mockup_files/summary-mockup.html">summary report</a>
-              </li>
-              <li class="dropdown">
-                <a href="https://staging.myvoicenigeria.com/reports/region/599/#" data-toggle="dropdown" class="dropdown-toggle" style="border:none;">
-                  facility report<b class="caret"></b>
-                </a>
-                <ul class="dropdown-menu">
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/arum-chugbu-phc/">Arum Chugbu PHC</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/gwagi-phc/">Gwagi PHC</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/kwabe-pbc/">Kwabe PHC</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/kwarra-phc/">Kwarra PHC</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/mararaba-gongon-phc/">Mararaba Gongon PHC</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/nakere-phc/">Nakere PHC</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/wamba-general-hospital/">Wamba General Hospital</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/wamba-model-clinic/">Wamba Model Clinic</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/wayo-matti-phc/">Wayo Matti PHC</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/yashi-madaki-phc/">Yashi Madaki PHC</a>
-                    </li>
-                  
-                    <li>
-                      <a href="https://staging.myvoicenigeria.com/reports/facility/zalli-phc/">Zalli PHC</a>
-                    </li>
-                  
-                </ul>
-              </li>
-              <li>
-                
-                  <a href="https://staging.myvoicenigeria.com/accounts/login/">login</a>
-                
-              </li>
-              <li class="print-action">
-                <a href="https://staging.myvoicenigeria.com/reports/region/599/#"><img src="./summary-mockup_files/print-icon.png">print</a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      
-
-      
+{% block content %}
   <div class="container main-header">
     <div class="col-xs-9 no-padding-left">
       <h1>
-        <span style="font-weight: 700;">Analyst Summary</span>
-        <span style="float:right"><input type="button" onclick="alert('This will be added in once we connect to Django')" value="DOWNLOAD DATA"/></span><br>
+        <span style="font-weight: 700;">{{ object.name }} {{ object.get_type_display }}</span><br />
+         Summary Feedback Report
       </h1>
 
       <div class="lead"></div>
@@ -276,38 +155,6 @@
       </tbody>
     </table>
   </div><!-- / #feedback-facility .container -->
-
-
-      
-        <div class="footer">
-          <div class="container">
-            <div class="col-xs-5">
-              <a class="navbar-brand" href="https://staging.myvoicenigeria.com/" style="padding-top:30px;"><img src="./summary-mockup_files/myvoice-logo-dark.png"></a>
-            </div>
-
-            <div class="col-xs-7">
-              <div class="navbar" role="navigation">
-                <ul class="nav navbar-nav">
-                  <li><a href="https://staging.myvoicenigeria.com/">home</a></li>
-                  <li><a href="./summary-mockup_files/summary-mockup.html">summary report</a></li>
-                  <li><a href="https://staging.myvoicenigeria.com/reports/facility/">facility report</a></li>
-                  <li><a href="https://staging.myvoicenigeria.com/accounts/login/">login</a></li>
-                </ul>
-              </div>
-              <span style="font-weight:700">contact</span><br>
-              If you have any questions or comments about the content of this
-              report, please contact:<br>
-              <span style="font-weight:700">Nonso Jideofor:</span>  0818  332  7178
-            </div>
-          </div>
-        </div>
-      
-
-
-        <script src="./summary-mockup_files/jquery.min.js"></script>
-        <script src="./summary-mockup_files/bootstrap.min.js"></script>
-        <script type="text/javascript" src="./summary-mockup_files/6bf30aaa8e4e.js"></script>
-        <script type="text/javascript" charset="utf8" src="./DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
    
         <script type="text/javascript">
           $(document).ready( function () {
@@ -342,6 +189,4 @@
         </script>
       
     
-  
-
-</body></html>
+  {% endblock content %}
