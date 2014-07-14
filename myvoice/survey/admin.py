@@ -102,11 +102,6 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
     search_fields = ['visit__mobile', 'response', 'question__label']
     actions = ['export_to_csv']
 
-    def __init__(self, *args, **kwargs):
-        super(SurveyQuestionResponseAdmin, self).__init__(*args, **kwargs)
-        self.readonly_fields = ['question', 'response', 'datetime', 'visit',
-                                'clinic', 'service', 'created', 'updated']
-
     def change_view(self, request, *args, **kwargs):
         """
         Allow admins with a permission to edit response text that is typically
@@ -114,7 +109,12 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
         issues we are experiencing when a user sends a long response.
         """
         if request.user.has_perm('survey.change_response_text'):
-            self.readonly_fields.remove('response')
+            self.readonly_fields = ['question', 'datetime', 'visit', 'clinic',
+                                    'service', 'created', 'updated']
+        else:
+            self.readonly_fields = ['question', 'response', 'datetime',
+                                    'visit', 'clinic', 'service', 'created',
+                                    'updated']
         return super(SurveyQuestionResponseAdmin, self).change_view(
             request, *args, **kwargs)
 
