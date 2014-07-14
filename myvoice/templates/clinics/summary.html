@@ -39,6 +39,17 @@
           <th>Most Common<br>Wait Time (hrs)</th>
         </tr>
       </thead>
+      <tfoot>
+          <tr>
+              <th>July 7-13 2014</th>
+              <th>Open Facility</th>
+              <th>Respectful Staff Treatment</th>
+              <th>Clean Hospital Materials</th>
+              <th>Charged Fairly</th>
+              <th>Most Common Wait Time (hrs)</th>
+          </tr>
+      </tfoot>
+      
       <tbody>
         {% for i in "12345" %}
           <tr>
@@ -113,6 +124,20 @@
           </th>
         </tr>
       </thead>
+      <tfoot>
+          <tr>
+              <th>July 7-13 2014</th>
+              <th>Feedback Participation</th>
+              <th>Patient Satisfaction</th>
+              <th>Quality (Score, Q1)</th>
+              <th>Quantity (Score, Q1)</th>
+              <th>Open Facility</th>
+              <th>Respectful Staff Treatment</th>
+              <th>Clean Hospital Materials</th>
+              <th>Charged Fairly</th>
+              <th>Most Common Wait Time (hrs)</th>
+          </tr>
+      </tfoot>
       <tbody>
         {% for i in "12345" %}
           <tr>
@@ -131,4 +156,41 @@
       </tbody>
     </table>
   </div><!-- / #feedback-facility .container -->
+  
+  
+  
+    <!-- / Datatables Script -->
+    <script type="text/javascript" charset="utf8" src="./DataTables-1.10.0/media/js/jquery.dataTables.js"></script>
+
+    <script type="text/javascript">
+      $(document).ready( function () {
+          // Setup - add a text input to each footer cell
+        $('.table tfoot th').each( function () {
+            var title = $('.table tfoot th').eq( $(this).index() ).text();
+            $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
+        } );
+     
+        // DataTable
+        var table = $('.table').DataTable( { 
+          paging: false,
+          "columns": [
+          { "width": "200px" },
+          { "width": "40px" },
+          { "width": "40px" },
+          { "width": "40px" },
+        ]
+
+        });
+     
+        // Apply the filter
+        table.columns().eq( 0 ).each( function ( colIdx ) {
+            $( 'input', table.column( colIdx ).footer() ).on( 'keyup change', function () {
+                table
+                    .column( colIdx )
+                    .search( this.value )
+                    .draw();
+            } );
+        } );
+          } );
+        </script>
 {% endblock content %}
