@@ -213,7 +213,7 @@ class AnalystSummary(TemplateView):
         # All Clinics to Loop Through, build our own dict of data
         for a_clinic in Clinic.objects.all():
             st_count = Visit.objects.filter(survey_sent=True, patient__clinic=a_clinic).count()
-            sc_count = SurveyQuestionResponse.objects.filter(question__label__icontains="Wait Time")\
+            sc_count = SurveyQuestionResponse.objects.filter(question__label__iequals="Wait Time")\
                 .filter(clinic=a_clinic).count()
             sc_st_percent = 100*sc_count/st_count
             completion_table.append({
@@ -231,7 +231,7 @@ class AnalystSummary(TemplateView):
 
     def get_num_surveys_completed(self):
         # Number of Surveys Completed (Total)
-        return SurveyQuestionResponse.objects.filter(question__label__icontains="Wait Time")
+        return SurveyQuestionResponse.objects.filter(question__label__iequals="Wait Time")
 
     def get_context_data(self, **kwargs):
 
@@ -259,71 +259,71 @@ class AnalystSummary(TemplateView):
         rates_table.append({
             "row_title": "1.1   Hospital Availability",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Open Facility").filter(
-                question__question_type__icontains='multiple-choice').count()
+                question__label__iequals="Open Facility").filter(
+                question__question_type__iequals='multiple-choice').count()
             })
 
         rates_table.append({
             "row_title": "1.2   Hospital Availability Comment",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Open Facility").filter(
-                question__question_type__icontains="open-ended").count()
+                question__label__iequals="Open Facility").filter(
+                question__question_type__iequals="open-ended").count()
         })
 
         rates_table.append({
             "row_title": "2.1 Respectful Staff Treatment",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Respectful Staff Treatment").filter(
-                question__question_type__icontains='multiple-choice').count()
+                question__label__iequals="Respectful Staff Treatment").filter(
+                question__question_type__iequals='multiple-choice').count()
         })
 
         rates_table.append({
             "row_title": "2.2 Respectful Staff Treatment Comment",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Respectful Staff Treatment").filter(
-                question__question_type__icontains='open-ended').count()
+                question__label__iequals="Respectful Staff Treatment").filter(
+                question__question_type__iequals='open-ended').count()
         })
 
         rates_table.append({
             "row_title": "3.1 Clean Hospital Materials",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Clean Hospital Materials").filter(
-                question__question_type__icontains='multiple-choice').count()
+                question__label__iequals="Clean Hospital Materials").filter(
+                question__question_type__iequals='multiple-choice').count()
         })
 
         rates_table.append({
             "row_title": "3.2 Clean Hospital Materials Comment",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Clean Hospital Materials").filter(
-                question__question_type__icontains='open-ended').count()
+                question__label__iequals="Clean Hospital Materials").filter(
+                question__question_type__iequals='open-ended').count()
         })
 
         rates_table.append({
             "row_title": "4.1 Charged Fairly",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Charged Fairly").filter(
-                question__question_type__icontains='multiple-choice').count()
+                question__label__iequals="Charged Fairly").filter(
+                question__question_type__iequals='multiple-choice').count()
         })
 
         rates_table.append({
             "row_title": "4.2 Charged Fairly Comment",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Charged Fairly").filter(
-                question__question_type__icontains='open-ended').count()
+                question__label__iequals="Charged Fairly").filter(
+                question__question_type__iequals='open-ended').count()
         })
 
         rates_table.append({
             "row_title": "5.1 Wait Time",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="Wait time").filter(
-                question__question_type__icontains='multiple-choice').count()
+                question__label__iequals="Wait time").filter(
+                question__question_type__iequals='multiple-choice').count()
         })
 
         rates_table.append({
             "row_title": "6.1  General Feedback",
             "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__icontains="General Feedback").filter(
-                question__question_type__icontains='open-ended').count()
+                question__label__iequals="General Feedback").filter(
+                question__question_type__iequals='open-ended').count()
         })
 
         return rates_table
