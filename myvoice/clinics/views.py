@@ -1,7 +1,6 @@
 from itertools import groupby
 import json
 from operator import attrgetter
-# from django_xhtml2pdf.utils import generate_pdf
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -247,15 +246,15 @@ class AnalystSummary(TemplateView):
         context['sc'] = self.get_num_surveys_completed()
         context['sc_count'] = context['sc'].count()
 
-        context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
+		if context['st_count']:
+	        context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
+		else:
+			context['sc_st_percent'] = "--"
 
         return context
 
     def get_rates_table(self):
         rates_table = []
-
-        # It seems to be tricky to filter for choices in Django.. This helps.
-        # choice_reverse = dict((v, k) for k, v in SurveyQuestion.QUESTION_TYPES)
 
         rates_table.append({
             "row_title": "1.1   Hospital Availability",
@@ -328,13 +327,6 @@ class AnalystSummary(TemplateView):
         })
 
         return rates_table
-
-
-class ClinicPDF(View):
-    def dispatch(self, *args, **kwargs):
-        resp = HttpResponse(content_type='application/pdf')
-        # result = generate_pdf('clinics/report_pdf.html', file_object=resp)
-        return resp	 # was result - until we install django_xhtml2pdf
 
 
 class RegionReport(DetailView):
