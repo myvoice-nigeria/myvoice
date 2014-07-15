@@ -1,7 +1,7 @@
 from itertools import groupby
 import json
 from operator import attrgetter
-from django_xhtml2pdf.utils import generate_pdf
+# from django_xhtml2pdf.utils import generate_pdf
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -204,18 +204,25 @@ class ClinicReport(DetailView):
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
 
+
 class AnalystSummary(TemplateView):
     template_name = 'analysts/analysts.html'
 
     def get_completion_table(self):
         completion_table = []
-        
+
         # All Clinics to Loop Through, build our own dict of data
         for a_clinic in Clinic.objects.all():
-            st_count = Visit.objects.exclude(mobile=1, patient__clinic=a_clinic).count()
-            sc_count = SurveyQuestionResponse.objects.filter(question__label__icontains="Wait Time", clinic=a_clinic).count()
+            st_count = Visit.objects.exclude(mobile=1).filter(patient__clinic=a_clinic).count()
+            sc_count = SurveyQuestionResponse.objects.filter(question__label__icontains="Wait Time")\
+                .filter(clinic=a_clinic).count()
             sc_st_percent = 100*sc_count/st_count
-            completion_table.append({"clinic_name": a_clinic.name, "st_count": st_count, "sc_count": sc_count, "sc_st_percent": sc_st_percent})
+            completion_table.append({
+                "clinic_name": a_clinic.name,
+                "st_count": st_count,
+                "sc_count": sc_count,
+                "sc_st_percent": sc_st_percent
+            })
 
         return completion_table
 
@@ -228,7 +235,7 @@ class AnalystSummary(TemplateView):
         return SurveyQuestionResponse.objects.filter(question__label__icontains="Wait Time")
 
     def get_context_data(self, **kwargs):
-        
+
         context = super(AnalystSummary, self).\
             get_context_data(**kwargs)
 
@@ -243,73 +250,91 @@ class AnalystSummary(TemplateView):
         context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
 
         return context
-    
+
     def get_rates_table(self):
         rates_table = []
-        
+
         # It seems to be tricky to filter for choices in Django.. This helps.
-        # choice_reverse = dict((v, k) for k, v in SurveyQuestion.QUESTION_TYPES)       
+        # choice_reverse = dict((v, k) for k, v in SurveyQuestion.QUESTION_TYPES)
 
         rates_table.append({
-            "row_title": "1.1   Hospital Availability", 
-            "rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="Open Facility").filter(question__question_type__icontains='multiple-choice').count()
+            "row_title": "1.1   Hospital Availability",
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Open Facility").filter(
+                question__question_type__icontains='multiple-choice').count()
             })
 
-        # SurveyQuestionResponse.objects.filter(question__label__icontains="Open Facility").filter(question__question_type= choice_reverse['Multiple Choice'])
         rates_table.append({
             "row_title": "1.2   Hospital Availability Comment",
-            "rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="Open Facility").filter(question__question_type__icontains="open-ended").count()
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Open Facility").filter(
+                question__question_type__icontains="open-ended").count()
         })
 
         rates_table.append({
             "row_title": "2.1 Respectful Staff Treatment",
-            "rsp_num": SurveyQuestionResponse.objects.filter(question__question_type__icontains="Respectful Staff Treatment").filter(question__question_type__icontains="multiple-choice").count()
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Respectful Staff Treatment").filter(
+                question__question_type__icontains='multiple-choice').count()
         })
 
         rates_table.append({
             "row_title": "2.2 Respectful Staff Treatment Comment",
-        	"rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="Respectful Staff Treatment").filter(question__question_type__icontains='open ended').count()
-		})
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Respectful Staff Treatment").filter(
+                question__question_type__icontains='open-ended').count()
+        })
 
         rates_table.append({
             "row_title": "3.1 Clean Hospital Materials",
-	        "rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="Clean Hospital Materials").filter(question__question_type__icontains='multiple choice').count()
-		})
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Clean Hospital Materials").filter(
+                question__question_type__icontains='multiple-choice').count()
+        })
 
         rates_table.append({
             "row_title": "3.2 Clean Hospital Materials Comment",
-	        "rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="Clean Hospital Materials").filter(question__question_type__icontains='open ended').count()
-		})
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Clean Hospital Materials").filter(
+                question__question_type__icontains='open-ended').count()
+        })
 
         rates_table.append({
-            "row_title": "4.1 Charged Fairly", 
-	        "rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="Charged Fairly").filter(question__question_type__icontains='multiple choice').count()
-		})
-        
+            "row_title": "4.1 Charged Fairly",
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Charged Fairly").filter(
+                question__question_type__icontains='multiple-choice').count()
+        })
+
         rates_table.append({
             "row_title": "4.2 Charged Fairly Comment",
-	        "rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="Charged Fairly").filter(question__question_type__icontains='open ended').count()
-		})
-        
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Charged Fairly").filter(
+                question__question_type__icontains='open-ended').count()
+        })
+
         rates_table.append({
             "row_title": "5.1 Wait Time",
-	        "rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="Wait time").filter(question__question_type__icontains='multiple choice').count()
-		})
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="Wait time").filter(
+                question__question_type__icontains='multiple-choice').count()
+        })
 
         rates_table.append({
             "row_title": "6.1  General Feedback",
-            "rsp_num": SurveyQuestionResponse.objects.filter(question__label__icontains="General Feedback").filter(question__question_type__icontains='open ended').count()
-		})
+            "rsp_num": SurveyQuestionResponse.objects.filter(
+                question__label__icontains="General Feedback").filter(
+                question__question_type__icontains='open-ended').count()
+        })
 
         return rates_table
-
 
 
 class ClinicPDF(View):
     def dispatch(self, *args, **kwargs):
         resp = HttpResponse(content_type='application/pdf')
-        result = generate_pdf('clinics/report_pdf.html', file_object=resp)
-        return result
+        # result = generate_pdf('clinics/report_pdf.html', file_object=resp)
+        return resp	 # was result - until we install django_xhtml2pdf
 
 
 class RegionReport(DetailView):
