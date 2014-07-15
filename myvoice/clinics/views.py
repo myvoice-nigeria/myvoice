@@ -246,10 +246,10 @@ class AnalystSummary(TemplateView):
         context['sc'] = self.get_num_surveys_completed()
         context['sc_count'] = context['sc'].count()
 
-		if context['st_count']:
-	        context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
-		else:
-			context['sc_st_percent'] = "--"
+        if context['st_count']:
+            context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
+        else:
+            context['sc_st_percent'] = "--"
 
         return context
 
