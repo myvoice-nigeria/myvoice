@@ -23,17 +23,17 @@
     </div>
       <table class="completion_table table-bordered table-striped" style="width:100%">
         <tr>
-			<td style="width:200px">Clinic</td>
-			<td style="padding:5px">Number of Surveys<br/> Triggered</td>
-			<td style="padding:5px">Number of Surveys<br/> Started</td>
-			<td style="padding:5px">Number of Surveys<br/> Completed</td>
-		</tr>
-		{% for a_clinic in completion_table %} 
+            <td style="width:200px">Clinic</td>
+            <td style="padding:5px">Number of Surveys<br/> Triggered</td>
+            <td style="padding:5px">Number of Surveys<br/> Started</td>
+            <td style="padding:5px">Number of Surveys<br/> Completed</td>
+        </tr>
+        {% for a_clinic in completion_table %} 
         <tr>
-          	<td style="padding-right:15px">{{ a_clinic.clinic_name }}</td>
-			<td style="text-align:center">{{ a_clinic.st_count }}</td>
-			<td style="text-align:center"></td>
-			<td style="text-align:center">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
+            <td style="padding-right:15px">{{ a_clinic.clinic_name }}</td>
+            <td style="text-align:center">{{ a_clinic.st_count }}</td>
+            <td style="text-align:center"></td>
+            <td style="text-align:center">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
         </tr>
         {% endfor %}
       </table>
@@ -77,12 +77,12 @@
           </tr>
       </tfoot>
       <tbody>
-		{% for a_row in rates_table %} 
+        {% for a_row in rates_table %} 
         <tr>
-          	<td style="padding-right:15px">{{ a_row.row_title }}</td>
-			<td style="text-align:center">{{ a_row.rsp_num }}</td>
-			<td style="text-align:center"> --:-- </td>
-			<td style="text-align:center"> --:-- </td>
+            <td style="padding-right:15px">{{ a_row.row_title }}</td>
+            <td style="text-align:center">{{ a_row.rsp_num }}</td>
+            <td style="text-align:center"> --:-- </td>
+            <td style="text-align:center"> --:-- </td>
         </tr>
         {% endfor %}
           
