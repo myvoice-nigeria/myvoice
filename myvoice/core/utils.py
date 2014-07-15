@@ -26,9 +26,12 @@ def extract_attr(obj, name):
     if not parts:
         return None
     if len(parts) == 1:
-        return getattr(obj, name)
+        attr = getattr(obj, name)
+        return attr() if callable(attr) else attr
     else:
         newobj = getattr(obj, parts[0])
+        if callable(newobj):
+            newobj = newobj()
         return extract_attr(newobj, '.'.join(parts[1:]))
 
 
