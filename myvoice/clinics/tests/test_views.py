@@ -408,10 +408,16 @@ class TestClinicReportView(TestCase):
     def test_get_detailed_comments(self):
         """Test that generic feedback is combined with open-ended survey responses."""
         visit1 = factories.Visit.create(
-            patient=factories.Patient.create(clinic=self.clinic, serial=221)
+            service=factories.Service.create(code=2),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=221)
         )
         visit2 = factories.Visit.create(
-            patient=factories.Patient.create(clinic=self.clinic, serial=111)
+            service=factories.Service.create(code=3),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=111)
         )
 
         factories.SurveyQuestionResponse.create(
