@@ -118,8 +118,8 @@ class ClinicReport(DetailView):
         self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
-        self.generic_feedback = obj.generic_feedback.all()
         self.responses = self.responses.select_related('question', 'service', 'visit')
+        self.generic_feedback = obj.generic_feedback.all()
         self._check_assumptions()
         return obj
 
@@ -186,10 +186,30 @@ class ClinicReport(DetailView):
             return get_week_start(min_date), get_week_end(max_date)
         return None, None
 
+    def get_detailed_comments(self):
+        """Combine open-ended survey comments with General Feedback."""
+        survey_comments = survey_utils.get_detailed_comments(self.responses)
+        comments = [
+            {
+                'question': survey.question.label,
+                'datetime': survey.datetime,
+                'response': survey.response
+            } for survey in survey_comments]
+
+        feedback_label = self.generic_feedback.model._meta.verbose_name
+        for feedback in self.generic_feedback:
+            comments.append(
+                {
+                    'question': feedback_label,
+                    'datetime': feedback.message_date,
+                    'response': feedback.message
+                })
+
+        return sorted(comments, key=lambda item: (item['question'], item['datetime']))
+
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
-        kwargs['detailed_comments'] = survey_utils.get_detailed_comments(self.responses)
-        kwargs['generic_feedback'] = self.generic_feedback
+        kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()

@@ -1,7 +1,10 @@
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.utils import timezone
 
 import json
+import mock
+from datetime import datetime as dt
 
 from myvoice.core.tests import factories
 
@@ -403,3 +406,39 @@ class TestClinicReportView(TestCase):
         """Test that if hard-coded assumptions are not met, exception is raised."""
         survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
         self.assertRaises(Exception, self.make_request)
+
+    @mock.patch('myvoice.clinics.views.survey_utils')
+    def test_get_detailed_comments(self, util_mock):
+        """Test that generic feedback is combined with open-ended survey responses."""
+        mock_resp1 = mock.Mock()
+        mock_resp2 = mock.Mock()
+
+        mock_resp1.datetime = timezone.now() - timezone.timedelta(5)
+        mock_resp1.question.label = 'What question'
+        mock_resp1.response = 'First'
+
+        mock_resp2.datetime = timezone.now() - timezone.timedelta(3)
+        mock_resp2.question.label = 'General Feedback'
+        mock_resp2.response = 'Second'
+
+        util_mock.get_detailed_comments.return_value = [mock_resp1, mock_resp2]
+
+        factories.GenericFeedback.create(
+            clinic=self.clinic,
+            message='Feedback message',
+            message_date=timezone.now())
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+
+        report.get_object()
+
+        comments = report.get_detailed_comments()
+
+        # Basic checks
+        util_mock.assert_called_once()
+        self.assertEqual(3, len(comments))
+
+        # Check content of comments are sorted by question and datetime
+        self.assertEqual('Second', comments[0]['response'])
+        self.assertEqual('Feedback message', comments[1]['response'])
+        self.assertEqual('First', comments[2]['response'])

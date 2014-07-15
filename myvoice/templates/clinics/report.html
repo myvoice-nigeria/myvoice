@@ -161,7 +161,6 @@
     </table>
   </div><!-- / .container#feedback-on-services -->
 
-{% endif %}
   <div id="detailed-comments" class="container">
     <div class="col-xs-12 section-heading">
       <h2>DETAILED COMMENTS</h2>
@@ -175,24 +174,11 @@
         </tr>
       </thead>
       <tbody>
-      <tr>
-        <td colspan="6" class="special-table-row">
-            GENERIC FEEDBACK
-        </td>
-      </tr>
-      {% for feedback in generic_feedback %}
-      <tr>
-          <td>{{ feedback.message_date|date:"m/d/Y" }}</td>
-          <td>{{ feedback.message }}</td>
-      </tr>
-      {% endfor %}
-      {% comment %}
-
         {% regroup detailed_comments by question as comments %}
         {% for comment_group in comments %}
           <tr>
             <td colspan="6" class="special-table-row">
-              {{ comment_group.grouper.label|upper }}
+              {{ comment_group.grouper|upper }}
             </td>
           </tr>
           {% for comment in comment_group.list %}
@@ -202,8 +188,8 @@
             </tr>
           {% endfor %}
         {% endfor %}
-        {% endcomment %}
       </tbody>
     </table>
   </div><!-- / .container#detailed-comments -->
+{% endif %}
 {% endblock content %}

@@ -180,7 +180,8 @@ class GenericFeedback(models.Model):
     message_date = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name_plural = 'Generic Feedback'
+        verbose_name = 'General Feedback'
+        verbose_name_plural = 'General Feedback'
 
     def __unicode__(self):
         return self.sender
