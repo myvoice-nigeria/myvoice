@@ -212,7 +212,7 @@ class AnalystSummary(TemplateView):
 
         # All Clinics to Loop Through, build our own dict of data
         for a_clinic in Clinic.objects.all():
-            st_count = Visit.objects.exclude(mobile=1).filter(patient__clinic=a_clinic).count()
+            st_count = Visit.objects.filter(survey_sent=True, patient__clinic=a_clinic).count()
             sc_count = SurveyQuestionResponse.objects.filter(question__label__icontains="Wait Time")\
                 .filter(clinic=a_clinic).count()
             sc_st_percent = 100*sc_count/st_count
@@ -227,7 +227,7 @@ class AnalystSummary(TemplateView):
 
     def get_num_surveys_triggered(self):
         # Number of Surveys Triggered (Total)
-        return Visit.objects.exclude(mobile=1)
+        return Visit.objects.filter(survey_sent=True)
 
     def get_num_surveys_completed(self):
         # Number of Surveys Completed (Total)
