@@ -215,7 +215,10 @@ class AnalystSummary(TemplateView):
             st_count = Visit.objects.filter(survey_sent=True, patient__clinic=a_clinic).count()
             sc_count = SurveyQuestionResponse.objects.filter(question__label__iequals="Wait Time")\
                 .filter(clinic=a_clinic).count()
-            sc_st_percent = 100*sc_count/st_count
+            if context['st_count']:
+				sc_st_percent = 100*sc_count/st_count
+			else:
+            	sc_st_percent = "--"
             completion_table.append({
                 "clinic_name": a_clinic.name,
                 "st_count": st_count,
