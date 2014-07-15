@@ -3,7 +3,6 @@ from django.test.client import RequestFactory
 from django.utils import timezone
 
 import json
-import mock
 
 from myvoice.core.tests import factories
 
@@ -406,21 +405,33 @@ class TestClinicReportView(TestCase):
         survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
         self.assertRaises(Exception, self.make_request)
 
-    @mock.patch('myvoice.clinics.views.survey_utils')
-    def test_get_detailed_comments(self, util_mock):
+    def test_get_detailed_comments(self):
         """Test that generic feedback is combined with open-ended survey responses."""
-        mock_resp1 = mock.Mock()
-        mock_resp2 = mock.Mock()
+        visit1 = factories.Visit.create(
+            patient=factories.Patient.create(clinic=self.clinic, serial=221)
+        )
+        visit2 = factories.Visit.create(
+            patient=factories.Patient.create(clinic=self.clinic, serial=111)
+        )
 
-        mock_resp1.datetime = timezone.now() - timezone.timedelta(5)
-        mock_resp1.question.label = 'What question'
-        mock_resp1.response = 'First'
-
-        mock_resp2.datetime = timezone.now() - timezone.timedelta(3)
-        mock_resp2.question.label = 'General Feedback'
-        mock_resp2.response = 'Second'
-
-        util_mock.get_detailed_comments.return_value = [mock_resp1, mock_resp2]
+        factories.SurveyQuestionResponse.create(
+            question=factories.SurveyQuestion.create(
+                label='General Feedback',
+                survey=self.survey,
+                question_type=survey_models.SurveyQuestion.OPEN_ENDED),
+            response='Second',
+            datetime=timezone.now()-timezone.timedelta(3),
+            visit=visit1,
+            clinic=self.clinic)
+        factories.SurveyQuestionResponse.create(
+            question=factories.SurveyQuestion.create(
+                label='What question',
+                survey=self.survey,
+                question_type=survey_models.SurveyQuestion.OPEN_ENDED),
+            response='First',
+            datetime=timezone.now()-timezone.timedelta(5),
+            visit=visit2,
+            clinic=self.clinic)
 
         factories.GenericFeedback.create(
             clinic=self.clinic,
@@ -434,7 +445,6 @@ class TestClinicReportView(TestCase):
         comments = report.get_detailed_comments()
 
         # Basic checks
-        util_mock.assert_called_once()
         self.assertEqual(3, len(comments))
 
         # Check content of comments are sorted by question and datetime

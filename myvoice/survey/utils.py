@@ -71,16 +71,6 @@ def convert_to_international_format(phone):
         return None
 
 
-def get_detailed_comments(responses):
-    """Returns all responses which are open-ended.
-
-    Ordered by question, in order to use {% regroup %} in a template.
-    """
-    from .models import SurveyQuestion
-    open_ended = responses.filter(question__question_type=SurveyQuestion.OPEN_ENDED)
-    return open_ended.order_by('question', 'datetime')
-
-
 def get_completion_count(responses):
     """Returns the count of responses which are completed.
 

@@ -9,7 +9,7 @@ from django.views.generic import DetailView, View, FormView
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
-from myvoice.survey.models import Survey
+from myvoice.survey.models import Survey, SurveyQuestion
 
 from . import forms
 from . import models
@@ -188,13 +188,14 @@ class ClinicReport(DetailView):
 
     def get_detailed_comments(self):
         """Combine open-ended survey comments with General Feedback."""
-        survey_comments = survey_utils.get_detailed_comments(self.responses)
         comments = [
             {
                 'question': survey.question.label,
                 'datetime': survey.datetime,
                 'response': survey.response
-            } for survey in survey_comments]
+            } for survey in self.responses.filter(
+                question__question_type=SurveyQuestion.OPEN_ENDED)
+            ]
 
         feedback_label = self.generic_feedback.model._meta.verbose_name
         for feedback in self.generic_feedback:
