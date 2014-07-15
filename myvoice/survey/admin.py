@@ -123,8 +123,9 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
         return obj.visit.mobile
 
     def export_to_csv(self, request, queryset):
-        headers = ['question', 'response', 'datetime', 'visit.patient.serial',
-                   'clinic', 'service', 'created', 'updated']
+        headers = ['visit.mobile', 'visit.visit_time', 'clinic', 'service',
+                   'question.survey', 'question', 'question.question_type',
+                   'response', 'datetime', 'visit.patient.serial']
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=response_data.csv'
         data = extract_qset_data(queryset, headers)
