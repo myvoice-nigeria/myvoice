@@ -16,3 +16,4 @@ public/media/
 secrets.sls
 myvoice.log*
 htmlcov/
+myvoice_prod.sql
