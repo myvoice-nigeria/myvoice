@@ -4,7 +4,6 @@ from django.utils import timezone
 
 import json
 import mock
-from datetime import datetime as dt
 
 from myvoice.core.tests import factories
 
