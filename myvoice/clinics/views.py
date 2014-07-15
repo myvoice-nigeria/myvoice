@@ -119,7 +119,7 @@ class ClinicReport(DetailView):
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
         self.responses = self.responses.select_related('question', 'service', 'visit')
-        self.generic_feedback = obj.generic_feedback.all()
+        self.generic_feedback = obj.genericfeedback_set.all()
         self._check_assumptions()
         return obj
 
