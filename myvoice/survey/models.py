@@ -128,6 +128,9 @@ class SurveyQuestionResponse(models.Model):
     class Meta:
         verbose_name = 'Response'
         unique_together = [('visit', 'question')]
+        permissions = [
+            ('change_response_text', 'Can change response text'),
+        ]
 
     def __unicode__(self):
         return self.response
