@@ -184,7 +184,7 @@
           </tr>
           {% for comment in comment_group.list %}
             <tr>
-              <td>{{ comment.datetime|date:"m/d/Y" }}</td>
+              <td>{{ comment.datetime|date:"d/m/Y" }}</td>
               <td>{{ comment.response }}</td>
             </tr>
           {% endfor %}
