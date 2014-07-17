@@ -1,6 +1,8 @@
 from django.conf.urls import url
+from django.views.generic.base import RedirectView
 
 from . import views
+
 
 
 urlpatterns = [
@@ -19,4 +21,8 @@ urlpatterns = [
         name='analyst_summary'),
     url(r'^visit/$', views.VisitView.as_view(), name='visit'),
     url(r'^feedback/$', views.FeedbackView.as_view(), name='visit'),
+    url(r'^wamba_report/$',
+        views.RegionReport.as_view(),
+        name='wamba',
+        kwargs=dict(pk=599)),
 ]

@@ -10,7 +10,7 @@
       <h1 style="width:565px">
         <br/>
         <span style="font-weight: 700;">{{ object.name }} {{ object.get_type_display }}</span>
-        <span style="font-weight: 700;">Analyst Summary</span><span style="float:right"><input type="button" onclick="alert('This will be added by Friday')" value="DOWNLOAD DATA"/></span>
+        <span style="font-weight: 700;">Analyst Summary</span>
       </h1>
 
       <div class="lead"></div>
@@ -104,7 +104,9 @@
             } );
             
             // DataTable
-            var table = $('.table').DataTable( { 
+            var table = $('.table').DataTable( {
+              bFilter: false,
+              bInfo : false, 
               paging: false,
               "columns": [
               { "width": "200px" },
