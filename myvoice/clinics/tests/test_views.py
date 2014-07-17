@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 import json
+import datetime, pytz
 
 from myvoice.core.tests import factories
 
@@ -403,3 +404,38 @@ class TestClinicReportView(TestCase):
         """Test that if hard-coded assumptions are not met, exception is raised."""
         survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
         self.assertRaises(Exception, self.make_request)
+
+
+class TestAnalystDashboardView(TestCase):
+
+    def setUp(self):
+        now = datetime.datetime.now(pytz.utc)
+        self.factory = RequestFactory()
+        self.clinic = factories.Clinic.create(code=1)
+        self.service = factories.Service.create(code=5)
+        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
+        self.visit = factories.Visit.create(patient=self.patient, service=self.service, survey_sent=now)
+        self.question = factories.SurveyQuestion.create(label="Wait Time")
+        self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
+            question=self.question, clinic=self.clinic)
+
+    def make_request(self, data=None):
+        """Make test request."""
+        request = self.factory.get('/analyst_summary/')
+        return clinics.AnalystSummary.as_view()(request)
+
+    def test_clinic_report_page_loads(self):
+        """Smoke test to make sure the page loads and returns some content."""
+        response = self.make_request()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(bool(response.render()))
+
+    def test_st_count(self):
+        st_count = models.Visit.objects.filter(
+                survey_sent__isnull=False, patient__clinic=self.clinic).count()
+        self.assertEqual(st_count, 1)
+
+    def test_sc_count(self):
+        sc_count = survey_models.SurveyQuestionResponse.objects.filter(
+                clinic=self.clinic).count()
+        self.assertEqual(sc_count, 1)

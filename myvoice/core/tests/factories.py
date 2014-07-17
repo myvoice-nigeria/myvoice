@@ -102,3 +102,10 @@ class SurveyQuestion(factory.django.DjangoModelFactory):
     def question_type(self):
         choices = [k for k, _ in survey.SurveyQuestion.QUESTION_TYPES]
         return random.choice(choices)
+
+
+class SurveyQuestionResponse(factory.django.DjangoModelFactory):
+    FACTORY_FOR = survey.SurveyQuestionResponse
+
+    question = factory.SubFactory('myvoice.core.tests.factories.Question')
+    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')

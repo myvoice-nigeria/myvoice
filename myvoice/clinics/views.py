@@ -206,6 +206,12 @@ class ClinicReport(DetailView):
 
 class AnalystSummary(TemplateView):
     template_name = 'analysts/analysts.html'
+    allowed_methods = ['get', 'post', 'put', 'delete', 'options']
+
+    def options(self, request, id):
+        response = HttpResponse()
+        response['allow'] = ','.join([self.allowed_methods])
+        return response
 
     def get_completion_table(self, clinic=""):
         completion_table = []
@@ -237,11 +243,11 @@ class AnalystSummary(TemplateView):
 
         return completion_table
 
-    def get_num_surveys_triggered(self):
+    def get_surveys_triggered_summary(self):
         # Number of Surveys Triggered (Total)
         return Visit.objects.filter(survey_sent__isnull=False)
 
-    def get_num_surveys_completed(self):
+    def get_surveys_completed_summary(self):
         # Number of Surveys Completed (Total)
         return SurveyQuestionResponse.objects.filter(question__label__iexact="Wait Time")
 
@@ -252,10 +258,10 @@ class AnalystSummary(TemplateView):
 
         context['completion_table'] = self.get_completion_table()
         context['rates_table'] = self.get_rates_table()
-        context['st'] = self.get_num_surveys_triggered()
+        context['st'] = self.get_surveys_triggered_summary()
         context['st_count'] = context['st'].count()
 
-        context['sc'] = self.get_num_surveys_completed()
+        context['sc'] = self.get_surveys_completed_summary()
         context['sc_count'] = context['sc'].count()
 
         if context['st_count']:
