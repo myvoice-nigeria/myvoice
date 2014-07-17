@@ -239,10 +239,13 @@ class AnalystSummary(TemplateView):
 
     def get_completion_table(self, clinic=""):
         completion_table = []
+        st_total = 0            # Surveys Triggered
+        ss_total = 0            # Surveys Started
+        sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
         if not clinic:
-            clinics_to_add = Clinic.objects.all()
+            clinics_to_add = Clinic.objects.all().order_by("name")
         else:
             if type(clinic) == str:
                 clinics_to_add = Clinic.objects.get(name=clinic)
@@ -252,17 +255,33 @@ class AnalystSummary(TemplateView):
         for a_clinic in clinics_to_add:
             st_count = Visit.objects.filter(
                 survey_sent__isnull=False, patient__clinic=a_clinic).count()
+            st_total += st_count
+
             sc_count = SurveyQuestionResponse.objects.filter(question__label="Wait Time")\
                 .filter(clinic=a_clinic).count()
+            sc_total += sc_count
             if st_count:
                 sc_st_percent = 100*sc_count/st_count
             else:
                 sc_st_percent = "--"
+
             completion_table.append({
                 "clinic_name": a_clinic.name,
                 "st_count": st_count,
                 "sc_count": sc_count,
                 "sc_st_percent": sc_st_percent
+            })
+
+        if st_total:
+            sc_st_percent_total = 100*sc_total/st_total
+        else:
+            sc_st_percent_total = "--"
+
+        completion_table.append({
+                "clinic_name": "Total",
+                "st_count": st_total,
+                "sc_count": sc_total,
+                "sc_st_percent": sc_st_percent_total
             })
 
         return completion_table

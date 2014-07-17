@@ -29,12 +29,16 @@
             <td style="padding:5px">Number of Surveys<br/> Completed</td>
         </tr>
         {% for a_clinic in completion_table %} 
-        <tr>
-            <td style="padding-right:15px">{{ a_clinic.clinic_name }}</td>
-            <td style="text-align:center">{{ a_clinic.st_count }}</td>
-            <td style="text-align:center"></td>
-            <td style="text-align:center">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
-        </tr>
+            {% ifequal a_clinic.clinic_name "Total" %}
+            <tr style="font-weight: bold">
+            {% else %}
+            <tr style="font-weight: normal">
+            {% endifequal %}
+                <td style="padding-right:15px">{{ a_clinic.clinic_name }}</td>
+                <td style="text-align:center">{{ a_clinic.st_count }}</td>
+                <td style="text-align:center"></td>
+                <td style="text-align:center">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
+            </tr>
         {% endfor %}
       </table>
     </br>
