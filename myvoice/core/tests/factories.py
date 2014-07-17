@@ -109,3 +109,4 @@ class SurveyQuestionResponse(factory.django.DjangoModelFactory):
 
     question = factory.SubFactory('myvoice.core.tests.factories.Question')
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
+    visit = factory.SubFactory('myvoice.core.tests.factories.Visit')

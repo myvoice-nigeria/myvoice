@@ -2,7 +2,8 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 
 import json
-import datetime, pytz
+import datetime
+import pytz
 
 from myvoice.core.tests import factories
 
@@ -414,10 +415,11 @@ class TestAnalystDashboardView(TestCase):
         self.clinic = factories.Clinic.create(code=1)
         self.service = factories.Service.create(code=5)
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
-        self.visit = factories.Visit.create(patient=self.patient, service=self.service, survey_sent=now)
+        self.visit = factories.Visit.create(
+            patient=self.patient, service=self.service, survey_sent=now)
         self.question = factories.SurveyQuestion.create(label="Wait Time")
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
-            question=self.question, clinic=self.clinic)
+            question=self.question, clinic=self.clinic, visit=self.visit)
 
     def make_request(self, data=None):
         """Make test request."""
@@ -432,10 +434,10 @@ class TestAnalystDashboardView(TestCase):
 
     def test_st_count(self):
         st_count = models.Visit.objects.filter(
-                survey_sent__isnull=False, patient__clinic=self.clinic).count()
+            survey_sent__isnull=False, patient__clinic=self.clinic).count()
         self.assertEqual(st_count, 1)
 
     def test_sc_count(self):
         sc_count = survey_models.SurveyQuestionResponse.objects.filter(
-                clinic=self.clinic).count()
+            clinic=self.clinic).count()
         self.assertEqual(sc_count, 1)
