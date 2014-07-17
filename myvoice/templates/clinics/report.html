@@ -161,6 +161,7 @@
     </table>
   </div><!-- / .container#feedback-on-services -->
 
+  {% if detailed_comments %}
   <div id="detailed-comments" class="container">
     <div class="col-xs-12 section-heading">
       <h2>DETAILED COMMENTS</h2>
@@ -178,12 +179,12 @@
         {% for comment_group in comments %}
           <tr>
             <td colspan="6" class="special-table-row">
-              {{ comment_group.grouper.label|upper }}
+              {{ comment_group.grouper|upper }}
             </td>
           </tr>
           {% for comment in comment_group.list %}
             <tr>
-              <td>{{ comment.datetime|date:"m/d/Y" }}</td>
+              <td>{{ comment.datetime|date:"d/m/Y" }}</td>
               <td>{{ comment.response }}</td>
             </tr>
           {% endfor %}
@@ -191,5 +192,6 @@
       </tbody>
     </table>
   </div><!-- / .container#detailed-comments -->
+  {% endif %}
 {% endif %}
 {% endblock content %}

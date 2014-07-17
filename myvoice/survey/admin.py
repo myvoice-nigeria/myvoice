@@ -99,10 +99,24 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
                    'question__question_type']
     list_select_related = True
     ordering = ['visit', 'question']
-    readonly_fields = ['question', 'response', 'datetime', 'visit', 'clinic',
-                       'service', 'created', 'updated']
     search_fields = ['visit__mobile', 'response', 'question__label']
     actions = ['export_to_csv']
+
+    def change_view(self, request, *args, **kwargs):
+        """
+        Allow admins with a permission to edit response text that is typically
+        imported directly from TextIt. This is intended as a workaround for
+        issues we are experiencing when a user sends a long response.
+        """
+        if request.user.has_perm('survey.change_response_text'):
+            self.readonly_fields = ['question', 'datetime', 'visit', 'clinic',
+                                    'service', 'created', 'updated']
+        else:
+            self.readonly_fields = ['question', 'response', 'datetime',
+                                    'visit', 'clinic', 'service', 'created',
+                                    'updated']
+        return super(SurveyQuestionResponseAdmin, self).change_view(
+            request, *args, **kwargs)
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -123,8 +137,9 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
         return obj.visit.mobile
 
     def export_to_csv(self, request, queryset):
-        headers = ['question', 'response', 'datetime', 'visit.patient.serial',
-                   'clinic', 'service', 'created', 'updated']
+        headers = ['visit.mobile', 'visit.visit_time', 'clinic', 'service',
+                   'question.survey', 'question', 'question.get_question_type_display',
+                   'response', 'datetime', 'visit.patient.serial']
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=response_data.csv'
         data = extract_qset_data(queryset, headers)

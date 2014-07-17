@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.utils import timezone
 
 import json
 import datetime
@@ -405,6 +406,59 @@ class TestClinicReportView(TestCase):
         """Test that if hard-coded assumptions are not met, exception is raised."""
         survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
         self.assertRaises(Exception, self.make_request)
+
+    def test_get_detailed_comments(self):
+        """Test that generic feedback is combined with open-ended survey responses."""
+        visit1 = factories.Visit.create(
+            service=factories.Service.create(code=2),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=221)
+        )
+        visit2 = factories.Visit.create(
+            service=factories.Service.create(code=3),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=111)
+        )
+
+        factories.SurveyQuestionResponse.create(
+            question=factories.SurveyQuestion.create(
+                label='General Feedback',
+                survey=self.survey,
+                question_type=survey_models.SurveyQuestion.OPEN_ENDED),
+            response='Second',
+            datetime=timezone.now()-timezone.timedelta(3),
+            visit=visit1,
+            clinic=self.clinic)
+        factories.SurveyQuestionResponse.create(
+            question=factories.SurveyQuestion.create(
+                label='What question',
+                survey=self.survey,
+                question_type=survey_models.SurveyQuestion.OPEN_ENDED),
+            response='First',
+            datetime=timezone.now()-timezone.timedelta(5),
+            visit=visit2,
+            clinic=self.clinic)
+
+        factories.GenericFeedback.create(
+            clinic=self.clinic,
+            message='Feedback message',
+            message_date=timezone.now())
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+
+        report.get_object()
+
+        comments = report.get_detailed_comments()
+
+        # Basic checks
+        self.assertEqual(3, len(comments))
+
+        # Check content of comments are sorted by question and datetime
+        self.assertEqual('Second', comments[0]['response'])
+        self.assertEqual('Feedback message', comments[1]['response'])
+        self.assertEqual('First', comments[2]['response'])
 
 
 class TestAnalystDashboardView(TestCase):

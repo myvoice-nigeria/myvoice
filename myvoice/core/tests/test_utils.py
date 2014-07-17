@@ -67,9 +67,34 @@ class TestCSVExport(TestCase):
         self.assertEqual(['me', 'somewhere', '5'], data[1])
         self.assertEqual(['you', 'elsewhere', '17'], data[2])
 
+    def test_extract_callable(self):
+        """Test that a callable attribute is evaluated."""
+        self.row1.name = lambda: "Hello"
+        header = ['name']
+        data = utils.extract_qset_data(self.qset, header)
+        self.assertEqual(['Hello'], data[1])
+        self.assertEqual(['you'], data[2])
+
+    def test_extract_multilevel_callable(self):
+        """Test that we can go through multiple levels of callable attributes."""
+        child1 = mock.Mock()
+        child1.name = lambda: "Child 1"  # row1.parent.child().name()
+        child2 = mock.Mock()
+        child2.name = lambda: "Child 2"  # row2.parent.child().name()
+        self.row1.parent = mock.NonCallableMock()
+        self.row1.parent.child = lambda: child1
+        self.row2.parent = mock.NonCallableMock()
+        self.row2.parent.child = lambda: child2
+        header = ['parent.child.name']
+        data = utils.extract_qset_data(self.qset, header)
+        self.assertEqual(['Child 1'], data[1])
+        self.assertEqual(['Child 2'], data[2])
+
     def test_extract_fk(self):
         """Test that we can get attributes of a fk field using dot notation."""
+        self.row1.parent = mock.NonCallableMock()
         self.row1.parent.name = 'parent 1'
+        self.row2.parent = mock.NonCallableMock()
         self.row2.parent.name = 'parent 2'
         header = ['name', 'address', 'counter', 'parent.name']
         data = utils.extract_qset_data(self.qset, header)

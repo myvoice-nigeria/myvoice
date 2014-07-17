@@ -9,6 +9,7 @@ from django.views.generic import DetailView, View, FormView, TemplateView
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
+
 from myvoice.survey.models import Survey, SurveyQuestionResponse
 from myvoice.clinics.models import Clinic, Visit
 
@@ -120,6 +121,7 @@ class ClinicReport(DetailView):
         self.questions = dict([(q.label, q) for q in self.questions])
         self.responses = obj.surveyquestionresponse_set.all()
         self.responses = self.responses.select_related('question', 'service', 'visit')
+        self.generic_feedback = obj.genericfeedback_set.all()
         self._check_assumptions()
         return obj
 
@@ -186,9 +188,31 @@ class ClinicReport(DetailView):
             return get_week_start(min_date), get_week_end(max_date)
         return None, None
 
+    def get_detailed_comments(self):
+        """Combine open-ended survey comments with General Feedback."""
+        comments = [
+            {
+                'question': survey.question.label,
+                'datetime': survey.datetime,
+                'response': survey.response
+            } for survey in self.responses.filter(
+                question__question_type=SurveyQuestion.OPEN_ENDED)
+            ]
+
+        feedback_label = self.generic_feedback.model._meta.verbose_name
+        for feedback in self.generic_feedback:
+            comments.append(
+                {
+                    'question': feedback_label,
+                    'datetime': feedback.message_date,
+                    'response': feedback.message
+                })
+
+        return sorted(comments, key=lambda item: (item['question'], item['datetime']))
+
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
-        kwargs['detailed_comments'] = survey_utils.get_detailed_comments(self.responses)
+        kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()

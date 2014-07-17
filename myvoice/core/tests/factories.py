@@ -106,7 +106,8 @@ class SurveyQuestion(factory.django.DjangoModelFactory):
 
 class SurveyQuestionResponse(factory.django.DjangoModelFactory):
     FACTORY_FOR = survey.SurveyQuestionResponse
-
-    question = factory.SubFactory('myvoice.core.tests.factories.Question')
+    question = factory.SubFactory('myvoice.core.tests.factories.SurveyQuestion')
+    response = factory.fuzzy.FuzzyText()
+    datetime = factory.fuzzy.FuzzyDateTime(
+        datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
-    visit = factory.SubFactory('myvoice.core.tests.factories.Visit')
