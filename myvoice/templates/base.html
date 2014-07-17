@@ -66,8 +66,19 @@
               <li>
                 <a href="{% url 'home' %}">Home</a>
               </li>
-              <li>
-                <a href="{% url 'region_report' 599 %}">summary report</a>
+              <li class="dropdown">
+                <a href="#" data-toggle="dropdown"
+                   class="dropdown-toggle" style="border:none;">
+                  summary reports<b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a href="{% url 'region_report' 599 %}">region report</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'analyst_summary' %}">analyst summary</a>
+                  </li>
+                </ul>
               </li>
               <li class="dropdown">
                 <a href="#" data-toggle="dropdown"
@@ -83,7 +94,7 @@
                 </ul>
               </li>
               <li>
-                <a href="{% url 'analyst_summary' %}">analyst summary</a>
+                
               </li>
               <li>
                 {% if request.user.is_authenticated %}
