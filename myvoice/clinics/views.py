@@ -10,7 +10,7 @@ from django.views.generic import DetailView, View, FormView, TemplateView
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
 
-from myvoice.survey.models import Survey, SurveyQuestionResponse
+from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 from myvoice.clinics.models import Clinic, Visit
 
 from . import forms
@@ -240,7 +240,10 @@ class AnalystSummary(TemplateView):
     def get_completion_table(self, clinic=""):
         completion_table = []
         st_total = 0            # Surveys Triggered
+<<<<<<< HEAD
         ss_total = 0            # Surveys Started
+=======
+>>>>>>> analyst-dashboard
         sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
@@ -278,11 +281,19 @@ class AnalystSummary(TemplateView):
             sc_st_percent_total = "--"
 
         completion_table.append({
+<<<<<<< HEAD
                 "clinic_name": "Total",
                 "st_count": st_total,
                 "sc_count": sc_total,
                 "sc_st_percent": sc_st_percent_total
             })
+=======
+            "clinic_name": "Total",
+            "st_count": st_total,
+            "sc_count": sc_total,
+            "sc_st_percent": sc_st_percent_total
+        })
+>>>>>>> analyst-dashboard
 
         return completion_table
 

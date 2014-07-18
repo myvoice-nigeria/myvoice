@@ -4,6 +4,10 @@
 
 {% block title %}{{ object.name }} {{ object.get_type_display }} Summary Feedback Report{% endblock title %}
 
+{% block extra-header-js %}
+    <script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/js/jquery.dataTables.js' %}"></script>
+{% endblock extra-header-js %}
+
 {% block content %}
   <div class="container main-header">
     <div class="col-xs-9 no-padding-left">
