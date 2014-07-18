@@ -229,6 +229,30 @@ h2 {
     display: block;
  }
 
+.completion_table {
+    width:100%;
+}
+
+.w200 {
+    width:200px;
+}
+
+.completion_table td {
+    padding:5px;
+}
+
+.bold {
+    font-weight: bold; 
+}
+
+.center {
+    text-align:center
+}
+
+.clinic_name {
+    padding-right:15px;
+}
+
  canvas#weekChart {
   margin-top:20px;
  }
