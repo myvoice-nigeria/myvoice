@@ -4,13 +4,17 @@
 
 {% block title %}{{ object.name }} {{ object.get_type_display }} Summary Feedback Report{% endblock title %}
 
+{% block extra-header-js %}
+    <script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/js/jquery.dataTables.js' %}"></script>
+{% endblock extra-header-js %}
+
 {% block content %}
   <div class="container main-header">
     <div class="col-xs-9 no-padding-left">
       <h1 style="width:565px">
         <br/>
         <span style="font-weight: 700;">{{ object.name }} {{ object.get_type_display }}</span>
-        <span style="font-weight: 700;">Analyst Summary</span><span style="float:right"><input type="button" onclick="alert('This will be added by Friday')" value="DOWNLOAD DATA"/></span>
+        <span style="font-weight: 700;">Analyst Summary</span>
       </h1>
 
       <div class="lead"></div>
@@ -18,8 +22,18 @@
   </div><!-- /.container -->
 
   <div id="feedback-on-services" class="container">
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 section-heading2">
+      <div class="dark-grey">
       <h2>COMPLETION RATE</h2>
+      </div>
+      <div class="light-grey">
+      <p>Select:
+        <select><option value="start_date">Start Date</option></select>
+        <select><option value="end_date">End Date</option></select>
+        <select><option value="service">Service</option></select>
+        <input type="button" value="Apply"/>
+      </p>
+      </div>
     </div>
       <table class="completion_table table-bordered table-striped" style="width:100%">
         <tr>
@@ -29,12 +43,16 @@
             <td style="padding:5px">Number of Surveys<br/> Completed</td>
         </tr>
         {% for a_clinic in completion_table %} 
-        <tr>
-            <td style="padding-right:15px">{{ a_clinic.clinic_name }}</td>
-            <td style="text-align:center">{{ a_clinic.st_count }}</td>
-            <td style="text-align:center"></td>
-            <td style="text-align:center">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
-        </tr>
+            {% ifequal a_clinic.clinic_name "Total" %}
+            <tr style="font-weight: bold">
+            {% else %}
+            <tr style="font-weight: normal">
+            {% endifequal %}
+                <td style="padding-right:15px">{{ a_clinic.clinic_name }}</td>
+                <td style="text-align:center">{{ a_clinic.st_count }}</td>
+                <td style="text-align:center"></td>
+                <td style="text-align:center">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
+            </tr>
         {% endfor %}
       </table>
     </br>
@@ -43,6 +61,13 @@
   <div id="feedback-facility" class="container">
     <div class="col-xs-12 section-heading">
       <h2>FEEDBACK RATES BY QUESTION</h2>
+      <p>Select: 
+        <select><option value="start_date">Start Date</option></select>
+        <select><option value="end_date">End Date</option></select>
+        <select><option value="clinic">Clinic</option></select>
+        <select><option value="service">Service</option></select>
+        <input type="button" value="Apply"/>
+      </p>
     </div>
 
     <table class="table table-bordered table-striped" style="width:565px !important">
@@ -100,7 +125,9 @@
             } );
             
             // DataTable
-            var table = $('.table').DataTable( { 
+            var table = $('.table').DataTable( {
+              bFilter: false,
+              bInfo : false, 
               paging: false,
               "columns": [
               { "width": "200px" },
