@@ -36,10 +36,11 @@
       {% block header-js %}
        <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
        <script src="{% static 'lib/bootstrap-3.2.0/js/bootstrap.min.js' %}"></script>
-       <script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/media/js/jquery.dataTables.js' %}"></script>
-
       {% endblock header-js %}
-      {% block extra-header-js %}{% endblock extra-header-js %}
+
+      {% block extra-header-js %}
+       <script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/media/js/jquery.dataTables.js' %}"></script>
+      {% endblock extra-header-js %}
 
       {% block shims %}
         <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -66,8 +67,19 @@
               <li>
                 <a href="{% url 'home' %}">Home</a>
               </li>
-              <li>
-                <a href="{% url 'region_report' 599 %}">summary report</a>
+              <li class="dropdown">
+                <a href="#" data-toggle="dropdown"
+                   class="dropdown-toggle" style="border:none;">
+                  summary reports<b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a href="{% url 'region_report' 599 %}">wamba LGA summary</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'analyst_summary' %}">analyst summary</a>
+                  </li>
+                </ul>
               </li>
               <li class="dropdown">
                 <a href="#" data-toggle="dropdown"
@@ -83,7 +95,7 @@
                 </ul>
               </li>
               <li>
-                <a href="{% url 'analyst_summary' %}">analyst summary</a>
+                
               </li>
               <li>
                 {% if request.user.is_authenticated %}
