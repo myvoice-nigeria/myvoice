@@ -107,8 +107,39 @@ h2 {
 }
 
 .section-heading h2 {
+	height: 30px;
 	margin:0;
+	width: 120%;
 }
+
+.section-heading2 {
+	margin-bottom:10px;
+	padding:1px;
+}
+
+.dark-grey {
+	background-color: #A6A8AB;
+	color:#fff;
+	 height:50px;
+	margin:0;
+	padding-top:2px;
+	padding-left:10px;
+	width:100%;
+}
+
+.dark-grey h2 {
+	margin-top:15px;
+	margin-left:5px;
+}
+
+.light-grey {
+	background-color: #f0f1f1;
+	 height:50px;
+	margin:0;
+	padding-top:2px;
+	width:100%;
+}
+
 
 .container .navbar-header,
 .container .navbar-collapse {
