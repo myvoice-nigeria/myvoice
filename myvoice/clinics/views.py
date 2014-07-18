@@ -240,7 +240,6 @@ class AnalystSummary(TemplateView):
     def get_completion_table(self, clinic=""):
         completion_table = []
         st_total = 0            # Surveys Triggered
-        ss_total = 0            # Surveys Started
         sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
@@ -278,11 +277,11 @@ class AnalystSummary(TemplateView):
             sc_st_percent_total = "--"
 
         completion_table.append({
-                "clinic_name": "Total",
-                "st_count": st_total,
-                "sc_count": sc_total,
-                "sc_st_percent": sc_st_percent_total
-            })
+            "clinic_name": "Total",
+            "st_count": st_total,
+            "sc_count": sc_total,
+            "sc_st_percent": sc_st_percent_total
+        })
 
         return completion_table
 
