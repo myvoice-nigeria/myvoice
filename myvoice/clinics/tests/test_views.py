@@ -485,13 +485,3 @@ class TestAnalystDashboardView(TestCase):
         response = self.make_request()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render()))
-
-    def test_st_count(self):
-        st_count = models.Visit.objects.filter(
-            survey_sent__isnull=False, patient__clinic=self.clinic).count()
-        self.assertEqual(st_count, 1)
-
-    def test_sc_count(self):
-        sc_count = survey_models.SurveyQuestionResponse.objects.filter(
-            clinic=self.clinic).count()
-        self.assertEqual(sc_count, 1)
