@@ -11,7 +11,7 @@
 {% block content %}
   <div class="container main-header">
     <div class="col-xs-9 no-padding-left">
-      <h1 style="width:565px">
+      <h1>
         <br/>
         <span style="font-weight: 700;">{{ object.name }} {{ object.get_type_display }}</span>
         <span style="font-weight: 700;">Analyst Summary</span>
@@ -22,7 +22,7 @@
   </div><!-- /.container -->
 
   <div id="feedback-on-services" class="container">
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 section-heading completion_selects">
       <h2>COMPLETION RATE</h2>
       Select:
       <select id="crt_start_date">
@@ -54,7 +54,7 @@
             {% endifequal %}
                 <td class="clinic_name">{{ a_clinic.clinic_name }}</td>
                 <td class="center clinic_st">{{ a_clinic.st_count }}</td>
-                <td class="center clinic_ss"></td>
+                <td class="center clinic_ss">{{ a_clinic.ss_count }} ({{ a_clinic.ss_st_percent }}%)</td>
                 <td class="center clinic_sc">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
             </tr>
         {% endfor %}
@@ -65,6 +65,21 @@
   <div id="feedback-facility" class="container">
     <div class="col-xs-12 section-heading">
       <h2>FEEDBACK RATES BY QUESTION</h2>
+      Select:<br/>
+      <select id="frt_start_date">
+        <option value="">Start Date</option>
+        {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+      </select>
+      <select id="frt_end_date">
+        <option value="">End Date</option>
+        {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+      </select>
+      <select id="frt_clinic"><option value="">Clinic</option>
+        {% for a_clinic in clinics %} <option>{{ a_clinic.name }}</option> {% endfor %}
+      </select>
+      <select id="frt_service"><option value="">Service</option>
+        {% for service in services %} <option>{{ service.name }}</option> {% endfor %}
+      </select>
     </div>
 
     <table class="table datatables table-bordered table-striped">
@@ -133,7 +148,11 @@
 
           $(document).ready( function () {
 
-            $( "select" ).change(function() {
+            $( ".completion_selects select" ).change(function() {
+              filter_completion_rate_table();
+            });
+
+            $( ".w select" ).change(function() {
               filter_completion_rate_table();
             });
 

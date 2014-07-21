@@ -36,19 +36,19 @@ h2 {
 
 /* Non-responsive overrides
  *
- * Utilitze the following CSS to disable the responsive-ness of the container,
+ * Utilitize the following CSS to disable the responsive-ness of the container,
  * grid system, and navbar.
  */
 
 /* Reset the container */
 .container {
-  width: 565px;
+  width: 625px;
   max-width: none !important;
 }
 
 /* Fix for DataTables width issues */
 .analyst_container {        
-  width: 625px;
+  width: 625px !important;
   max-width: none !important;
 }
 

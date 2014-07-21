@@ -241,6 +241,7 @@ class AnalystSummary(TemplateView):
     def get_completion_table(self, clinic="", start_date="", end_date="", service=""):
         completion_table = []
         st_total = 0            # Surveys Triggered
+        ss_total = 0
         sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
@@ -252,6 +253,7 @@ class AnalystSummary(TemplateView):
             else:
                 clinics_to_add = clinic
 
+        # Filter for Start Date, End Date and Service
         if start_date:
             if type(start_date) is str:
                 start_date = parse(start_date)
@@ -266,6 +268,8 @@ class AnalystSummary(TemplateView):
 
         # Loop through the Clinics, summating the data required.
         for a_clinic in clinics_to_add:
+
+            # Survey Triggered (Sent) Query Statistics
             st_query = Visit.objects.filter(
                 survey_sent__isnull=False, patient__clinic=a_clinic)
             if start_date:
@@ -276,35 +280,52 @@ class AnalystSummary(TemplateView):
 
             if service:
                 st_query = st_query.filter(service__name=service)
+
             st_count = st_query.count()
             st_total += st_count
 
-            # Add if start_date, end_date, or service filters
+            # Survey Started Query Statistics
+            ss_count = SurveyQuestionResponse.objects\
+                .filter(question__question_type__iexact="open-ended").count()
+            ss_total += ss_count
+            
+
+            # Survey Completed Query Statistics 
             sc_count = SurveyQuestionResponse.objects.filter(question__label="Wait Time")\
                 .filter(clinic=a_clinic).count()
             sc_total += sc_count
+            
+            # Survey Percentages     
             if st_count:
+                ss_st_percent = 100*ss_count/st_count
                 sc_st_percent = 100*sc_count/st_count
             else:
+                ss_st_percent = "--"
                 sc_st_percent = "--"
 
             completion_table.append({
                 "clinic_id": a_clinic.id,
                 "clinic_name": a_clinic.name,
                 "st_count": st_count,
+                "ss_count": ss_count,
+                "ss_st_percent": ss_st_percent,
                 "sc_count": sc_count,
                 "sc_st_percent": sc_st_percent
             })
 
         if st_total:
+            ss_st_percent_total = 100*ss_total/st_total
             sc_st_percent_total = 100*sc_total/st_total
         else:
+            ss_st_percent_total = "--"
             sc_st_percent_total = "--"
 
         completion_table.append({
             "clinic_id": -1,
             "clinic_name": "Total",
             "st_count": st_total,
+            "ss_count": ss_total,
+            "ss_st_percent": ss_st_percent_total,
             "sc_count": sc_total,
             "sc_st_percent": sc_st_percent_total,
         })
@@ -326,6 +347,9 @@ class AnalystSummary(TemplateView):
         # Number of Surveys Triggered (Total)
         return Visit.objects.filter(survey_sent__isnull=False)
 
+    def get_surveys_started_summary(self):
+        return SurveyQuestionResponse.objects.filter(question__question_type__iexact="open-ended")
+
     def get_surveys_completed_summary(self):
         # Number of Surveys Completed (Total)
         return SurveyQuestionResponse.objects.filter(question__label__iexact="Wait Time")
@@ -337,21 +361,33 @@ class AnalystSummary(TemplateView):
 
         context['completion_table'] = self.get_completion_table()
         context['rates_table'] = self.get_rates_table()
+
         context['st'] = self.get_surveys_triggered_summary()
         context['st_count'] = context['st'].count()
 
+        context['ss'] = self.get_surveys_started_summary()
+        context['ss_count'] = context['ss'].count()
+
         context['sc'] = self.get_surveys_completed_summary()
         context['sc_count'] = context['sc'].count()
+
+        if context['ss_count']:
+            context['ss_st_percent'] = 100*context['ss_count']/context['st_count']
+        else:
+            context['ss_st_percent'] = "--"
 
         if context['st_count']:
             context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
         else:
             context['sc_st_percent'] = "--"
 
+
+        # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
         first_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
         last_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
         context['date_range'] = self.get_date_range(first_date, last_date)
+        context['clinics'] = Clinic.objects.all().order_by("name")
         return context
 
     def get_rates_table(self):
