@@ -124,7 +124,7 @@ class Patient(models.Model):
         unique_together = [('clinic', 'serial')]
 
     def __unicode__(self):
-        return u'{0} at {1}'.format(self.mobile, self.clinic.name)
+        return u'{0} at {1}'.format(self.serial, self.clinic.name)
 
 
 class Visit(models.Model):
