@@ -2,6 +2,8 @@
 
 {% load static from staticfiles %}
 
+{% load rates_data %}
+
 {% block title %}{{ object.name }} {{ object.get_type_display }} Summary Feedback Report{% endblock title %}
 
 {% block extra-header-js %}
@@ -85,15 +87,66 @@
           </tr>
       </tfoot>
       <tbody>
-        {% for a_row in rates_table %} 
-        <tr>
-            <td class="clinic_name">{{ a_row.row_title }}</td>
-            <td class="center">{{ a_row.rsp_num }}</td>
-            <td class="center"> --:-- </td>
-            <td class="center"> --:-- </td>
-        </tr>
-        {% endfor %}
-          
+      <tr>
+          <td class="clinic_name">1.1  Hospital Availablilty</td>
+          <td class="center">{% get_rate "Open Facility" "multiple-choice" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">1.2  Hospital Availablilty Comment</td>
+          <td class="center">{% get_rate "Open Facility" "open-ended" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">2.1 Respectful Staff Treatment</td>
+          <td class="center">{% get_rate "Respectful Staff Treatment" "multiple-choice" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">2.2 Respectful Staff Treatment Comment</td>
+          <td class="center">{% get_rate "Respectful Staff Treatment" "open-ended" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">3.1 Clean Hospital Materials</td>
+          <td class="center">{% get_rate "Clean Hospital Materials" "multiple-choice" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">3.2 Clean Hospital Materials Comment</td>
+          <td class="center">{% get_rate "Clean Hospital Materials" "open-ended" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">4.1 Charged Fairly</td>
+          <td class="center">{% get_rate "Charged Fairly" "multiple-choice" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">4.2 Charged Fairly Comments</td>
+          <td class="center">{% get_rate "Charged Fairly" "open-ended" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">5.1 Wait Time</td>
+          <td class="center">{% get_rate "Wait time" "multiple-choice" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
+      <tr>
+          <td class="clinic_name">6.1 General Feedback</td>
+          <td class="center">{% get_rate "General Feedback" "open-ended" %}</td>
+          <td class="center"> --:-- </td>
+          <td class="center"> --:-- </td>
+      </tr>
 
       </tbody>
     </table>

@@ -286,11 +286,11 @@ class AnalystSummary(TemplateView):
         return completion_table
 
     def get_surveys_triggered_summary(self):
-        # Number of Surveys Triggered (Total)
+        """Total number of Surveys Triggered."""
         return Visit.objects.filter(survey_sent__isnull=False)
 
     def get_surveys_completed_summary(self):
-        # Number of Surveys Completed (Total)
+        """Total number of Surveys Completed."""
         return SurveyQuestionResponse.objects.filter(question__label__iexact="Wait Time")
 
     def get_context_data(self, **kwargs):
@@ -299,7 +299,6 @@ class AnalystSummary(TemplateView):
             get_context_data(**kwargs)
 
         context['completion_table'] = self.get_completion_table()
-        context['rates_table'] = self.get_rates_table()
         context['st'] = self.get_surveys_triggered_summary()
         context['st_count'] = context['st'].count()
 
@@ -312,81 +311,6 @@ class AnalystSummary(TemplateView):
             context['sc_st_percent'] = "--"
 
         return context
-
-    def get_rates_table(self):
-        rates_table = []
-
-        rates_table.append({
-            "row_title": "1.1   Hospital Availability",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Open Facility").filter(
-                question__question_type__iexact='multiple-choice').count()
-            })
-
-        rates_table.append({
-            "row_title": "1.2   Hospital Availability Comment",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Open Facility").filter(
-                question__question_type__iexact="open-ended").count()
-        })
-
-        rates_table.append({
-            "row_title": "2.1 Respectful Staff Treatment",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Respectful Staff Treatment").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_title": "2.2 Respectful Staff Treatment Comment",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Respectful Staff Treatment").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_title": "3.1 Clean Hospital Materials",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Clean Hospital Materials").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_title": "3.2 Clean Hospital Materials Comment",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Clean Hospital Materials").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_title": "4.1 Charged Fairly",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Charged Fairly").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_title": "4.2 Charged Fairly Comment",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Charged Fairly").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_title": "5.1 Wait Time",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="Wait time").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_title": "6.1  General Feedback",
-            "rsp_num": SurveyQuestionResponse.objects.filter(
-                question__label__iexact="General Feedback").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        return rates_table
 
 
 class RegionReport(DetailView):
