@@ -25,9 +25,9 @@
     <div class="col-xs-12 section-heading">
       <h2>COMPLETION RATE</h2>
       Select:
-      <select id="crt_start_date"><option>Start Date</option><option>Jan 01 2014</option></select>
-      <select id="crt_end_date"><option>End Date</option><option>Jul 01 2014</option></select>
-      <select id="crt_service"><option>Service</option>
+      <select id="crt_start_date"><option>Start Date</option><option>{{ first_date }}</option></select>
+      <select id="crt_end_date"><option>End Date</option><option>{{ last_date }}</option></select>
+      <select id="crt_service"><option value="">Service</option>
         {% for service in services %} <option>{{ service.name }}</option> {% endfor %}</select>
 
 
@@ -108,26 +108,19 @@
    
         <script type="text/javascript">
           function filter_completion_rate_table() {
+            
             // Completion Rate Table - Selects
             var start_date = $("#crt_start_date").val();
             var end_date = $("#crt_end_date").val();
-            var clinic = $("#crt_clinic").val();
+            // var clinic = $("#crt_clinic").val(); // Use for Feedback Rates Table. Not this Completion Rates
             var service = $("#crt_service").val();
 
-            $.get("/completion_filter", {'service':service}, function(data,status){
-              console.log(service);
-              //alert($("#crt_service").val());
-              //alert(data.clinic_data);
-              //$('.title').text("")
-              //$('.content').text("")
+            $.get("/completion_filter", {'service':service, 'start_date':start_date, 'end_date':end_date}, function(data,status){
               $.each(data.clinic_data, function(key, value){
                 $("tr#"+key+" td.clinic_st").text(value.st);
                 $("tr#"+key+" td.clinic_ss").text(value.ss);
                 $("tr#"+key+" td.clinic_sc").text(value.sc + "("+value.scp+"%)");
               });
-              //$('.title').append("<p>" + data.title + "</p>");
-              //$('.content').append("<p>" + data.text + "</p>");     
-              //story_id += 1
             });
           }
 
@@ -149,6 +142,7 @@
               bFilter: false,
               bInfo : false, 
               paging: false,
+              autoWidth: false,
               "columns": [
               { "width": "200px" },
               { "width": "40px" },

@@ -335,6 +335,8 @@ class AnalystSummary(TemplateView):
             context['sc_st_percent'] = "--"
 
         context['services'] = Service.objects.all()
+        context['first_date'] = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
+        context['last_date'] = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
         return context
 
     def get_rates_table(self):
@@ -416,7 +418,13 @@ class AnalystSummary(TemplateView):
 class CompletionFilter(View):
 
     def get(self, request):
-        the_service="ANC"
+        if request.GET.get('service'):
+            the_service = request.GET['service']
+            if the_service is "Service":
+                the_service = ""
+        else:
+            the_service = ""
+
         a = AnalystSummary()
         data = a.get_completion_table(service=the_service)
         content = {"clinic_data": {}}
