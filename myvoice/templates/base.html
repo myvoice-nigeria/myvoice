@@ -27,10 +27,17 @@
               href="{% static 'css/myvoice.css' %}">
         <link type="text/css" rel="stylesheet"
               href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic'>
+        <link rel="stylesheet" type="text/css" 
+            href="{% static 'lib/DataTables-1.10.0/css/jquery.dataTables.css' %}">
+
       {% endblock css %}
       {% block extra-css %}{% endblock extra-css %}
 
-      {% block header-js %}{% endblock header-js %}
+      {% block header-js %}
+       <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
+       <script src="{% static 'lib/bootstrap-3.2.0/js/bootstrap.min.js' %}"></script>
+      {% endblock header-js %}
+
       {% block extra-header-js %}{% endblock extra-header-js %}
 
       {% block shims %}
@@ -58,8 +65,19 @@
               <li>
                 <a href="{% url 'home' %}">Home</a>
               </li>
-              <li>
-                <a href="{% url 'region_report' 599 %}">summary report</a>
+              <li class="dropdown">
+                <a href="#" data-toggle="dropdown"
+                   class="dropdown-toggle" style="border:none;">
+                  summary reports<b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a href="{% url 'region_report' 599 %}">wamba LGA summary</a>
+                  </li>
+                  <li>
+                    <a href="{% url 'analyst_summary' %}">analyst summary</a>
+                  </li>
+                </ul>
               </li>
               <li class="dropdown">
                 <a href="#" data-toggle="dropdown"
@@ -73,6 +91,9 @@
                     </li>
                   {% endfor %}
                 </ul>
+              </li>
+              <li>
+                
               </li>
               <li>
                 {% if request.user.is_authenticated %}
@@ -104,6 +125,7 @@
                   <li><a href="{% url 'home' %}">home</a></li>
                   <li><a href="{% url 'region_report' 599 %}">summary report</a></li>
                   <li><a href="{% url 'select_clinic' %}">facility report</a></li>
+                  <li><a href="{% url 'analyst_summary' %}">analyst summary</a></li>
                   <li><a href="{% url 'login' %}">login</a></li>
                 </ul>
               </div>
@@ -117,8 +139,6 @@
       {% endblock footer %}
 
       {% block js %}
-        <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
-        <script src="{% static 'lib/bootstrap-3.2.0/js/bootstrap.min.js' %}"></script>
         {% compress js %}
           <script src="{% static 'js/site.js' %}"></script>
         {% endcompress %}
