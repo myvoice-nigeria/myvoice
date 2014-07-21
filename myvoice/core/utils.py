@@ -43,3 +43,9 @@ def extract_qset_data(qset, fld_names):
                 for fld_name in fld_names]
         out.append(line)
     return out
+
+
+def daterange(start_date, end_date):
+    for n in range(int ((end_date - start_date).days)):
+        yield start_date + datetime.timedelta(n)
+

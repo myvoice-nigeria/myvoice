@@ -25,10 +25,17 @@
     <div class="col-xs-12 section-heading">
       <h2>COMPLETION RATE</h2>
       Select:
-      <select id="crt_start_date"><option>Start Date</option><option>{{ first_date }}</option></select>
-      <select id="crt_end_date"><option>End Date</option><option>{{ last_date }}</option></select>
+      <select id="crt_start_date">
+        <option value="">Start Date</option>
+        {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+      </select>
+      <select id="crt_end_date">
+        <option value="">End Date</option>
+        {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+      </select>
       <select id="crt_service"><option value="">Service</option>
-        {% for service in services %} <option>{{ service.name }}</option> {% endfor %}</select>
+        {% for service in services %} <option>{{ service.name }}</option> {% endfor %}
+      </select>
 
 
     </div>
@@ -60,7 +67,7 @@
       <h2>FEEDBACK RATES BY QUESTION</h2>
     </div>
 
-    <table class="table table-bordered table-striped">
+    <table class="table datatables table-bordered table-striped">
       <thead>
         <tr>
           <th class="special-th">Survey Question</th>
@@ -142,7 +149,7 @@
               bFilter: false,
               bInfo : false, 
               paging: false,
-              autoWidth: false,
+              "autoWidth": false,
               "columns": [
               { "width": "200px" },
               { "width": "40px" },
@@ -160,12 +167,7 @@
                         .search( this.value )
                         .draw();
                 } );
-            } );
-            
-            // Completion DataTable
-            //var ctable = $('.completion_table').DataTable({ paging: false });
-            
-            
+            } );            
           } );
         </script>
       

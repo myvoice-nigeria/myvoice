@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
 from myvoice.survey import utils as survey_utils
 
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
@@ -253,13 +253,16 @@ class AnalystSummary(TemplateView):
                 clinics_to_add = clinic
 
         if start_date:
-            start_date = parse(start_date)                      # Convert a string date to start_date. Double check javascript dates..
+            if type(start_date) is str:
+                start_date = parse(start_date)
 
         if end_date:
-            end_date = parse(end_date)
+            if type(end_date) is str:
+                end_date = parse(end_date)
 
         if service:
-            service = Service.objects.get(name__iexact=service)
+            if type(service) is str:
+                service = Service.objects.get(name__iexact=service)
 
         # Loop through the Clinics, summating the data required.
         for a_clinic in clinics_to_add:
@@ -308,6 +311,17 @@ class AnalystSummary(TemplateView):
 
         return completion_table
 
+    # Returns a list of Datetime Days between two dates
+    def get_date_range(self, start_date, end_date):
+        return_dates = []
+        if type(start_date) is str:
+            start_date = parse(start_date)
+        if type(end_date) is str:
+            end_date = parse(end_date)
+        for single_date in daterange(start_date, end_date):
+            return_dates.append(single_date)
+        return return_dates
+
     def get_surveys_triggered_summary(self):
         # Number of Surveys Triggered (Total)
         return Visit.objects.filter(survey_sent__isnull=False)
@@ -335,8 +349,9 @@ class AnalystSummary(TemplateView):
             context['sc_st_percent'] = "--"
 
         context['services'] = Service.objects.all()
-        context['first_date'] = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        context['last_date'] = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+        first_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
+        last_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+        context['date_range'] = self.get_date_range(first_date, last_date)
         return context
 
     def get_rates_table(self):
@@ -417,25 +432,43 @@ class AnalystSummary(TemplateView):
 
 class CompletionFilter(View):
 
-    def get(self, request):
-        if request.GET.get('service'):
-            the_service = request.GET['service']
-            if the_service is "Service":
-                the_service = ""
+    def get_variable(self, request, variable_name, ignore_value):
+        if request.GET.get(variable_name):
+            the_variable_data = request.GET[variable_name]
+            if str(the_variable_data) is str(ignore_value):
+                the_variable_data = ""
         else:
-            the_service = ""
+            the_variable_data = ""
+        return the_variable_data
+
+    def get(self, request):
+        the_service = self.get_variable(request, "service", "Service")
+        the_start_date = self.get_variable(request, "start_date", "Start Date")
+        the_end_date = self.get_variable(request, "end_date", "End Date")
+
+        if not the_start_date or "Start Date" in the_start_date:
+            the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
+        else:
+            the_start_date = parse(the_start_date)
+        if not the_end_date or "End Date" in the_end_date:
+            the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+        else:
+            the_end_date = parse(the_end_date)
+
 
         a = AnalystSummary()
-        data = a.get_completion_table(service=the_service)
+        data = a.get_completion_table(start_date=the_start_date, end_date=the_end_date, service=the_service)
         content = {"clinic_data": {}}
         for a_clinic in data:
-            content["clinic_data"][a_clinic["clinic_id"]] = {"name": a_clinic["clinic_name"], "st":a_clinic["st_count"], "ss":0, "sc":a_clinic["sc_count"], "scp":a_clinic["sc_st_percent"]}
-        
-#        content = {"clinic_data": {"1":{"name": "Arum Chugbu PHC", "st":1, "ss":2, "sc":3, "scp": 10}, "3":{"name":"Kwabe PHC", "st":4, "ss":5, "sc":6, "scp":10}}}
-        # return content
-        # response = HttpResponse(data, content_type='text/json')
-        return HttpResponse(json.dumps(content), content_type="text/json")
+            content["clinic_data"][a_clinic["clinic_id"]] = {
+                "name": a_clinic["clinic_name"],
+                "st": a_clinic["st_count"],
+                "ss": 0,
+                "sc": a_clinic["sc_count"],
+                "scp": a_clinic["sc_st_percent"]
+            }
 
+        return HttpResponse(json.dumps(content), content_type="text/json")
 
 
 class RegionReport(DetailView):

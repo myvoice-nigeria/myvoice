@@ -42,8 +42,18 @@ h2 {
 
 /* Reset the container */
 .container {
-  width: 595px;
+  width: 565px;
   max-width: none !important;
+}
+
+/* Fix for DataTables width issues */
+.analyst_container {        
+  width: 625px;
+  max-width: none !important;
+}
+
+.datatables {
+    width: 565px !important;
 }
 
 .main-header {
@@ -142,7 +152,7 @@ h2 {
 
 
 .container .navbar-header,
-.container .navbar-collapse {
+.container .navbar-collapse, .analyst_container {
   margin-right: 0;
   margin-left: 0;
 }
