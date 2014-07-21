@@ -288,14 +288,13 @@ class AnalystSummary(TemplateView):
             ss_count = SurveyQuestionResponse.objects\
                 .filter(question__question_type__iexact="open-ended").count()
             ss_total += ss_count
-            
 
-            # Survey Completed Query Statistics 
+            # Survey Completed Query Statistics
             sc_count = SurveyQuestionResponse.objects.filter(question__label="Wait Time")\
                 .filter(clinic=a_clinic).count()
             sc_total += sc_count
-            
-            # Survey Percentages     
+
+            # Survey Percentages
             if st_count:
                 ss_st_percent = 100*ss_count/st_count
                 sc_st_percent = 100*sc_count/st_count
@@ -380,7 +379,6 @@ class AnalystSummary(TemplateView):
             context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
         else:
             context['sc_st_percent'] = "--"
-
 
         # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
