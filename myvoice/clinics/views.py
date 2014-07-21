@@ -1,6 +1,7 @@
 from itertools import groupby
 import json
 from operator import attrgetter
+from dateutil.parser import parse
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -11,7 +12,7 @@ from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
 
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
-from myvoice.clinics.models import Clinic, Visit
+from myvoice.clinics.models import Clinic, Service, Visit
 
 from . import forms
 from . import models
@@ -237,13 +238,9 @@ class AnalystSummary(TemplateView):
         response['allow'] = ','.join([self.allowed_methods])
         return response
 
-    def get_completion_table(self, clinic=""):
+    def get_completion_table(self, clinic="", start_date="", end_date="", service=""):
         completion_table = []
         st_total = 0            # Surveys Triggered
-<<<<<<< HEAD
-        ss_total = 0            # Surveys Started
-=======
->>>>>>> analyst-dashboard
         sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
@@ -255,11 +252,31 @@ class AnalystSummary(TemplateView):
             else:
                 clinics_to_add = clinic
 
+        if start_date:
+            start_date = parse(start_date)                      # Convert a string date to start_date. Double check javascript dates..
+
+        if end_date:
+            end_date = parse(end_date)
+
+        if service:
+            service = Service.objects.get(name__iexact=service)
+
+        # Loop through the Clinics, summating the data required.
         for a_clinic in clinics_to_add:
-            st_count = Visit.objects.filter(
-                survey_sent__isnull=False, patient__clinic=a_clinic).count()
+            st_query = Visit.objects.filter(
+                survey_sent__isnull=False, patient__clinic=a_clinic)
+            if start_date:
+                st_query = st_query.filter(visit_time__gte=start_date)
+
+            if end_date:
+                st_query = st_query.filter(visit_time__lte=end_date)
+
+            if service:
+                st_query = st_query.filter(service__name=service)
+            st_count = st_query.count()
             st_total += st_count
 
+            # Add if start_date, end_date, or service filters
             sc_count = SurveyQuestionResponse.objects.filter(question__label="Wait Time")\
                 .filter(clinic=a_clinic).count()
             sc_total += sc_count
@@ -269,6 +286,7 @@ class AnalystSummary(TemplateView):
                 sc_st_percent = "--"
 
             completion_table.append({
+                "clinic_id": a_clinic.id,
                 "clinic_name": a_clinic.name,
                 "st_count": st_count,
                 "sc_count": sc_count,
@@ -281,19 +299,12 @@ class AnalystSummary(TemplateView):
             sc_st_percent_total = "--"
 
         completion_table.append({
-<<<<<<< HEAD
-                "clinic_name": "Total",
-                "st_count": st_total,
-                "sc_count": sc_total,
-                "sc_st_percent": sc_st_percent_total
-            })
-=======
+            "clinic_id": -1,
             "clinic_name": "Total",
             "st_count": st_total,
             "sc_count": sc_total,
-            "sc_st_percent": sc_st_percent_total
+            "sc_st_percent": sc_st_percent_total,
         })
->>>>>>> analyst-dashboard
 
         return completion_table
 
@@ -323,6 +334,7 @@ class AnalystSummary(TemplateView):
         else:
             context['sc_st_percent'] = "--"
 
+        context['services'] = Service.objects.all()
         return context
 
     def get_rates_table(self):
@@ -399,6 +411,23 @@ class AnalystSummary(TemplateView):
         })
 
         return rates_table
+
+
+class CompletionFilter(View):
+
+    def get(self, request):
+        the_service="ANC"
+        a = AnalystSummary()
+        data = a.get_completion_table(service=the_service)
+        content = {"clinic_data": {}}
+        for a_clinic in data:
+            content["clinic_data"][a_clinic["clinic_id"]] = {"name": a_clinic["clinic_name"], "st":a_clinic["st_count"], "ss":0, "sc":a_clinic["sc_count"], "scp":a_clinic["sc_st_percent"]}
+        
+#        content = {"clinic_data": {"1":{"name": "Arum Chugbu PHC", "st":1, "ss":2, "sc":3, "scp": 10}, "3":{"name":"Kwabe PHC", "st":4, "ss":5, "sc":6, "scp":10}}}
+        # return content
+        # response = HttpResponse(data, content_type='text/json')
+        return HttpResponse(json.dumps(content), content_type="text/json")
+
 
 
 class RegionReport(DetailView):

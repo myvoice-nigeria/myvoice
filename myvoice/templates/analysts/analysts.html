@@ -24,6 +24,13 @@
   <div id="feedback-on-services" class="container">
     <div class="col-xs-12 section-heading">
       <h2>COMPLETION RATE</h2>
+      Select:
+      <select id="crt_start_date"><option>Start Date</option><option>Jan 01 2014</option></select>
+      <select id="crt_end_date"><option>End Date</option><option>Jul 01 2014</option></select>
+      <select id="crt_service"><option>Service</option>
+        {% for service in services %} <option>{{ service.name }}</option> {% endfor %}</select>
+
+
     </div>
       <table class="completion_table table-bordered table-striped" style="width:100%">
         <tr>
@@ -34,14 +41,14 @@
         </tr>
         {% for a_clinic in completion_table %} 
             {% ifequal a_clinic.clinic_name "Total" %}
-            <tr class="bold">
+            <tr class="bold" id="{{ a_clinic.clinic_id }}">
             {% else %}
-            <tr>
+            <tr id="{{ a_clinic.clinic_id }}">
             {% endifequal %}
                 <td class="clinic_name">{{ a_clinic.clinic_name }}</td>
-                <td class="center">{{ a_clinic.st_count }}</td>
-                <td class="center"></td>
-                <td class="center">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
+                <td class="center clinic_st">{{ a_clinic.st_count }}</td>
+                <td class="center clinic_ss"></td>
+                <td class="center clinic_sc">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
             </tr>
         {% endfor %}
       </table>
@@ -100,7 +107,37 @@
   </div><!-- / #feedback-facility .container -->
    
         <script type="text/javascript">
+          function filter_completion_rate_table() {
+            // Completion Rate Table - Selects
+            var start_date = $("#crt_start_date").val();
+            var end_date = $("#crt_end_date").val();
+            var clinic = $("#crt_clinic").val();
+            var service = $("#crt_service").val();
+
+            $.get("/completion_filter", {'service':service}, function(data,status){
+              console.log(service);
+              //alert($("#crt_service").val());
+              //alert(data.clinic_data);
+              //$('.title').text("")
+              //$('.content').text("")
+              $.each(data.clinic_data, function(key, value){
+                $("tr#"+key+" td.clinic_st").text(value.st);
+                $("tr#"+key+" td.clinic_ss").text(value.ss);
+                $("tr#"+key+" td.clinic_sc").text(value.sc + "("+value.scp+"%)");
+              });
+              //$('.title').append("<p>" + data.title + "</p>");
+              //$('.content').append("<p>" + data.text + "</p>");     
+              //story_id += 1
+            });
+          }
+
           $(document).ready( function () {
+
+            $( "select" ).change(function() {
+              filter_completion_rate_table();
+            });
+
+
               // Setup - add a text input to each footer cell
             $('.table tfoot th').each( function () {
                 var title = $('.table tfoot th').eq( $(this).index() ).text();
@@ -121,7 +158,7 @@
 
             });
          
-            // Apply the filter
+            // Apply the Data Tables filter
             table.columns().eq( 0 ).each( function ( colIdx ) {
                 $( 'input', table.column( colIdx ).footer() ).on( 'keyup change', function () {
                     table
