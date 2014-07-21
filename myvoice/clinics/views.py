@@ -455,9 +455,9 @@ class CompletionFilter(View):
         else:
             the_end_date = parse(the_end_date)
 
-
         a = AnalystSummary()
-        data = a.get_completion_table(start_date=the_start_date, end_date=the_end_date, service=the_service)
+        data = a.get_completion_table(
+            start_date=the_start_date, end_date=the_end_date, service=the_service)
         content = {"clinic_data": {}}
         for a_clinic in data:
             content["clinic_data"][a_clinic["clinic_id"]] = {
