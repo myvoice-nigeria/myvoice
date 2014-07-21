@@ -63,7 +63,7 @@
   </div><!-- / #feedback-on-services .container -->
 
   <div id="feedback-facility" class="container">
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 section-heading feedback_selects">
       <h2>FEEDBACK RATES BY QUESTION</h2>
       Select:<br/>
       <select id="frt_start_date">
@@ -115,7 +115,7 @@
       </tfoot>
       <tbody>
         {% for a_row in rates_table %} 
-        <tr>
+        <tr id="a_row.rsp_num">
             <td class="clinic_name">{{ a_row.row_title }}</td>
             <td class="center">{{ a_row.rsp_num }}</td>
             <td class="center"> --:-- </td>
@@ -134,7 +134,6 @@
             // Completion Rate Table - Selects
             var start_date = $("#crt_start_date").val();
             var end_date = $("#crt_end_date").val();
-            // var clinic = $("#crt_clinic").val(); // Use for Feedback Rates Table. Not this Completion Rates
             var service = $("#crt_service").val();
 
             $.get("/completion_filter", {'service':service, 'start_date':start_date, 'end_date':end_date}, function(data,status){
@@ -146,14 +145,31 @@
             });
           }
 
+          function filter_completion_rate_table() {
+            
+            // Completion Rate Table - Selects
+            var start_date = $("#frt_start_date").val();
+            var end_date = $("#frt_end_date").val();
+            var clinic = $("#frt_clinic").val(); 
+            var service = $("#crt_service").val();
+
+            $.get("/feedback_filter", {'service':service, 'clinic': clinic, 'start_date':start_date, 'end_date':end_date}, function(data,status){
+              $.each(data.feedback_data, function(key, value){
+                $("tr#"+key+" td.feedback_st").text(value.st);
+                $("tr#"+key+" td.feedback_ss").text(value.ss);
+                $("tr#"+key+" td.feedback_sc").text(value.sc + "("+value.scp+"%)");
+              });
+            });
+          }
+
           $(document).ready( function () {
 
             $( ".completion_selects select" ).change(function() {
               filter_completion_rate_table();
             });
 
-            $( ".w select" ).change(function() {
-              filter_completion_rate_table();
+            $( ".feedback_selects select" ).change(function() {
+              filter_feedback_table();
             });
 
 

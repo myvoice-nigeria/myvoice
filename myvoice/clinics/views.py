@@ -505,6 +505,46 @@ class CompletionFilter(View):
         return HttpResponse(json.dumps(content), content_type="text/json")
 
 
+class FeedbackFilter(View):
+
+    def get_variable(self, request, variable_name, ignore_value):
+        if request.GET.get(variable_name):
+            the_variable_data = request.GET[variable_name]
+            if str(the_variable_data) is str(ignore_value):
+                the_variable_data = ""
+        else:
+            the_variable_data = ""
+        return the_variable_data
+
+    def get(self, request):
+        the_service = self.get_variable(request, "service", "Service")
+        the_start_date = self.get_variable(request, "start_date", "Start Date")
+        the_end_date = self.get_variable(request, "end_date", "End Date")
+
+        if not the_start_date or "Start Date" in the_start_date:
+            the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
+        else:
+            the_start_date = parse(the_start_date)
+        if not the_end_date or "End Date" in the_end_date:
+            the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+        else:
+            the_end_date = parse(the_end_date)
+
+        a = AnalystSummary()
+        data = a.get_completion_table(
+            start_date=the_start_date, end_date=the_end_date, service=the_service)
+        content = {"feedback_data": {}}
+        for a_clinic in data:
+            content["feedback_data"][a_clinic["clinic_id"]] = {
+                "name": a_clinic["clinic_name"],
+                "st": a_clinic["st_count"],
+                "ss": 0,
+                "sc": a_clinic["sc_count"],
+                "scp": a_clinic["sc_st_percent"]
+            }
+
+        return HttpResponse(json.dumps(content), content_type="text/json")
+
 class RegionReport(DetailView):
     template_name = 'clinics/summary.html'
     model = models.Region
