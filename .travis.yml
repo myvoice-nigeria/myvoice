@@ -8,8 +8,8 @@ env:
 install:
   - pip install -r requirements/dev.txt --use-mirrors
 before_script:
-  - createdb -E UTF-8 myvoice -U postgres
-  - psql myvoice -c "CREATE EXTENSION postgis;" -U postgres
+  - createdb -E UTF-8 myvoice -U postgres -O $USER
+  - psql myvoice -c "CREATE EXTENSION postgis;"
   - python manage.py syncdb --migrate --noinput
 script:
   - coverage run manage.py test
