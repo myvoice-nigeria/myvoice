@@ -4,7 +4,7 @@ domain: dev.example.com
 
 repo:
   url: https://github.com/caktus/myvoice.git
-  branch: fix-vagrant
+  branch: develop
 
 secrets:
   DB_PASSWORD: 'abc123'
