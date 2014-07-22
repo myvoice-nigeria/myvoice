@@ -4,7 +4,7 @@ base:
     - devs
   'environment:local_vagrant':
     - match: grain
-    - local
+    - local_vagrant
   'environment:staging':
     - match: grain
     - staging.env
