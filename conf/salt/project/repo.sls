@@ -19,15 +19,6 @@ project_repo_identity:
 {% endif %}
 
 project_repo:
-  {% if grains['environment'] == 'local' %}
-  file.symlink:
-    - name: {{ vars.source_dir }}
-    - target: "/vagrant"
-    - makedirs: True
-    - force: True
-    - require:
-      - file: root_dir
-  {% else %}
   git.latest:
     - name: "{{ pillar['repo']['url'] }}"
     - rev: "{{ pillar['repo'].get('branch', 'master') }}"
@@ -43,4 +34,3 @@ project_repo:
       - file: project_repo_identity
       {% endif %}
       - ssh_known_hosts: github.com
-  {% endif %}
