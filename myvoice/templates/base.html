@@ -61,7 +61,7 @@
               </a>
             </div>
 
-            <ul class="nav navbar-nav pull-right">
+            <ul class="nav navbar-nav pull-right  non-printable">
               <li>
                 <a href="{% url 'home' %}">Home</a>
               </li>
@@ -119,13 +119,12 @@
               <a class="navbar-brand" href="{% url 'home' %}" style="padding-top:30px;"><img src="{% static 'img/myvoice-logo-dark.png' %}"></a>
             </div>
 
-            <div class="col-xs-7">
+            <div class="col-xs-7 non-printable">
               <div class="navbar" role="navigation">
                 <ul class="nav navbar-nav">
                   <li><a href="{% url 'home' %}">home</a></li>
-                  <li><a href="{% url 'region_report' 599 %}">summary report</a></li>
+                  <li><a href="{% url 'region_report' 599 %}">summary reports</a></li>
                   <li><a href="{% url 'select_clinic' %}">facility report</a></li>
-                  <li><a href="{% url 'analyst_summary' %}">analyst summary</a></li>
                   <li><a href="{% url 'login' %}">login</a></li>
                 </ul>
               </div>

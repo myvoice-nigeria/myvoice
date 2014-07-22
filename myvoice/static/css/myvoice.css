@@ -46,6 +46,25 @@ h2 {
   max-width: none !important;
 }
 
+
+@media print and (color) {
+   * {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+   }
+}
+
+/* In case we want something hidden for only print versions */
+.printable { display: none;}
+
+@media print  
+{
+  .container { page-break-inside: avoid; }
+  .non-printable { display: none; }
+  .printable { display: block; }
+}
+
+
 /* Fix for DataTables width issues */
 .analyst_container {        
   width: 625px !important;

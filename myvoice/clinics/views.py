@@ -2,6 +2,7 @@ from itertools import groupby
 import json
 from operator import attrgetter
 from dateutil.parser import parse
+from decimal import Decimal
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -386,6 +387,103 @@ class AnalystSummary(TemplateView):
         context['clinics'] = Clinic.objects.all().order_by("name")
         return context
 
+    def get_rates_table(self, service="", clinic="", start_date="", end_date=""):
+        rates_table = []
+
+        sqr_query = SurveyQuestionResponse.objects.all()
+        if clinic:
+            sqr_query = sqr_query.filter(clinic__name__iexact=clinic)
+        if service:
+            sqr_query = sqr_query.filter(service__name__iexact=service)
+        if start_date:
+            if type(start_date) is str:
+                sqr_query = sqr_query.filter(visit_time__gte=parse(start_date))
+        if end_date:
+            if type(end_date) is str:
+                sqr_query = sqr_query.filter(visit_time__lte=parse(end_date))
+
+
+        rates_table.append({
+            "row_num": "1.1",
+            "row_title": "1.1 Hospital Availability",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Open Facility").filter(
+                question__question_type__iexact='multiple-choice').count()
+            })
+
+        rates_table.append({
+            "row_num": "1.2",
+            "row_title": "1.2 Hospital Availability Comment",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Open Facility").filter(
+                question__question_type__iexact="open-ended").count()
+        })
+
+        rates_table.append({
+            "row_num": "2.1",
+            "row_title": "2.1 Respectful Staff Treatment",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Respectful Staff Treatment").filter(
+                question__question_type__iexact='multiple-choice').count()
+        })
+
+        rates_table.append({
+            "row_num": "2.2",
+            "row_title": "2.2 Respectful Staff Treatment Comment",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Respectful Staff Treatment").filter(
+                question__question_type__iexact='open-ended').count()
+        })
+
+        rates_table.append({
+            "row_num": "3.1",
+            "row_title": "3.1 Clean Hospital Materials",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Clean Hospital Materials").filter(
+                question__question_type__iexact='multiple-choice').count()
+        })
+
+        rates_table.append({
+            "row_num": "3.2",
+            "row_title": "3.2 Clean Hospital Materials Comment",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Clean Hospital Materials").filter(
+                question__question_type__iexact='open-ended').count()
+        })
+
+        rates_table.append({
+            "row_num": "4.1",
+            "row_title": "4.1 Charged Fairly",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Charged Fairly").filter(
+                question__question_type__iexact='multiple-choice').count()
+        })
+
+        rates_table.append({
+            "row_num": "4.2",
+            "row_title": "4.2 Charged Fairly Comment",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Charged Fairly").filter(
+                question__question_type__iexact='open-ended').count()
+        })
+
+        rates_table.append({
+            "row_num": "5.1",
+            "row_title": "5.1 Wait Time",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="Wait time").filter(
+                question__question_type__iexact='multiple-choice').count()
+        })
+
+        rates_table.append({
+            "row_num": "6.1",
+            "row_title": "6.1  General Feedback",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="General Feedback").filter(
+                question__question_type__iexact='open-ended').count()
+        })
+
+        return rates_table
 
 class CompletionFilter(View):
 
@@ -420,7 +518,7 @@ class CompletionFilter(View):
             content["clinic_data"][a_clinic["clinic_id"]] = {
                 "name": a_clinic["clinic_name"],
                 "st": a_clinic["st_count"],
-                "ss": 0,
+                "ss": a_clinic["ss_count"],
                 "sc": a_clinic["sc_count"],
                 "scp": a_clinic["sc_st_percent"]
             }
@@ -441,6 +539,7 @@ class FeedbackFilter(View):
 
     def get(self, request):
         the_service = self.get_variable(request, "service", "Service")
+        the_clinic = self.get_variable(request, "clinic", "Clinic")
         the_start_date = self.get_variable(request, "start_date", "Start Date")
         the_end_date = self.get_variable(request, "end_date", "End Date")
 
@@ -454,16 +553,15 @@ class FeedbackFilter(View):
             the_end_date = parse(the_end_date)
 
         a = AnalystSummary()
-        data = a.get_completion_table(
-            start_date=the_start_date, end_date=the_end_date, service=the_service)
+        data = a.get_rates_table(
+            start_date=the_start_date, end_date=the_end_date, service=the_service, clinic=the_clinic)
         content = {"feedback_data": {}}
-        for a_clinic in data:
-            content["feedback_data"][a_clinic["clinic_id"]] = {
-                "name": a_clinic["clinic_name"],
-                "st": a_clinic["st_count"],
-                "ss": 0,
-                "sc": a_clinic["sc_count"],
-                "scp": a_clinic["sc_st_percent"]
+        for a_rate_row in data:
+            content["feedback_data"]["row"+a_rate_row["row_num"].replace(".","")] = {
+                "row_title": a_rate_row["row_title"],
+                "rsp_num": a_rate_row["rsp_num"],
+                "rsp_prt": "--:--",
+                "rsp_srt": "--:--"
             }
 
         return HttpResponse(json.dumps(content), content_type="text/json")
