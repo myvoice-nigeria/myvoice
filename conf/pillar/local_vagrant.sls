@@ -1,4 +1,4 @@
-environment: local
+environment: local_vagrant
 
 domain: dev.example.com
 
