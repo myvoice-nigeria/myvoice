@@ -24,6 +24,9 @@ run ``vagrant up``. To finalize the provisioning you simply need to run::
     fab vagrant salt:saltutil.sync_all
     fab vagrant highstate
 
+Note: if you receive an error the first time you run ``highstate``, run it again as it may
+take a couple tries at first.
+
 The Vagrant box will use the current working copy of the project and the local_vagrant.py settings. If you want
 to use this for development/testing it is helpful to change your local_vagrant settings to extend from staging
 instead of dev::
