@@ -24,21 +24,27 @@ run ``vagrant up``. To finalize the provisioning you simply need to run::
     fab vagrant salt:saltutil.sync_all
     fab vagrant highstate
 
-The Vagrant box will use the current working copy of the project and the local.py settings. If you want
-to use this for development/testing it is helpful to change your local settings to extend from staging
+Note: if you receive an error the first time you run ``highstate``, run it again as it may
+take a couple tries at first.
+
+The Vagrant box will use the current working copy of the project and the local_vagrant.py settings. If you want
+to use this for development/testing it is helpful to change your local_vagrant settings to extend from staging
 instead of dev::
 
     # Example local.py
     from myvoice.settings.staging import *
 
     # Override settings here
-    DATABASES['default']['NAME'] = 'myvoice_local'
-    DATABASES['default']['USER'] = 'myvoice_local'
+    DATABASES['default']['NAME'] = 'myvoice_local_vagrant'
+    DATABASES['default']['USER'] = 'myvoice_local_vagrant'
     
     DEBUG = True
 
 This won't have the same nice features of the development server such as auto-reloading but it will
 run with a stack which is much closer to the production environment.
+
+Note this configuration is currently the default, as ``local_vagrant.py`` is checked in to
+the repository.
 
 
 Testing on the VM
@@ -46,18 +52,18 @@ Testing on the VM
 
 With the VM fully provisioned and deployed, you can access the VM at the IP address specified in the
 ``Vagrantfile``, which is 33.33.33.10 by default. Since the Nginx configuration will only listen for the domain name in
-``conf/pillar/staging/env.sls``, you will need to modify your ``/etc/hosts`` configuration to view it
+``conf/pillar/local_vagrant.sls``, you will need to modify your ``/etc/hosts`` configuration to view it
 at one of those IP addresses. I recommend 33.33.33.10, otherwise the ports in the localhost URL cause
 the CSRF middleware to complain ``REASON_BAD_REFERER`` when testing over SSL. You will need to add::
 
     33.33.33.10 <domain>
 
-where ``<domain>`` matches the domain in ``conf/pillar/staging/env.sls``. For example, let's use
+where ``<domain>`` matches the domain in ``conf/pillar/local_vagrant.sls``. For example, let's use
 staging.example.com::
 
-    33.33.33.10 staging.example.com
+    33.33.33.10 dev.example.com
 
-In your browser you can now view https://staging.example.com and see the VM running the full web stack.
+In your browser you can now view https://dev.example.com and see the VM running the full web stack.
 
-Note that this ``/etc/hosts`` entry will prevent you from accessing the true staging.example.com.
+Note that this ``/etc/hosts`` entry will prevent you from accessing the true dev.example.com.
 When your testing is complete, you should remove or comment out this entry.
