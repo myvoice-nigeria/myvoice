@@ -40,24 +40,27 @@ instead of dev::
 This won't have the same nice features of the development server such as auto-reloading but it will
 run with a stack which is much closer to the production environment.
 
+Note this configuration is currently the default, as ``local.py`` is checked in to
+the repository.
+
 
 Testing on the VM
 ------------------------
 
 With the VM fully provisioned and deployed, you can access the VM at the IP address specified in the
 ``Vagrantfile``, which is 33.33.33.10 by default. Since the Nginx configuration will only listen for the domain name in
-``conf/pillar/staging/env.sls``, you will need to modify your ``/etc/hosts`` configuration to view it
+``conf/pillar/local.sls``, you will need to modify your ``/etc/hosts`` configuration to view it
 at one of those IP addresses. I recommend 33.33.33.10, otherwise the ports in the localhost URL cause
 the CSRF middleware to complain ``REASON_BAD_REFERER`` when testing over SSL. You will need to add::
 
     33.33.33.10 <domain>
 
-where ``<domain>`` matches the domain in ``conf/pillar/staging/env.sls``. For example, let's use
+where ``<domain>`` matches the domain in ``conf/pillar/local.sls``. For example, let's use
 staging.example.com::
 
-    33.33.33.10 staging.example.com
+    33.33.33.10 dev.example.com
 
-In your browser you can now view https://staging.example.com and see the VM running the full web stack.
+In your browser you can now view https://dev.example.com and see the VM running the full web stack.
 
-Note that this ``/etc/hosts`` entry will prevent you from accessing the true staging.example.com.
+Note that this ``/etc/hosts`` entry will prevent you from accessing the true dev.example.com.
 When your testing is complete, you should remove or comment out this entry.

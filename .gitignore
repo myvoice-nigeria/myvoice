@@ -10,7 +10,6 @@
 *.remote
 .coverage
 .vagrant
-*/settings/local.py
 public/static/
 public/media/
 secrets.sls
