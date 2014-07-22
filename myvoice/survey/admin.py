@@ -10,24 +10,22 @@ from myvoice.core.utils import extract_qset_data
 
 
 class SurveyQuestionInline(admin.TabularInline):
-    """
-    Disallow adding or deleting SurveyQuestions through the admin - they must
-    be managed through the automatic import of Surveys.
-
-    Also disallow editing most of the fields that we import from TextIt.
-    """
 
     extra = 0
     fields = ['id', 'question_id', 'question', 'label', 'question_type',
               'categories']
     model = models.SurveyQuestion
+
+    # Disallow editing most fields, as they are imported from TextIt.
     readonly_fields = ['id', 'question_id', 'label', 'question_type',
                        'categories']
 
     def has_add_permission(self, request, obj=None):
+        """Disallow admin addition - questions must be imported from TextIt."""
         return False
 
     def has_delete_permission(self, request, obj=None):
+        """Disallow admin deletion - questions must be imported from TextIt."""
         return False
 
 
@@ -77,12 +75,6 @@ class SurveyAdmin(admin.ModelAdmin):
 
 
 class SurveyQuestionResponseAdmin(admin.ModelAdmin):
-    """
-    Disallow adding or deleting responses through the admin - they must be
-    managed through automatic import.
-
-    Also disallow editing the fields that we import from TextIt.
-    """
 
     fieldsets = [
         (None, {
@@ -104,9 +96,10 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
 
     def change_view(self, request, *args, **kwargs):
         """
-        Allow admins with a permission to edit response text that is typically
-        imported directly from TextIt. This is intended as a workaround for
-        issues we are experiencing when a user sends a long response.
+        Disallow editing of most fields that are imported from TextIt. However,
+        we will allow admins with a specific permission to edit response text.
+        This is intended as a workaround for issues we are experiencing when a
+        user sends a long response.
         """
         if request.user.has_perm('survey.change_response_text'):
             self.readonly_fields = ['question', 'datetime', 'visit', 'clinic',
@@ -119,9 +112,7 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
             request, *args, **kwargs)
 
     def has_add_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
+        """Disallow admin addition - responses must be imported from TextIt."""
         return False
 
     def visit_time(self, obj):
