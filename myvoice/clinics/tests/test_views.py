@@ -3,8 +3,6 @@ from django.test.client import RequestFactory
 from django.utils import timezone
 
 import json
-import datetime
-import pytz
 
 from myvoice.core.tests import factories
 
@@ -459,29 +457,3 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Second', comments[0]['response'])
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
-
-
-class TestAnalystDashboardView(TestCase):
-
-    def setUp(self):
-        now = datetime.datetime.now(pytz.utc)
-        self.factory = RequestFactory()
-        self.clinic = factories.Clinic.create(code=1)
-        self.service = factories.Service.create(code=5)
-        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
-        self.visit = factories.Visit.create(
-            patient=self.patient, service=self.service, survey_sent=now)
-        self.question = factories.SurveyQuestion.create(label="Wait Time")
-        self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
-            question=self.question, clinic=self.clinic, visit=self.visit)
-
-    def make_request(self, data=None):
-        """Make test request."""
-        request = self.factory.get('/analyst_summary/')
-        return clinics.AnalystSummary.as_view()(request)
-
-    def test_clinic_report_page_loads(self):
-        """Smoke test to make sure the page loads and returns some content."""
-        response = self.make_request()
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(bool(response.render()))
