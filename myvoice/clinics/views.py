@@ -2,7 +2,6 @@ from itertools import groupby
 import json
 from operator import attrgetter
 from dateutil.parser import parse
-from decimal import Decimal
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -402,7 +401,6 @@ class AnalystSummary(TemplateView):
             if type(end_date) is str:
                 sqr_query = sqr_query.filter(visit_time__lte=parse(end_date))
 
-
         rates_table.append({
             "row_num": "1.1",
             "row_title": "1.1 Hospital Availability",
@@ -485,6 +483,7 @@ class AnalystSummary(TemplateView):
 
         return rates_table
 
+
 class CompletionFilter(View):
 
     def get_variable(self, request, variable_name, ignore_value):
@@ -554,10 +553,11 @@ class FeedbackFilter(View):
 
         a = AnalystSummary()
         data = a.get_rates_table(
-            start_date=the_start_date, end_date=the_end_date, service=the_service, clinic=the_clinic)
+            start_date=the_start_date, end_date=the_end_date,
+            service=the_service, clinic=the_clinic)
         content = {"feedback_data": {}}
         for a_rate_row in data:
-            content["feedback_data"]["row"+a_rate_row["row_num"].replace(".","")] = {
+            content["feedback_data"]["row"+a_rate_row["row_num"].replace(".", "")] = {
                 "row_title": a_rate_row["row_title"],
                 "rsp_num": a_rate_row["rsp_num"],
                 "rsp_prt": "--:--",
@@ -565,6 +565,7 @@ class FeedbackFilter(View):
             }
 
         return HttpResponse(json.dumps(content), content_type="text/json")
+
 
 class RegionReport(DetailView):
     template_name = 'clinics/summary.html'
