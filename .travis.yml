@@ -4,7 +4,7 @@ python:
 addons:
   postgresql: "9.1"
 env:
-  - DJANGO_SETTINGS_MODULE="myvoice.settings.travis_ci"
+  - DJANGO_SETTINGS_MODULE="myvoice.settings.dev"
 install:
   - pip install -r requirements/dev.txt --use-mirrors
 before_script:
