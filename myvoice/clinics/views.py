@@ -251,7 +251,6 @@ class RegionReport(ClinicReport):
         self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
         self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([(q.label, q) for q in self.questions])
-        #import pdb;pdb.set_trace()
         self.responses = SurveyQuestionResponse.objects.filter(
             clinic__lga__iexact=obj.name, visit__visit_time__range=(self.start_date, self.end_date))
         self.responses = self.responses.select_related('question', 'service', 'visit')
