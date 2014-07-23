@@ -220,13 +220,22 @@ class ClinicReport(DetailView):
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
         num_registered = survey_utils.get_registration_count(self.object)
+        num_started = survey_utils.get_started_count(self.responses)
         num_completed = survey_utils.get_completion_count(self.responses)
+
         if num_registered:
+            percent_started = make_percentage(num_started, num_registered)
             percent_completed = make_percentage(num_completed, num_registered)
         else:
             percent_completed = None
+            percent_started = None
+
         kwargs['num_registered'] = num_registered
+        kwargs['num_started'] = num_started
+        kwargs['percent_started'] = percent_started
+        kwargs['num_completed'] = num_completed
         kwargs['percent_completed'] = percent_completed
+
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
 

@@ -207,9 +207,17 @@ h2 {
   margin-bottom: 20px;
  }
 
+ .report-percent {
+  font-size: .6em;
+  font-weight: 300;
+  overflow: hidden;
+  white-space: nowrap;
+ }
+
  .green-box {
   width:auto;
   background-color: #8ac43f;
+  border-radius: 50%;
   color:#fff;
   text-align: center;
   float: left;

@@ -87,6 +87,13 @@ def get_registration_count(clinic):
     return Visit.objects.filter(patient__clinic=clinic).count()
 
 
+def get_started_count(responses):
+    """Returns the count of responses which are started."""
+
+    return responses.filter(question__label__iexact="Open Facility")\
+        .filter(question__question_type__iexact="multiple-choice").count()
+
+
 def display_feedback(response_text):
     """Returns whether or not the text response should be displayed."""
     if not response_text or len(response_text.strip()) <= 1:
