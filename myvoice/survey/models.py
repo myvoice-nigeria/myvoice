@@ -121,6 +121,7 @@ class SurveyQuestionResponse(models.Model):
     service = models.ForeignKey(
         'clinics.Service', null=True, blank=True,
         help_text="The service this response is about, if any.")
+    display_on_dashboard = models.BooleanField(default=True)
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

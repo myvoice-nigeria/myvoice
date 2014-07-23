@@ -189,7 +189,8 @@ class ClinicReport(DetailView):
     def get_detailed_comments(self):
         """Combine open-ended survey comments with General Feedback."""
         open_ended_responses = self.responses.filter(
-            question__question_type=SurveyQuestion.OPEN_ENDED)
+            question__question_type=SurveyQuestion.OPEN_ENDED,
+            display_on_dashboard=True)
         comments = [
             {
                 'question': r.question.label,

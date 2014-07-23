@@ -468,6 +468,10 @@ class TestClinicReportView(TestCase):
         factories.SurveyQuestionResponse(
             question=question, response='Hello',
             visit=factories.Visit(patient__clinic=self.clinic))
+        factories.SurveyQuestionResponse(
+            question=question, response='Staff that was hidden manually',
+            visit=factories.Visit(patient__clinic=self.clinic),
+            display_on_dashboard=False)
         factories.GenericFeedback(
             clinic=self.clinic, message_date=timezone.now(), message='No')
         factories.GenericFeedback(
