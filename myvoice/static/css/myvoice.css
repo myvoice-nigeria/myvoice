@@ -207,6 +207,11 @@ h2 {
   margin-bottom: 20px;
  }
 
+ .report-percent {
+  font-size: .8em;
+  font-weight: 300;
+ }
+
  .green-box {
   width:auto;
   background-color: #8ac43f;
