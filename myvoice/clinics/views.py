@@ -231,10 +231,7 @@ class RegionReport(ClinicReport):
     model = models.Region
 
     def get_object(self, queryset=None):
-        #obj = super(RegionReport, self).get_object(queryset)
-        #parent = super(RegionReport, self)
         obj = DetailView.get_object(self, queryset)
-        #obj = DetailView().get_object(queryset)
         self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
         self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([(q.label, q) for q in self.questions])
@@ -247,7 +244,6 @@ class RegionReport(ClinicReport):
 
     def get_context_data(self, **kwargs):
         data = super(RegionReport, self).get_context_data(**kwargs)
-        #import pdb;pdb.set_trace()
         return data
 
 
