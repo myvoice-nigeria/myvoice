@@ -21,7 +21,7 @@ sendsms_conf:
         directory: "{{ vars.source_dir }}"
         name: "celery-sendsms"
         command: "worker"
-        flags: "-n sendsms@%n --loglevel=INFO --concurrency=5 -Q sendsms"
+        flags: "--loglevel=INFO --concurrency=5 -Q sendsms"
     - require:
       - pip: supervisor
       - file: log_dir
