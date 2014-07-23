@@ -1,6 +1,7 @@
 from itertools import groupby
 import json
 from operator import attrgetter
+import datetime
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -230,13 +231,29 @@ class RegionReport(ClinicReport):
     template_name = 'clinics/lgasummary.html'
     model = models.Region
 
+    def get(self, request, *args, **kwargs):
+        if 'day' in request.GET and 'month' in request.GET and 'year' in request.GET:
+            day = request.GET.get('day')
+            month = request.GET.get('month')
+            year = request.GET.get('year')
+            try:
+                curr_date = datetime.datetime(int(year), int(month), int(day))
+            except:
+                curr_date = datetime.datetime.now() - datetime.timedelta(14)
+        else:
+            curr_date = datetime.datetime.now() - datetime.timedelta(14)
+        self.start_date = get_week_start(curr_date)
+        self.end_date = get_week_end(curr_date)
+        return super(RegionReport, self).get(request, *args, **kwargs)
+
     def get_object(self, queryset=None):
         obj = DetailView.get_object(self, queryset)
         self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
         self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([(q.label, q) for q in self.questions])
+        #import pdb;pdb.set_trace()
         self.responses = SurveyQuestionResponse.objects.filter(
-            clinic__lga__iexact=obj.name)
+            clinic__lga__iexact=obj.name, visit__visit_time__range=(self.start_date, self.end_date))
         self.responses = self.responses.select_related('question', 'service', 'visit')
         self.generic_feedback = models.GenericFeedback.objects.none()
         self._check_assumptions()
@@ -281,7 +298,8 @@ class RegionReport(ClinicReport):
             # Get feedback participation
             survey_count = len(responses_by_question.get('Open Facility', 0))
             total_visits = models.Visit.objects.filter(
-                patient__clinic=clinic, survey_sent__isnull=False).count()
+                patient__clinic=clinic, survey_sent__isnull=False,
+                visit_time__range=(self.start_date, self.end_date)).count()
             if total_visits:
                 survey_percent = make_percentage(survey_count, total_visits)
             else:
@@ -290,6 +308,7 @@ class RegionReport(ClinicReport):
             # Get patient satisfaction
             satis_percent, satis_total = self.get_satisfaction_counts(responses_by_question)
 
+            # Build the data
             clinic_data = [
                 ('{}%'.format(survey_percent), total_visits),
                 ('{}%'.format(satis_percent), satis_total),
