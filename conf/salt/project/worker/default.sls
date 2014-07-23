@@ -21,7 +21,7 @@ default_conf:
         directory: "{{ vars.source_dir }}"
         name: "celery-default"
         command: "worker"
-        flags: "--loglevel=INFO"
+        flags: "--loglevel=INFO --concurrency=10"
     - require:
       - pip: supervisor
       - file: log_dir
