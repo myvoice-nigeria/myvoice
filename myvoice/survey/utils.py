@@ -85,3 +85,12 @@ def get_registration_count(clinic):
     """Returns the count of patients who should have received this survey."""
     from myvoice.clinics.models import Visit
     return Visit.objects.filter(patient__clinic=clinic).count()
+
+
+def display_feedback(response_text):
+    """Returns whether or not the text response should be displayed."""
+    if not response_text or len(response_text.strip()) <= 1:
+        return False
+    if response_text.strip().lower() in ['55999', 'yes', 'no']:
+        return False
+    return True
