@@ -389,9 +389,29 @@ class AnalystSummary(TemplateView):
         return rates_table
 
 
-class RegionReport(DetailView):
-    template_name = 'clinics/summary.html'
+class RegionReport(ClinicReport):
+    template_name = 'clinics/lgasummary.html'
     model = models.Region
+
+    def get_object(self, queryset=None):
+        #obj = super(RegionReport, self).get_object(queryset)
+        #parent = super(RegionReport, self)
+        obj = DetailView.get_object(self, queryset)
+        #obj = DetailView().get_object(queryset)
+        self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
+        self.questions = self.survey.surveyquestion_set.all()
+        self.questions = dict([(q.label, q) for q in self.questions])
+        self.responses = SurveyQuestionResponse.objects.filter(
+            clinic__lga__iexact=obj.name)
+        self.responses = self.responses.select_related('question', 'service', 'visit')
+        self.generic_feedback = models.GenericFeedback.objects.none()
+        self._check_assumptions()
+        return obj
+
+    def get_context_data(self, **kwargs):
+        data = super(RegionReport, self).get_context_data(**kwargs)
+        #import pdb;pdb.set_trace()
+        return data
 
 
 class FeedbackView(View):
