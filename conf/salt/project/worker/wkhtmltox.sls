@@ -20,7 +20,7 @@ gdebi-core:
 
 wkhtmltopdf:
   cmd.run: 
-    - name: gdebi /tmp/wkhtmltox-{{ wk_version }}_linux-precise-{{ wk_arch }}.deb
+    - name: gdebi --non-interactive /tmp/wkhtmltox-{{ wk_version }}_linux-precise-{{ wk_arch }}.deb
     - require:
       - file: /tmp/wkhtmltox-{{ wk_version }}_linux-precise-{{ wk_arch }}.deb
-    - unless: dpkg --list|grep wkhtmltox
+    - unless: which wkhtmltopdf
