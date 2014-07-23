@@ -223,6 +223,8 @@ class ClinicReport(DetailView):
             percent_completed = make_percentage(num_completed, num_registered)
         else:
             percent_completed = None
+            percent_started = None
+            
         kwargs['num_registered'] = num_registered
         kwargs['num_started'] = num_started
         kwargs['percent_started'] = percent_started
