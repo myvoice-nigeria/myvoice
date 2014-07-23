@@ -18,6 +18,7 @@ base:
   'roles:worker':
     - match: grain
     - project.worker.default
+    - project.worker.sendsms
     - project.worker.beat
   'roles:balancer':
     - match: grain
