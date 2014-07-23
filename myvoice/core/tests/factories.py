@@ -64,7 +64,7 @@ class Patient(factory.django.DjangoModelFactory):
 
     name = factory.fuzzy.FuzzyText()
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
-    serial = factory.fuzzy.FuzzyInteger(0)
+    serial = factory.Sequence(lambda n: n)
 
 
 class Visit(factory.django.DjangoModelFactory):

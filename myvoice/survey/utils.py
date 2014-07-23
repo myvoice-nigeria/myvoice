@@ -91,3 +91,12 @@ def get_started_count(responses):
     """Returns the count of responses which are started."""
 
     return responses.filter(question__question_type__iexact="open-ended").count()
+
+
+def display_feedback(response_text):
+    """Returns whether or not the text response should be displayed."""
+    if not response_text or len(response_text.strip()) <= 1:
+        return False
+    if response_text.strip().lower() in ['55999', 'yes', 'no']:
+        return False
+    return True

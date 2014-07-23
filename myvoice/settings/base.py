@@ -249,12 +249,17 @@ djcelery.setup_loader()
 CELERYBEAT_SCHEDULE = {
     'import-responses': {
         'task': 'myvoice.survey.tasks.import_responses',
-        'schedule': crontab(minute='0', hour='*'),
+        'schedule': crontab(minute='*/5'),
     },
 }
 CELERY_SEND_TASK_ERROR_EMAILS = True
 CELERY_ROUTES = {
+    # process the time-sensitive tasks that send SMSes on their own queue
     'myvoice.survey.tasks.start_feedback_survey': {'queue': 'sendsms'},
+    'myvoice.survey.tasks.handle_new_visits': {'queue': 'sendsms'},
+    # put import_responses on its own queue so it doesn't back up other tasks
+    # if it gets delayed
+    'myvoice.survey.tasks.import_responses': {'queue': 'importer'},
 }
 
 # Set PostGIS version so that Django can find it.
