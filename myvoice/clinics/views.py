@@ -188,23 +188,27 @@ class ClinicReport(DetailView):
 
     def get_detailed_comments(self):
         """Combine open-ended survey comments with General Feedback."""
+        open_ended_responses = self.responses.filter(
+            question__question_type=SurveyQuestion.OPEN_ENDED)
         comments = [
             {
-                'question': survey.question.label,
-                'datetime': survey.datetime,
-                'response': survey.response
-            } for survey in self.responses.filter(
-                question__question_type=SurveyQuestion.OPEN_ENDED)
-            ]
+                'question': r.question.label,
+                'datetime': r.datetime,
+                'response': r.response,
+            }
+            for r in open_ended_responses
+            if survey_utils.display_feedback(r.response)
+        ]
 
         feedback_label = self.generic_feedback.model._meta.verbose_name
         for feedback in self.generic_feedback:
-            comments.append(
-                {
-                    'question': feedback_label,
-                    'datetime': feedback.message_date,
-                    'response': feedback.message
-                })
+            if survey_utils.display_feedback(feedback.message):
+                comments.append(
+                    {
+                        'question': feedback_label,
+                        'datetime': feedback.message_date,
+                        'response': feedback.message
+                    })
 
         return sorted(comments, key=lambda item: (item['question'], item['datetime']))
 
