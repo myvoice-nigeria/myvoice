@@ -71,8 +71,7 @@
       <h2>FEEDBACK REPORTED BY FACILITY</h2>
     </div>
 
-    <p>Number of patients with this service who reported this feedback
-    between July 7–August 7, 2014.</p>
+    <p>Number of patients with this service who reported this feedback.</p>
 
     <table class="table table-bordered table-striped">
       <thead>
@@ -140,20 +139,19 @@
           </tr>
       </tfoot>
       <tbody>
-        {% for i in "12345" %}
-          <tr>
-            <td>{% cycle "Arum Chugbu" "Gwagi" "Kwabe" "Kwarra" "M. Gongon" %}</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>63</td>
-            <td>63</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>4</td>
-          </tr>
-        {% endfor %}
+      {% for clinic, clinic_data in feedback_by_clinic %}
+        <tr>
+            <td>{{ clinic }}</td>
+            {% for result, total_respondents in clinic_data %}
+            {% if result == None %}
+              <td>N/A (0)</td>
+            {% else %}
+              <td>{{ result }} ({{ total_respondents }})</td>
+            {% endif %}
+            {% endfor %}
+        </tr>
+      {% endfor %}
+
       </tbody>
     </table>
   </div><!-- / #feedback-facility .container -->

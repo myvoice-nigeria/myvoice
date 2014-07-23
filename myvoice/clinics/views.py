@@ -243,7 +243,78 @@ class RegionReport(ClinicReport):
         return obj
 
     def get_context_data(self, **kwargs):
+        kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
         data = super(RegionReport, self).get_context_data(**kwargs)
+        return data
+
+    def get_satisfaction_counts(self, responses):
+        """Return satisfaction percentage and total of survey participants."""
+        if not responses:
+            return None
+        unsatisfied, total = 0, 0
+
+        for question, q_responses in responses.items():
+            if question in ['Respectful Staff Treatment', 'Charged Fairly']:
+                answer = self.questions[question].primary_answer
+                unsatisfied += len([r for r in q_responses if r['response'] != answer])
+            elif question == 'Wait Time':
+                answer = self.questions[question].get_categories()[-1]
+                unsatisfied += len([r for r in q_responses if r['response'] == answer])
+            total += len(q_responses)
+
+        return 100 - make_percentage(unsatisfied, total), total
+
+    def get_feedback_by_clinic(self):
+        """Return analyzed feedback by clinic then question."""
+        data = []
+        clinic_map = dict(self.responses.exclude(clinic=None).values_list(
+            'clinic__id', 'clinic__name').distinct())
+
+        responses = self.responses.exclude(clinic=None).values(
+            'clinic', 'question__label', 'response')
+        by_clinic = survey_utils.group_response_dicts(responses, 'clinic')
+
+        for clinic, clinic_responses in by_clinic:
+            by_question = survey_utils.group_response_dicts(clinic_responses, 'question__label')
+            responses_by_question = dict(by_question)
+
+            # Get feedback participation
+            survey_count = len(responses_by_question.get('Open Facility', 0))
+            total_visits = models.Visit.objects.filter(
+                patient__clinic=clinic, survey_sent__isnull=False).count()
+            if total_visits:
+                survey_percent = make_percentage(survey_count, total_visits)
+            else:
+                survey_percent = None
+
+            # Get patient satisfaction
+            satis_percent, satis_total = self.get_satisfaction_counts(responses_by_question)
+
+            clinic_data = [
+                ('{}%'.format(survey_percent), total_visits),
+                ('{}%'.format(satis_percent), satis_total),
+                (None, 0),
+                (None, 0)
+            ]
+            for label in ['Open Facility', 'Respectful Staff Treatment',
+                          'Clean Hospital Materials', 'Charged Fairly']:
+                if label in responses_by_question:
+                    question = self.questions[label]
+                    question_responses = responses_by_question[label]
+                    total_responses = len(question_responses)
+                    percentage = survey_utils.analyze_dict(
+                        question_responses, question.primary_answer)
+                    clinic_data.append(('{}%'.format(percentage), total_responses))
+                else:
+                    clinic_data.append((None, 0))
+
+            if 'Wait Time' in responses_by_question:
+                wait_times = responses_by_question['Wait Time']
+                mode = survey_utils.get_mode_dict(wait_times)
+                clinic_data.append((mode, len(wait_times)))
+            else:
+                clinic_data.append((None, 0))
+            data.append((clinic_map[clinic], clinic_data))
         return data
 
 
