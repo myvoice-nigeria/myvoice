@@ -90,7 +90,7 @@ def get_registration_count(clinic):
 def get_started_count(responses):
     """Returns the count of responses which are started."""
 
-    return responses.filter(question__label="Open Facility")\
+    return responses.filter(question__label__iexact="Open Facility")\
         .filter(question__question_type__iexact="multiple-choice").count()
 
 
