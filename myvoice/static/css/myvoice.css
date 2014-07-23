@@ -215,6 +215,7 @@ h2 {
  .green-box {
   width:auto;
   background-color: #8ac43f;
+  border-radius: 50%;
   color:#fff;
   text-align: center;
   float: left;
