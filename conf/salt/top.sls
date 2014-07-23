@@ -17,6 +17,7 @@ base:
     - project.web.app
   'roles:worker':
     - match: grain
+    - project.worker.wkhtmltox
     - project.worker.default
     - project.worker.sendsms
     - project.worker.importer
