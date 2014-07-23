@@ -7,11 +7,11 @@ class TestDisplayFeedback(TestCase):
 
     def test_false(self):
         bad_feedback = [None, '', '    ', ' 1', '1', 'yes', 'Yes', 'YES',
-                        'no', 'No', 'NO', '55999']
+                        'no', 'No', 'NO', '55999', 'n0']
         for bad in bad_feedback:
             self.assertEqual(utils.display_feedback(bad), False)
 
     def test_true(self):
-        good_feedback = ['Yes this is good', 'Great feedback']
+        good_feedback = ['Yes this is good', 'Great feedback', '20']
         for good in good_feedback:
             self.assertEqual(utils.display_feedback(good), True)
