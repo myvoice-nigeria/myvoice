@@ -208,8 +208,10 @@ h2 {
  }
 
  .report-percent {
-  font-size: .8em;
+  font-size: .7em;
   font-weight: 300;
+  overflow: hidden;
+  white-space: nowrap;
  }
 
  .green-box {
