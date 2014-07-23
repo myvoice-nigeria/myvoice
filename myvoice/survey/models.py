@@ -1,4 +1,5 @@
-from django.utils import timezone
+import datetime
+
 from django.db import models
 
 
@@ -105,7 +106,7 @@ class SurveyQuestionResponse(models.Model):
     response = models.TextField(
         help_text="Normalized response to the question.")
     datetime = models.DateTimeField(
-        default=timezone.now,
+        default=datetime.datetime.now,
         help_text="When this response was received.")
     visit = models.ForeignKey(
         'clinics.Visit', null=True, blank=True,

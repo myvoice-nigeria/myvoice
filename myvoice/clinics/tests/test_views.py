@@ -3,8 +3,6 @@ from django.test.client import RequestFactory
 from django.utils import timezone
 
 import json
-import datetime
-import pytz
 
 from myvoice.core.tests import factories
 
@@ -554,3 +552,4 @@ class TestAnalystDashboardView(TestCase):
 
         # Test we have the right query
         self.assertEqual(sc_query.count(), 2)
+

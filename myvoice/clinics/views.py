@@ -6,13 +6,17 @@ from dateutil.parser import parse
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import DetailView, View, FormView, TemplateView
+from django.views.generic import DetailView, View, FormView
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
 from myvoice.survey import utils as survey_utils
+<<<<<<< HEAD
 
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 from myvoice.clinics.models import Clinic, Service, Visit
+=======
+from myvoice.survey.models import Survey, SurveyQuestion
+>>>>>>> develop
 
 from . import forms
 from . import models
