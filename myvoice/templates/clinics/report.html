@@ -63,16 +63,16 @@
     <div class="col-xs-5 participation-module no-padding-right">
       <div class="date">{{ min_date.date|date:"F j, Y" }} - {{ max_date.date|date:"F j, Y" }}</div>
         <div class="content">
-          <h2>FEEDBACK PARTICIPATION</h2>
+          <h2>SURVEY PARTICIPATION</h2>
           {% if num_registered %}
             <div class="col-xs-4">
               <h1>{{ num_registered }}</h1> Patients registered for survey
             </div>
             <div class="col-xs-4">
-              <h1>{{ num_started }} <span class="report-percent">({{ percent_started }})%</span></h1> Started surveys
+              <h1>{{ num_started }} <span class="report-percent">({{ percent_started|floatformat:"0" }})%</span></h1>surveys started
             </div>
             <div class="col-xs-4">
-              <h1>{{ num_completed }} <span class="report-percent">({{ percent_completed }})%</span></h1> Completed surveys
+              <h1>{{ num_completed }} <span class="report-percent">({{ percent_completed|floatformat:"0" }})%</span></h1>surveys completed 
             </div>
           {% else %}
             <div class="col-xs-12">
