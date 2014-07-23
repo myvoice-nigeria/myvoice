@@ -249,10 +249,13 @@ djcelery.setup_loader()
 CELERYBEAT_SCHEDULE = {
     'import-responses': {
         'task': 'myvoice.survey.tasks.import_responses',
-        'schedule': crontab(minute='*/2'),
+        'schedule': crontab(minute='0', hour='*'),
     },
 }
 CELERY_SEND_TASK_ERROR_EMAILS = True
+CELERY_ROUTES = {
+    'myvoice.survey.tasks.start_feedback_survey': {'queue': 'sendsms'},
+}
 
 # Set PostGIS version so that Django can find it.
 # See http://stackoverflow.com/questions/10584852/my-postgis-database-looks-fine-but-geodjango-thinks-otherwise-why  # noqa
