@@ -471,7 +471,8 @@ class TestAnalystDashboardView(TestCase):
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.visit = factories.Visit.create(
             patient=self.patient, service=self.service, survey_sent=now)
-        self.question = factories.SurveyQuestion.create(label="Wait Time")
+        self.question = factories.SurveyQuestion.create(
+            label="Wait Time", question_type="open-ended")
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
 
@@ -485,3 +486,71 @@ class TestAnalystDashboardView(TestCase):
         response = self.make_request()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render()))
+
+    def test_st_count(self):
+        """ Tests how many Surveys have been 'triggered' """
+        st_query = clinics.Visit.objects.filter(
+            survey_sent__isnull=False, patient__clinic=self.clinic)
+        self.assertEqual(st_query.count(), 1)
+
+        now = datetime.datetime.now(pytz.utc)
+        factories.Visit.create(
+            service=factories.Service.create(code=2),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=221),
+            survey_sent=now
+        )
+
+        self.assertEqual(st_query.count(), 2)
+
+    def test_ss_count(self):
+        """ Tests how many Surveys have been 'started' using first question type (open-ended) """
+        ss_query = survey_models.SurveyQuestionResponse.objects\
+            .filter(question__question_type__iexact="open-ended")
+
+        # We should have one from the setup
+        self.assertEqual(ss_query.count(), 1)
+
+        now = datetime.datetime.now(pytz.utc)
+
+        visit1 = factories.Visit.create(
+            service=factories.Service.create(code=2),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=221),
+            survey_sent=now
+        )
+
+        # Add another and see how we fare
+        factories.SurveyQuestionResponse.create(
+            question=self.question, clinic=self.clinic, visit=visit1)
+
+        # Test the additional
+        self.assertEqual(ss_query.count(), 2)
+
+    def test_sc_count(self):
+        """ Tests how many Surveys have been 'completed' using last question (Wait Time)"""
+
+        sc_query = survey_models.SurveyQuestionResponse.objects\
+            .filter(question__label="Wait Time").filter(clinic=self.clinic)
+
+        # Test the setup materials
+        self.assertEqual(sc_query.count(), 1)
+
+        # Add a few
+        now = datetime.datetime.now(pytz.utc)
+
+        visit1 = factories.Visit.create(
+            service=factories.Service.create(code=2),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=223),
+            survey_sent=now
+        )
+
+        factories.SurveyQuestionResponse.create(
+            question=self.question, clinic=self.clinic, visit=visit1)
+
+        # Test we have the right query
+        self.assertEqual(sc_query.count(), 2)
