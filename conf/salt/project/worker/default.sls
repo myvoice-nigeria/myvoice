@@ -35,9 +35,3 @@ default_process:
     - restart: True
     - require:
       - file: default_conf
-
-wkhtmltopdf:
-  pkg.installed
-
-wkhtmltoimage:
-  pkg.installed
