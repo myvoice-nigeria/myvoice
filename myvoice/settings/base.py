@@ -249,7 +249,7 @@ djcelery.setup_loader()
 CELERYBEAT_SCHEDULE = {
     'import-responses': {
         'task': 'myvoice.survey.tasks.import_responses',
-        'schedule': crontab(minute='*/2'),
+        'schedule': crontab(minute='0', hour='*'),
     },
 }
 CELERY_SEND_TASK_ERROR_EMAILS = True
