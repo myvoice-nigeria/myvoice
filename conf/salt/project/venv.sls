@@ -17,11 +17,7 @@ venv:
     - require:
       - pip: virtualenv
       - file: root_dir
-      {% if grains['environment'] == 'local' %}
-      - file: project_repo
-      {% else %}
       - git: project_repo
-      {% endif %}
       - pkg: python-pkgs
       - pkg: python-headers
 

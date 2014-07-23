@@ -5,13 +5,11 @@ from operator import attrgetter
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import DetailView, View, FormView, TemplateView
+from django.views.generic import DetailView, View, FormView
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
-
-from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
-from myvoice.clinics.models import Clinic, Visit
+from myvoice.survey.models import Survey, SurveyQuestion
 
 from . import forms
 from . import models
@@ -228,6 +226,7 @@ class ClinicReport(DetailView):
         return super(ClinicReport, self).get_context_data(**kwargs)
 
 
+<<<<<<< HEAD
 class AnalystSummary(TemplateView):
     template_name = 'analysts/analysts.html'
     allowed_methods = ['get', 'post', 'put', 'delete', 'options']
