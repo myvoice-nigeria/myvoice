@@ -4,7 +4,7 @@ domain: staging.myvoicenigeria.com
 
 repo:
   url: git@github.com:caktus/myvoice.git
-  branch: report_part_box
+  branch: develop
 
 # Addtional public environment variables to set for the project
 env:
