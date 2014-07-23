@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone
+from django.contrib.gis.geos import GEOSGeometry
 
 import json
 
@@ -457,3 +458,31 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Second', comments[0]['response'])
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
+
+
+class RegionReportView(TestCase):
+
+    def setUp(self):
+        geom = GEOSGeometry('MULTIPOLYGON((( 1 1, 1 2, 2 2, 1 1)))')
+        self.factory = RequestFactory()
+        self.region = factories.Region.create(pk=599, name='Wamba', type='lga', boundary=geom)
+        self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
+        self.questions = []
+        for l in ['Open Facility', 'Respectful Staff Treatment',
+                  'Clean Hospital Materials', 'Charged Fairly',
+                  'Wait Time']:
+            self.questions.append(factories.SurveyQuestion.create(label=l, survey=self.survey))
+
+    def make_request(self, data=None):
+        """Make Test request with POST data."""
+        if data is None:
+            data = {}
+        url = '/reports/region/599/'
+        request = self.factory.get(url, data=data)
+        return clinics.RegionReport.as_view()(request, pk=599)
+
+    def test_region_report_page_loads(self):
+        """Smoke test to make sure page loads and returns some context."""
+        response = self.make_request()
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(bool(response.render))
