@@ -34,6 +34,10 @@ h2 {
   margin-bottom: 10px;
 }
 
+.print-break {
+  page-break-after: always;
+}
+
 /* Non-responsive overrides
  *
  * Utilitze the following CSS to disable the responsive-ness of the container,
@@ -213,6 +217,12 @@ h2 {
   overflow: hidden;
   white-space: nowrap;
  }
+
+.week-text { 
+  float:left;
+  padding-left: 15px;
+  width:70px;
+}
 
  .green-box {
   width:auto;
