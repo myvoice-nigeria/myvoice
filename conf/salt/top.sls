@@ -14,9 +14,11 @@ base:
     - salt.master
   'roles:web':
     - match: grain
+    - project.newrelic.config
     - project.web.app
   'roles:worker':
     - match: grain
+    - project.newrelic.config
     - project.worker.wkhtmltox
     - project.worker.default
     - project.worker.sendsms
