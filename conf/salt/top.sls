@@ -7,6 +7,7 @@ base:
     - locale.utf8
     - project.devs
     - salt.minion
+    - project.newrelic.sysmon
   'precise32':
     - vagrant.user
   'roles:salt-master':
@@ -14,9 +15,11 @@ base:
     - salt.master
   'roles:web':
     - match: grain
+    - project.newrelic.appmon
     - project.web.app
   'roles:worker':
     - match: grain
+    - project.newrelic.appmon
     - project.worker.wkhtmltox
     - project.worker.default
     - project.worker.sendsms
