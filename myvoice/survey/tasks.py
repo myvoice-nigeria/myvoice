@@ -1,5 +1,6 @@
 import logging
 
+from oboeware import oboe_celery
 from celery.task import task
 
 from django.conf import settings
@@ -27,6 +28,7 @@ def _get_survey_start_time():
     return eta
 
 
+@oboe_celery.trace_task()
 @task
 def import_responses():
     """Periodically check for new responses for each survey."""
@@ -37,6 +39,7 @@ def import_responses():
         logger.debug('Finished importing responses for flow {0}.'.format(survey.flow_id))
 
 
+@oboe_celery.trace_task()
 @task
 def start_feedback_survey(visit_pk):
     """Initiate the patient feedback survey for a Visit."""
@@ -68,6 +71,7 @@ def start_feedback_survey(visit_pk):
                      "at {}.".format(visit.pk, visit.survey_sent))
 
 
+@oboe_celery.trace_task()
 @task
 def handle_new_visits():
     """
