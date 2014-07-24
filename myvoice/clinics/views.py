@@ -258,12 +258,12 @@ class RegionReport(ReportMixin, DetailView):
             month = request.GET.get('month')
             year = request.GET.get('year')
             try:
-                self.curr_date = timezone.datetime(int(year), int(month), int(day))
+                self.curr_date = timezone.now().replace(
+                    year=int(year), month=int(month), day=int(day))
             except (TypeError, ValueError):
-                self.curr_date = timezone.datetime.now()
+                self.curr_date = timezone.now()
         else:
-            self.curr_date = timezone.datetime.now()
-        self.calculate_date_range()
+            self.curr_date = timezone.now()
         return super(RegionReport, self).get(request, *args, **kwargs)
 
     def calculate_date_range(self):
@@ -271,7 +271,7 @@ class RegionReport(ReportMixin, DetailView):
             self.start_date = get_week_start(self.curr_date)
             self.end_date = get_week_end(self.curr_date)
         except (ValueError, AttributeError):
-            curr_date = timezone.datetime.now()
+            curr_date = timezone.now()
             self.start_date = get_week_start(curr_date)
             self.end_date = get_week_end(curr_date)
 
@@ -296,7 +296,7 @@ class RegionReport(ReportMixin, DetailView):
 
         responses is already grouped by question."""
         if not responses:
-            return None
+            return 0, 0
         unsatisfied, total = 0, 0
 
         for question, q_responses in responses.items():
@@ -309,6 +309,20 @@ class RegionReport(ReportMixin, DetailView):
             total += len(q_responses)
 
         return 100 - make_percentage(unsatisfied, total), total
+
+    def get_feedback_participation(self, responses, clinic):
+        """Return % of surveys responded to to total visits.
+
+        responses already grouped by question."""
+        survey_count = len(responses.get('Open Facility', 0))
+        total_visits = models.Visit.objects.filter(
+            patient__clinic=clinic, survey_sent__isnull=False,
+            visit_time__range=(self.start_date, self.end_date)).count()
+        if total_visits:
+            survey_percent = make_percentage(survey_count, total_visits)
+        else:
+            survey_percent = None
+        return survey_percent, total_visits
 
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
@@ -327,14 +341,8 @@ class RegionReport(ReportMixin, DetailView):
             responses_by_question = dict(by_question)
 
             # Get feedback participation
-            survey_count = len(responses_by_question.get('Open Facility', 0))
-            total_visits = models.Visit.objects.filter(
-                patient__clinic=clinic, survey_sent__isnull=False,
-                visit_time__range=(self.start_date, self.end_date)).count()
-            if total_visits:
-                survey_percent = make_percentage(survey_count, total_visits)
-            else:
-                survey_percent = None
+            survey_percent, total_visits = self.get_feedback_participation(
+                responses_by_question, clinic)
 
             # Get patient satisfaction
             satis_percent, satis_total = self.get_satisfaction_counts(responses_by_question)

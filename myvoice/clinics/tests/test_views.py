@@ -502,18 +502,21 @@ class TestRegionReportView(TestCase):
         factories.SurveyQuestion.create(label='Clean Hospital Materials', survey=self.survey)
         factories.SurveyQuestion.create(
             label='Charged Fairly', survey=self.survey, categories='Yes\nNo')
-        factories.SurveyQuestion.create(label='Wait Time', survey=self.survey)
+        factories.SurveyQuestion.create(label='Wait Time', survey=self.survey,
+                                        categories='<1 hour\n1-2 hours\n2-3 hours\n4+ hours')
 
         self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
 
+        service = factories.Service.create(code=2)
+
         v1 = factories.Visit.create(
-            service=factories.Service.create(code=2),
+            service=service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=221)
         )
         v2 = factories.Visit.create(
-            service=factories.Service.create(code=3),
+            service=service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=111)
@@ -545,14 +548,57 @@ class TestRegionReportView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render))
 
+    def test_date_from_request_params(self):
+        """Test that the date values from request params determine filter date."""
+        url = '/reports/region/599/?day=14&month=7&year=2014'
+        request = self.factory.get(url)
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.request = request
+        report.get(request)
+        dt = timezone.now().replace(year=2014, month=7, day=14, second=0, microsecond=0)
+        curr_date = report.curr_date.replace(microsecond=0, second=0)
+        self.assertEqual(dt, curr_date)
+
+    def test_bad_date_from_request_params(self):
+        """Test that the date values from request params determine filter date."""
+        url = '/reports/region/599/?day=x&month=7&year=2014'
+        request = self.factory.get(url)
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.request = request
+        report.get(request)
+        dt = timezone.now().replace(microsecond=0, second=0)
+        curr_date = report.curr_date.replace(microsecond=0, second=0)
+        self.assertEqual(dt, curr_date)
+
+    def test_feedback_participation(self):
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+        responses = {
+            'Respectful Staff Treatment': [{'response': 'Yes'}, {'response': 'No'}],
+            'Open Facility': [{'response': 'Yes'}, {'response': 'No'}]}
+        percent, total = report.get_feedback_participation(responses, self.clinic)
+        self.assertEqual(100, percent)
+        self.assertEqual(2, total)
+
     def test_get_satisfaction_counts(self):
         """Test get satisfaction counts."""
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        responses = {'Respectful Staff Treatment': [{'response': 'Yes'}, {'response': 'No'}]}
-        satisf, total = report.get_satisfaction_counts(responses)
-        self.assertEqual(50, satisf)
-        self.assertEqual(2, total)
+        responses = {
+            'Respectful Staff Treatment': [{'response': 'Yes'}, {'response': 'No'}],
+            'Wait Time': [{'response': '<1 hour'}, {'response': '1-2 hours'}]}
+        satisfaction, total = report.get_satisfaction_counts(responses)
+        self.assertEqual(75, satisfaction)
+        self.assertEqual(4, total)
+
+    def test_get_satisfaction_counts_no_responses(self):
+        """Test get satisfaction counts with no responses."""
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+        responses = {}
+        satisfaction, total = report.get_satisfaction_counts(responses)
+        self.assertEqual(0, satisfaction)
+        self.assertEqual(0, total)
 
     def test_get_feedback_by_clinic(self):
         """Test get feedback by clinic."""
