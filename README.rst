@@ -33,7 +33,7 @@ To setup your local environment you should create a virtualenv and install the
 necessary requirements::
 
     mkvirtualenv myvoice
-    $VIRTUAL_ENV/bin/pip install -r $PWD/requirements/dev.txt
+    $VIRTUAL_ENV/bin/pip install -r $PWD/requirements/dev.txt --extra-index-url=https://pypi.tracelytics.com
 
 Then create a local settings file and set your ``DJANGO_SETTINGS_MODULE`` to use it::
 
