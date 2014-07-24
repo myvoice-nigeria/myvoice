@@ -6,17 +6,13 @@ from dateutil.parser import parse
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import DetailView, View, FormView
+from django.views.generic import DetailView, View, FormView, TemplateView
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
 from myvoice.survey import utils as survey_utils
-<<<<<<< HEAD
 
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 from myvoice.clinics.models import Clinic, Service, Visit
-=======
-from myvoice.survey.models import Survey, SurveyQuestion
->>>>>>> develop
 
 from . import forms
 from . import models
@@ -195,23 +191,28 @@ class ClinicReport(DetailView):
 
     def get_detailed_comments(self):
         """Combine open-ended survey comments with General Feedback."""
+        open_ended_responses = self.responses.filter(
+            question__question_type=SurveyQuestion.OPEN_ENDED,
+            display_on_dashboard=True)
         comments = [
             {
-                'question': survey.question.label,
-                'datetime': survey.datetime,
-                'response': survey.response
-            } for survey in self.responses.filter(
-                question__question_type=SurveyQuestion.OPEN_ENDED)
-            ]
+                'question': r.question.label,
+                'datetime': r.datetime,
+                'response': r.response,
+            }
+            for r in open_ended_responses
+            if survey_utils.display_feedback(r.response)
+        ]
 
         feedback_label = self.generic_feedback.model._meta.verbose_name
         for feedback in self.generic_feedback:
-            comments.append(
-                {
-                    'question': feedback_label,
-                    'datetime': feedback.message_date,
-                    'response': feedback.message
-                })
+            if survey_utils.display_feedback(feedback.message):
+                comments.append(
+                    {
+                        'question': feedback_label,
+                        'datetime': feedback.message_date,
+                        'response': feedback.message
+                    })
 
         return sorted(comments, key=lambda item: (item['question'], item['datetime']))
 
@@ -222,13 +223,22 @@ class ClinicReport(DetailView):
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
         num_registered = survey_utils.get_registration_count(self.object)
+        num_started = survey_utils.get_started_count(self.responses)
         num_completed = survey_utils.get_completion_count(self.responses)
+
         if num_registered:
+            percent_started = make_percentage(num_started, num_registered)
             percent_completed = make_percentage(num_completed, num_registered)
         else:
             percent_completed = None
+            percent_started = None
+
         kwargs['num_registered'] = num_registered
+        kwargs['num_started'] = num_started
+        kwargs['percent_started'] = percent_started
+        kwargs['num_completed'] = num_completed
         kwargs['percent_completed'] = percent_completed
+
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
 
@@ -285,7 +295,8 @@ class AnalystSummary(TemplateView):
             if service:
                 st_query = st_query.filter(service__name=service)
 
-            st_count = st_query.count()
+            # st_count = st_query.count()
+            sr_query = get_registration_count(a_clinic)
             st_total += st_count
 
             # Survey Started Query Statistics

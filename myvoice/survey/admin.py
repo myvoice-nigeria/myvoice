@@ -79,16 +79,16 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {
             'fields': ['question', 'visit', 'clinic', 'service', 'response',
-                       'datetime'],
+                       'datetime', 'display_on_dashboard'],
         }),
         ('Metadata', {
             'fields': ['created', 'updated'],
         }),
     ]
     list_display = ['mobile', 'visit_time', 'clinic', 'service', 'survey',
-                    'question', 'question_type', 'response']
+                    'question', 'question_type', 'response', 'display_on_dashboard']
     list_filter = ['question__survey', 'clinic', 'service',
-                   'question__question_type']
+                   'question__question_type', 'display_on_dashboard']
     list_select_related = True
     ordering = ['visit', 'question']
     search_fields = ['visit__mobile', 'response', 'question__label']

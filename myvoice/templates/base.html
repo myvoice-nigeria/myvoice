@@ -25,6 +25,8 @@
               href="{% static 'lib/bootstrap-3.2.0/css/bootstrap.min.css' %}">
         <link type="text/css" rel="stylesheet"
               href="{% static 'css/myvoice.css' %}">
+        <link type="text/css" rel="stylesheet" 
+              href="{% static 'css/print.css' %}" media="print">
         <link type="text/css" rel="stylesheet"
               href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic'>
       {% endblock css %}
@@ -58,12 +60,10 @@
               <li>
                 <a href="{% url 'home' %}">Home</a>
               </li>
-<<<<<<< HEAD
-              <li class="dropdown">
+ 
+               <li class="dropdown">
                 <a href="#" data-toggle="dropdown"
-                   class="dropdown-toggle" style="border:none;">
-                  summary reports<b class="caret"></b>
-                </a>
+                   class="dropdown-toggle" style="border:none;">summary reports<b class="caret"></b></a>
                 <ul class="dropdown-menu">
                   <li>
                     <a href="{% url 'region_report' 599 %}">wamba LGA summary</a>
@@ -72,10 +72,6 @@
                     <a href="{% url 'analyst_summary' %}">admin analyst summary</a>
                   </li>
                 </ul>
-=======
-              <li>
-                <a href="{% url 'region_report' 599 %}">summary report</a>
->>>>>>> develop
               </li>
               <li class="dropdown">
                 <a href="#" data-toggle="dropdown"

@@ -7,6 +7,7 @@
 {% block title %}{{ object.name }} {{ object.get_type_display }} Summary Feedback Report{% endblock title %}
 
 {% block extra-header-js %}
+    <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
     <script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/js/jquery.dataTables.js' %}"></script>
 {% endblock extra-header-js %}
 
@@ -18,8 +19,6 @@
         <span style="font-weight: 700;">{{ object.name }} {{ object.get_type_display }}</span>
         <span style="font-weight: 700;">Analyst Summary</span>
       </h1>
-
-      <div class="lead"></div>
     </div>
   </div><!-- /.container -->
 
@@ -180,7 +179,10 @@
       </tbody>
     </table>
   </div><!-- / #feedback-facility .container -->
-   
+   {% endblock content %}
+
+   {% block js %}
+
         <script type="text/javascript">
           function filter_completion_rate_table() {
             
@@ -262,4 +264,4 @@
         </script>
       
     
-  {% endblock content %}
+  {% endblock %}
