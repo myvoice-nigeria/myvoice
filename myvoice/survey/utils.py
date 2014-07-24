@@ -84,7 +84,7 @@ def get_completion_count(responses):
 def get_registration_count(clinic):
     """Returns the count of patients who should have received this survey."""
     from myvoice.clinics.models import Visit
-    return Visit.objects.filter(patient__clinic=clinic).count()
+    return Visit.objects.filter(survey_sent__isnull=False, patient__clinic=clinic).count()
 
 
 def get_started_count(responses):
