@@ -295,13 +295,16 @@ class AnalystSummary(TemplateView):
             if service:
                 st_query = st_query.filter(service__name=service)
 
-            # st_count = st_query.count()
-            sr_query = get_registration_count(a_clinic)
+            st_count = st_query.count()
+            #sr_query = get_registration_count(a_clinic)
+
             st_total += st_count
 
             # Survey Started Query Statistics
             ss_count = SurveyQuestionResponse.objects\
-                .filter(question__question_type__iexact="open-ended").count()
+                .filter(clinic=a_clinic)\
+                .filter(question__label__iexact="Open Facility")\
+                .filter(question__question_type__iexact="multiple-choice").count()
             ss_total += ss_count
 
             # Survey Completed Query Statistics
