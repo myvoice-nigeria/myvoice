@@ -13,6 +13,7 @@ django-widget-tweaks==1.3
 django-leaflet==0.13.5
 
 BeautifulSoup4==4.3.2
+oboe==1.5.7
 
 -e git+https://github.com/caktus/rapidsms-groups.git@rapidsms-upgrade#egg=rapidsms-groups
 -e git+https://github.com/caktus/rapidsms-broadcast.git@rapidsms-upgrade#egg=rapidsms-broadcast
