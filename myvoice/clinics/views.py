@@ -318,7 +318,7 @@ class RegionReport(ReportMixin, DetailView):
         """Return % of surveys responded to to total visits.
 
         responses already grouped by question."""
-        survey_count = len(responses.get('Open Facility', 0))
+        survey_count = len(responses.get('Open Facility', []))
         visits = models.Visit.objects.filter(
             patient__clinic=clinic, survey_sent__isnull=False)
         if self.start_date and self.end_date:
@@ -336,12 +336,17 @@ class RegionReport(ReportMixin, DetailView):
         data = []
 
         # So we can get the name of the clinic for the template
-        clinic_map = dict(self.responses.exclude(clinic=None).values_list(
-            'clinic__id', 'clinic__name').distinct())
+        clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
 
         responses = self.responses.exclude(clinic=None).values(
             'clinic', 'question__label', 'response')
         by_clinic = survey_utils.group_response_dicts(responses, 'clinic')
+
+        # Add clinics without responses back.
+        clinic_ids = [clinic[0] for clinic in by_clinic]
+        rest_clinics = set(clinic_map.keys()).difference(clinic_ids)
+        for _clinic in rest_clinics:
+            by_clinic.append((_clinic, []))
 
         for clinic, clinic_responses in by_clinic:
             by_question = survey_utils.group_response_dicts(clinic_responses, 'question__label')
