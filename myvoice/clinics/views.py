@@ -252,6 +252,12 @@ class RegionReport(ReportMixin, DetailView):
     template_name = 'clinics/summary.html'
     model = models.Region
 
+    def __init__(self, *args, **kwargs):
+        super(RegionReport, self).__init__(*args, **kwargs)
+        self.curr_date = None
+        self.start_date = None
+        self.end_date = None
+
     def get(self, request, *args, **kwargs):
         if 'day' in request.GET and 'month' in request.GET and 'year' in request.GET:
             day = request.GET.get('day')
@@ -261,9 +267,7 @@ class RegionReport(ReportMixin, DetailView):
                 self.curr_date = timezone.now().replace(
                     year=int(year), month=int(month), day=int(day))
             except (TypeError, ValueError):
-                self.curr_date = timezone.now()
-        else:
-            self.curr_date = timezone.now()
+                pass
         return super(RegionReport, self).get(request, *args, **kwargs)
 
     def calculate_date_range(self):
@@ -271,16 +275,16 @@ class RegionReport(ReportMixin, DetailView):
             self.start_date = get_week_start(self.curr_date)
             self.end_date = get_week_end(self.curr_date)
         except (ValueError, AttributeError):
-            curr_date = timezone.now()
-            self.start_date = get_week_start(curr_date)
-            self.end_date = get_week_end(curr_date)
+            pass
 
     def get_object(self, queryset=None):
         obj = super(RegionReport, self).get_object(queryset)
         self.calculate_date_range()
         self.initialize_data(obj)
-        self.responses = SurveyQuestionResponse.objects.filter(
-            clinic__lga__iexact=obj.name, visit__visit_time__range=(self.start_date, self.end_date))
+        self.responses = SurveyQuestionResponse.objects.filter(clinic__lga__iexact=obj.name)
+        if self.start_date and self.end_date:
+            self.responses = self.responses.filter(
+                visit__visit_time__range=(self.start_date, self.end_date))
         self.responses = self.responses.select_related('question', 'service', 'visit')
         return obj
 
@@ -315,9 +319,12 @@ class RegionReport(ReportMixin, DetailView):
 
         responses already grouped by question."""
         survey_count = len(responses.get('Open Facility', 0))
-        total_visits = models.Visit.objects.filter(
-            patient__clinic=clinic, survey_sent__isnull=False,
-            visit_time__range=(self.start_date, self.end_date)).count()
+        visits = models.Visit.objects.filter(
+            patient__clinic=clinic, survey_sent__isnull=False)
+        if self.start_date and self.end_date:
+            visits = visits.filter(visit_time__range=(self.start_date, self.end_date))
+        total_visits = visits.count()
+
         if total_visits:
             survey_percent = make_percentage(survey_count, total_visits)
         else:

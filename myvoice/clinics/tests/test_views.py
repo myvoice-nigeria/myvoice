@@ -497,7 +497,7 @@ class TestRegionReportView(TestCase):
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
         open_f = factories.SurveyQuestion.create(label='Open Facility', survey=self.survey)
-        respect = factories.SurveyQuestion.create(
+        self.respect = factories.SurveyQuestion.create(
             label='Respectful Staff Treatment', survey=self.survey, categories='Yes\nNo')
         factories.SurveyQuestion.create(label='Clean Hospital Materials', survey=self.survey)
         factories.SurveyQuestion.create(
@@ -529,7 +529,7 @@ class TestRegionReportView(TestCase):
             clinic=self.clinic, response='Yes')
 
         factories.SurveyQuestionResponse.create(
-            question=respect,
+            question=self.respect,
             datetime=timezone.now(),
             visit=v2,
             clinic=self.clinic, response='No')
@@ -548,8 +548,33 @@ class TestRegionReportView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render))
 
+    def test_default_responses(self):
+        """Test that without date in request params, all responses used."""
+        url = '/reports/region/599/'
+        request = self.factory.get(url)
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.request = request
+        report.get(request)
+
+        # Test that all responses are taken
+        dt = timezone.now().replace(year=2014, month=7, day=14, second=0, microsecond=0)
+        v2 = factories.Visit.create(
+            service=factories.Service.create(code=3),
+            visit_time=dt + timezone.timedelta(2),
+            survey_sent=dt + timezone.timedelta(2),
+            patient=factories.Patient.create(clinic=self.clinic, serial=115)
+        )
+        factories.SurveyQuestionResponse.create(
+            question=self.respect,
+            datetime=timezone.now(),
+            visit=v2,
+            clinic=self.clinic, response='No')
+
+        report.get_object()
+        self.assertEqual(3, report.responses.count())
+
     def test_date_from_request_params(self):
-        """Test that the date values from request params determine filter date."""
+        """Test that the date values from request params determine filter for responses."""
         url = '/reports/region/599/?day=14&month=7&year=2014'
         request = self.factory.get(url)
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
@@ -559,16 +584,47 @@ class TestRegionReportView(TestCase):
         curr_date = report.curr_date.replace(microsecond=0, second=0)
         self.assertEqual(dt, curr_date)
 
+        # Test that responses btw 14th and 20th of June
+        v2 = factories.Visit.create(
+            service=factories.Service.create(code=3),
+            visit_time=dt + timezone.timedelta(2),
+            survey_sent=dt + timezone.timedelta(2),
+            patient=factories.Patient.create(clinic=self.clinic, serial=115)
+        )
+        factories.SurveyQuestionResponse.create(
+            question=self.respect,
+            datetime=timezone.now(),
+            visit=v2,
+            clinic=self.clinic, response='No')
+
+        report.get_object()
+        self.assertEqual(1, report.responses.count())
+
     def test_bad_date_from_request_params(self):
-        """Test that the date values from request params determine filter date."""
+        """Test that if date values from request params are wrong, all responses taken."""
         url = '/reports/region/599/?day=x&month=7&year=2014'
         request = self.factory.get(url)
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.request = request
         report.get(request)
-        dt = timezone.now().replace(microsecond=0, second=0)
-        curr_date = report.curr_date.replace(microsecond=0, second=0)
-        self.assertEqual(dt, curr_date)
+        dt = timezone.now().replace(year=2014, month=7, day=14, second=0, microsecond=0)
+        self.assertIsNone(report.curr_date)
+
+        # Test that all responses are taken
+        v2 = factories.Visit.create(
+            service=factories.Service.create(code=3),
+            visit_time=dt + timezone.timedelta(2),
+            survey_sent=dt + timezone.timedelta(2),
+            patient=factories.Patient.create(clinic=self.clinic, serial=115)
+        )
+        factories.SurveyQuestionResponse.create(
+            question=self.respect,
+            datetime=timezone.now(),
+            visit=v2,
+            clinic=self.clinic, response='No')
+
+        report.get_object()
+        self.assertEqual(3, report.responses.count())
 
     def test_feedback_participation(self):
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
