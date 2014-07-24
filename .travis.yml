@@ -6,7 +6,7 @@ addons:
 env:
   - DJANGO_SETTINGS_MODULE="myvoice.settings.dev"
 install:
-  - pip install -r requirements/dev.txt --use-mirrors
+  - pip install -r requirements/dev.txt --use-mirrors --extra-index-url=https://pypi.tracelytics.com
   - pip install coveralls
 before_script:
   - createdb -E UTF-8 myvoice -U postgres -O $USER
