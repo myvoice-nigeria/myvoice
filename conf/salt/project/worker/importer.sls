@@ -6,9 +6,9 @@ include:
   - project.venv
   - postfix
 
-default_conf:
+importer_conf:
   file.managed:
-    - name: /etc/supervisor/conf.d/{{ pillar['project_name'] }}-celery-default.conf
+    - name: /etc/supervisor/conf.d/{{ pillar['project_name'] }}-celery-importer.conf
     - source: salt://project/worker/celery.conf
     - user: root
     - group: root
@@ -19,9 +19,9 @@ default_conf:
         settings: "{{ pillar['project_name'] }}.settings.{{ pillar['environment'] }}"
         virtualenv_root: "{{ vars.venv_dir }}"
         directory: "{{ vars.source_dir }}"
-        name: "celery-default"
+        name: "celery-importer"
         command: "worker"
-        flags: "-n celery@%%n --loglevel=INFO --concurrency=10"
+        flags: "-n importer@%%n --loglevel=INFO --concurrency=1 -Q importer"
     - require:
       - pip: supervisor
       - file: log_dir
@@ -29,9 +29,9 @@ default_conf:
     - watch_in:
       - cmd: supervisor_update
 
-default_process:
+importer_process:
   supervisord.running:
-    - name: {{ pillar['project_name'] }}-celery-default
+    - name: {{ pillar['project_name'] }}-celery-importer
     - restart: True
     - require:
-      - file: default_conf
+      - file: importer_conf
