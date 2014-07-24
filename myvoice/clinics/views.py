@@ -228,7 +228,7 @@ class ClinicReport(DetailView):
 
 
 class RegionReport(ClinicReport):
-    template_name = 'clinics/lgasummary.html'
+    template_name = 'clinics/summary.html'
     model = models.Region
 
     def get(self, request, *args, **kwargs):

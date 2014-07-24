@@ -25,13 +25,12 @@
       <h2>FEEDBACK ON SERVICES</h2>
     </div>
 
-    <p>Number of patients with this service who reported this feedback between
-    July 7–August 7, 2014.</p>
+    <p>Number of patients with this service who reported this feedback.</p>
 
     <table class="table table-bordered table-striped">
       <thead>
         <tr>
-          <th class="special-th">July 7-13 2014</th>
+            <th class="special-th">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
           <th>Open Facility</th>
           <th>Respectful<br>Staff Treatment</th>
           <th>Clean<br>Hospital Materials</th>
@@ -39,16 +38,29 @@
           <th>Most Common<br>Wait Time (hrs)</th>
         </tr>
       </thead>
+      <tfoot>
+        <tr>
+          <th class="special-th">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
+          <th>Open Facility</th>
+          <th>Respectful<br>Staff Treatment</th>
+          <th>Clean<br>Hospital Materials</th>
+          <th>Charged Fairly</th>
+          <th>Most Common<br>Wait Time (hrs)</th>
+        </tr>
+      </tfoot>
+      
       <tbody>
-        {% for i in "12345" %}
-          <tr>
-            <td>{% cycle "ANC" "Normal Delivery" "Immunization/Vaccination" "OPD" "Family Planning" %}</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>&lt;1 hour</td>
-          </tr>
+        {% for service, service_data in feedback_by_service %}
+        <tr>
+            <td>{{ service.name }}</td>
+            {% for result, total_respondents in service_data %}
+            {% if result == None %}
+              <td>N/A (0)</td>
+            {% else %}
+              <td>{{ result }} ({{ total_respondents }})</td>
+            {% endif %}
+            {% endfor %}
+        </tr>
         {% endfor %}
       </tbody>
     </table>
@@ -59,8 +71,7 @@
       <h2>FEEDBACK REPORTED BY FACILITY</h2>
     </div>
 
-    <p>Number of patients with this service who reported this feedback
-    between July 7–August 7, 2014.</p>
+    <p>Number of patients with this service who reported this feedback.</p>
 
     <table class="table table-bordered table-striped">
       <thead>
@@ -113,21 +124,34 @@
           </th>
         </tr>
       </thead>
-      <tbody>
-        {% for i in "12345" %}
+      <tfoot>
           <tr>
-            <td>{% cycle "Arum Chugbu" "Gwagi" "Kwabe" "Kwarra" "M. Gongon" %}</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>63</td>
-            <td>63</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>20% (32)</td>
-            <td>4</td>
+              <th>July 7-13 2014</th>
+              <th>Feedback Participation</th>
+              <th>Patient Satisfaction</th>
+              <th>Quality (Score, Q1)</th>
+              <th>Quantity (Score, Q1)</th>
+              <th>Open Facility</th>
+              <th>Respectful Staff Treatment</th>
+              <th>Clean Hospital Materials</th>
+              <th>Charged Fairly</th>
+              <th>Most Common Wait Time (hrs)</th>
           </tr>
-        {% endfor %}
+      </tfoot>
+      <tbody>
+      {% for clinic, clinic_data in feedback_by_clinic %}
+        <tr>
+            <td>{{ clinic }}</td>
+            {% for result, total_respondents in clinic_data %}
+            {% if result == None %}
+              <td>N/A (0)</td>
+            {% else %}
+              <td>{{ result }} ({{ total_respondents }})</td>
+            {% endif %}
+            {% endfor %}
+        </tr>
+      {% endfor %}
+
       </tbody>
     </table>
   </div><!-- / #feedback-facility .container -->
