@@ -24,7 +24,7 @@ class Region(gis.Model):
         unique_together = ('external_id', 'type')
 
     def __unicode__(self):
-        return "{} - {}".format(self.get_type_display(), self.name)
+        return u"{} - {}".format(self.get_type_display(), self.name)
 
 
 class Clinic(models.Model):
@@ -124,7 +124,7 @@ class Patient(models.Model):
         unique_together = [('clinic', 'serial')]
 
     def __unicode__(self):
-        return '{0} at {1}'.format(self.serial, self.clinic.name)
+        return u'{0} at {1}'.format(self.serial, self.clinic.name)
 
 
 class Visit(models.Model):
@@ -179,7 +179,8 @@ class GenericFeedback(models.Model):
     message_date = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name_plural = 'Generic Feedback'
+        verbose_name = 'General Feedback'
+        verbose_name_plural = 'General Feedback'
 
     def __unicode__(self):
         return self.sender

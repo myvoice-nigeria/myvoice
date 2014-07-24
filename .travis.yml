@@ -4,18 +4,22 @@ python:
 addons:
   postgresql: "9.1"
 env:
-  - DJANGO_SETTINGS_MODULE="myvoice.settings.travis_ci"
+  - DJANGO_SETTINGS_MODULE="myvoice.settings.dev"
 install:
   - pip install -r requirements/dev.txt --use-mirrors
+  - pip install coveralls
 before_script:
-  - createdb -E UTF-8 myvoice -U postgres
-  - psql myvoice -c "CREATE EXTENSION postgis;" -U postgres
+  - createdb -E UTF-8 myvoice -U postgres -O $USER
+  - psql myvoice -c "CREATE EXTENSION postgis;"
   - python manage.py syncdb --migrate --noinput
 script:
   - coverage run manage.py test
   - coverage report -m --fail-under 60
   - flake8 .
+after_success:
+  - coveralls
 notifications:
   email:
     - myvoice-team@caktusgroup.com
     - bayokrapht@gmail.com
+    - endura29@gmail.com

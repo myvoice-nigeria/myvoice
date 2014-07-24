@@ -48,7 +48,7 @@
 
 {% block content %}
   <div class="container main-header">
-    <div class="col-xs-7 no-padding-left">
+    <div class="col-xs-6 no-padding-left">
       <h1>
         <span style="font-weight: 700;">{{ object.name }}</span><br />
         Facility Report
@@ -60,16 +60,19 @@
       SMS surveys of patients at {{ object.name }}.</div>
     </div>
 
-    <div class="col-xs-5 participation-module no-padding-right">
+    <div class="col-xs-6 participation-module no-padding-right">
       <div class="date">{{ min_date.date|date:"F j, Y" }} - {{ max_date.date|date:"F j, Y" }}</div>
         <div class="content">
-          <h2>FEEDBACK PARTICIPATION</h2>
+          <h2>SURVEY PARTICIPATION</h2>
           {% if num_registered %}
-            <div class="col-xs-6">
-              <h1>{{ num_registered }}</h1> Patients registered for survey
+            <div class="col-xs-4">
+              <h1>{{ num_registered }}</h1> Sent
             </div>
-            <div class="col-xs-6">
-              <h1>{{ percent_completed }}%</h1> Completed surveys
+            <div class="col-xs-4">
+              <h1>{{ num_started }} <span class="report-percent">({{ percent_started|floatformat:"0" }}%)</span></h1> Started
+            </div>
+            <div class="col-xs-4">
+              <h1>{{ num_completed }} <span class="report-percent">({{ percent_completed|floatformat:"0" }}%)</span></h1> Completed 
             </div>
           {% else %}
             <div class="col-xs-12">
@@ -92,7 +95,7 @@
     Please try again later!</p>
   </div>
 {% else %}
-  <div id="feedback-analytics" class="container">
+  <div id="feedback-analytics" class="container print-break">
     <div class="col-xs-12 section-heading">
       <h2>FEEDBACK ANALYTICS</h2>
     </div>
@@ -161,6 +164,7 @@
     </table>
   </div><!-- / .container#feedback-on-services -->
 
+  {% if detailed_comments %}
   <div id="detailed-comments" class="container">
     <div class="col-xs-12 section-heading">
       <h2>DETAILED COMMENTS</h2>
@@ -178,12 +182,12 @@
         {% for comment_group in comments %}
           <tr>
             <td colspan="6" class="special-table-row">
-              {{ comment_group.grouper.label|upper }}
+              {{ comment_group.grouper|upper }}
             </td>
           </tr>
           {% for comment in comment_group.list %}
             <tr>
-              <td>{{ comment.datetime|date:"m/d/Y" }}</td>
+              <td>{{ comment.datetime|date:"d/m/Y" }}</td>
               <td>{{ comment.response }}</td>
             </tr>
           {% endfor %}
@@ -191,5 +195,6 @@
       </tbody>
     </table>
   </div><!-- / .container#detailed-comments -->
+  {% endif %}
 {% endif %}
 {% endblock content %}

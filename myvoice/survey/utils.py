@@ -71,16 +71,6 @@ def convert_to_international_format(phone):
         return None
 
 
-def get_detailed_comments(responses):
-    """Returns all responses which are open-ended.
-
-    Ordered by question, in order to use {% regroup %} in a template.
-    """
-    from .models import SurveyQuestion
-    open_ended = responses.filter(question__question_type=SurveyQuestion.OPEN_ENDED)
-    return open_ended.order_by('question', 'datetime')
-
-
 def get_completion_count(responses):
     """Returns the count of responses which are completed.
 
@@ -95,3 +85,19 @@ def get_registration_count(clinic):
     """Returns the count of patients who should have received this survey."""
     from myvoice.clinics.models import Visit
     return Visit.objects.filter(patient__clinic=clinic).count()
+
+
+def get_started_count(responses):
+    """Returns the count of responses which are started."""
+
+    return responses.filter(question__label__iexact="Open Facility")\
+        .filter(question__question_type__iexact="multiple-choice").count()
+
+
+def display_feedback(response_text):
+    """Returns whether or not the text response should be displayed."""
+    if not response_text or len(response_text.strip()) <= 1:
+        return False
+    if response_text.strip().lower() in ['55999', 'yes', 'no', 'n0']:
+        return False
+    return True

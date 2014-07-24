@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.utils import timezone
 
 import json
 
@@ -19,7 +20,7 @@ class TestVisitView(TestCase):
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.invalid_msg = '{"text": "1 or more parts of your entry are missing, please check '\
                            'and enter the registration again."}'
-        self.error_msg = '{"text": "Error for serial %s. There is a mistake in '\
+        self.error_msg = '{"text": "Error for serial %s. There was a mistake in entering '\
                          '%s. Please check and enter the whole registration code again."}'
         self.success_msg = '{"text": "Entry received for patient with serial number %s. '\
                            'Thank you."}'
@@ -201,8 +202,8 @@ class TestVisitView(TestCase):
         obj = models.Visit.objects.all()[0]
         self.assertEqual('08122233301', obj.mobile)
 
-    def test_alpha_clinic(self):
-        """Test that we interprete 'i' or 'I' as 1 in clinic."""
+    def test_small_alpha_clinic(self):
+        """Test that we interprete 'i' as 1 in clinic."""
         reg_data = {'text': 'i 08122233301 400 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
         self.assertEqual(response.content, self.success_msg % 400)
@@ -210,12 +211,14 @@ class TestVisitView(TestCase):
         # Test that visit is saved
         self.assertEqual(1, models.Visit.objects.count())
 
+    def test_big_alpha_clinic(self):
+        """Test that we interprete 'I' as 1 in clinic."""
         reg_data = {'text': 'I 08122233301 400 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
         self.assertEqual(response.content, self.success_msg % 400)
 
         # Test that visit is saved
-        self.assertEqual(2, models.Visit.objects.count())
+        self.assertEqual(1, models.Visit.objects.count())
 
     def test_alpha_mobile(self):
         """Test that we interprete 'i' or 'I' as 1 in mobile."""
@@ -401,3 +404,84 @@ class TestClinicReportView(TestCase):
         """Test that if hard-coded assumptions are not met, exception is raised."""
         survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
         self.assertRaises(Exception, self.make_request)
+
+    def test_get_detailed_comments(self):
+        """Test that generic feedback is combined with open-ended survey responses."""
+        visit1 = factories.Visit.create(
+            service=factories.Service.create(code=2),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=221)
+        )
+        visit2 = factories.Visit.create(
+            service=factories.Service.create(code=3),
+            patient=factories.Patient.create(
+                clinic=self.clinic,
+                serial=111)
+        )
+
+        factories.SurveyQuestionResponse.create(
+            question=factories.SurveyQuestion.create(
+                label='General Feedback',
+                survey=self.survey,
+                question_type=survey_models.SurveyQuestion.OPEN_ENDED),
+            response='Second',
+            datetime=timezone.now()-timezone.timedelta(3),
+            visit=visit1,
+            clinic=self.clinic)
+        factories.SurveyQuestionResponse.create(
+            question=factories.SurveyQuestion.create(
+                label='What question',
+                survey=self.survey,
+                question_type=survey_models.SurveyQuestion.OPEN_ENDED),
+            response='First',
+            datetime=timezone.now()-timezone.timedelta(5),
+            visit=visit2,
+            clinic=self.clinic)
+
+        factories.GenericFeedback.create(
+            clinic=self.clinic,
+            message='Feedback message',
+            message_date=timezone.now())
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+
+        report.get_object()
+
+        comments = report.get_detailed_comments()
+
+        # Basic checks
+        self.assertEqual(3, len(comments))
+
+        # Check content of comments are sorted by question and datetime
+        self.assertEqual('Second', comments[0]['response'])
+        self.assertEqual('Feedback message', comments[1]['response'])
+        self.assertEqual('First', comments[2]['response'])
+
+    def test_hide_invalid_feedback(self):
+        question = factories.SurveyQuestion(
+            label='General', survey=self.survey,
+            question_type=survey_models.SurveyQuestion.OPEN_ENDED)
+        factories.SurveyQuestionResponse(
+            question=question, response='No',
+            visit=factories.Visit(patient__clinic=self.clinic))
+        factories.SurveyQuestionResponse(
+            question=question, response='Hello',
+            visit=factories.Visit(patient__clinic=self.clinic))
+        factories.SurveyQuestionResponse(
+            question=question, response='Staff feedback that was hidden manually',
+            visit=factories.Visit(patient__clinic=self.clinic),
+            display_on_dashboard=False)
+        factories.GenericFeedback(
+            clinic=self.clinic, message_date=timezone.now(), message='No')
+        factories.GenericFeedback(
+            clinic=self.clinic, message_date=timezone.now(), message='Hello2')
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report.get_object()
+        comments = report.get_detailed_comments()
+        self.assertEqual(2, len(comments))
+        self.assertEqual(comments[0]['question'], 'General')
+        self.assertEqual(comments[0]['response'], 'Hello')
+        self.assertEqual(comments[1]['question'], 'General Feedback')
+        self.assertEqual(comments[1]['response'], 'Hello2')

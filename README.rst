@@ -61,6 +61,79 @@ To import the default data, run::
     python manage.py import_regions
 
 
+Development Process
+------------------------
+
+We use the `GitHub Flow development <http://scottchacon.com/2011/08/31/github-flow.html>`_
+process, so all new work is done in independent feature branches (off of
+develop). Pull requests are then used to solicit feedback from another developer.
+Only upon receiving a "ship it" from another developer is that code merged to
+develop. The develop branch can then been deployed to the staging server, and
+once it's been QA'ed by the client, it can be merged to master and deployed
+to production.
+
+Unit Testing and Code Format
++++++++++++++++++++++++++++
+
+Unit tests should be written for all new code, and we strive to achieve 100%
+test coverage for all new code. We use flake8 to check for proper code formatting.
+There is a Travis CI server set up to warn developers if unit tests or code
+formatting is broken, and new developers can be added to this list in the
+``.travis.yml`` file in the repo.
+
+Static Media
+++++++++++++++++++++++++
+
+Static media should be hosted in the repo (rather than using a CDN) to aid with
+running the dev server in absence of an internet connection (which may occur
+while traveling or if a developer ends up writing code in rural Nigeria).
+
+Data Input
+++++++++++++++++++++++++
+
+If you have static data that will never change, you can use an ``initial_data.json``
+fixture in Django. If you have some initial data that you want to add, but it
+might change later, e.g., via the admin, you can use a fixture and just run the
+``loaddata`` management command to add it. If the data source itself will be updated
+from time to time and re-imported, you could also write a management command to
+parse the source data directly and add it to the Django models. In any of these
+cases, the data should most likely be checked in to the repo.
+
+Migrations
+++++++++++++++++++++++++
+
+The project uses South for migrations. In case any new migrations get added to
+develop before your branch is merged, you will need to (a) roll back your local
+database to a state before your migrations, (b) delete your new migrations, (c)
+merge develop into your branch, and (d) recreate your migrations based on the
+new schema. Only once the migrations are updated should the branch be merged,
+and migrations that have landed on develop should never be renumbered or changed
+(as they may have been deployed to a server).
+
+Getting a Copy of Production Data
++++++++++++++++++++++++++++++++++
+
+You can download a SQL file of production data by running the following fab
+command::
+
+    fab download_prod_db:myvoice_prod.sql
+
+You can then drop and recreate your local database with this data, e.g.::
+
+    dropdb myvoice
+    createdb -E UTF8 myvoice
+    psql myvoice < myvoice_prod.sql
+
+Copying Production Data to Staging
+++++++++++++++++++++++++++++++++++
+
+You can also copy production data to the staging server like so::
+
+    fab copy_prod_db_to_staging
+
+This will completely replace the staging database with the current database
+from production.
+
 Deployment
 ------------------------
 

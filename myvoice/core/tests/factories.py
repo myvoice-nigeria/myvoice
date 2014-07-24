@@ -64,7 +64,7 @@ class Patient(factory.django.DjangoModelFactory):
 
     name = factory.fuzzy.FuzzyText()
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
-    serial = factory.fuzzy.FuzzyInteger(0)
+    serial = factory.Sequence(lambda n: n)
 
 
 class Visit(factory.django.DjangoModelFactory):
@@ -102,3 +102,13 @@ class SurveyQuestion(factory.django.DjangoModelFactory):
     def question_type(self):
         choices = [k for k, _ in survey.SurveyQuestion.QUESTION_TYPES]
         return random.choice(choices)
+
+
+class SurveyQuestionResponse(factory.django.DjangoModelFactory):
+    FACTORY_FOR = survey.SurveyQuestionResponse
+
+    question = factory.SubFactory('myvoice.core.tests.factories.SurveyQuestion')
+    response = factory.fuzzy.FuzzyText()
+    datetime = factory.fuzzy.FuzzyDateTime(
+        datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
+    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')

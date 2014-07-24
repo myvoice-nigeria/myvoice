@@ -19,3 +19,7 @@ users:
   priyanka:
     public_key:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQCx9KRxYb649VZeM072nh7gUcuF/Xi5DfVHWODS2winfG3aVG4Z+tzfhv2GTMOd7PeUchwfdJ3I9QVlWmR0vVoxhsGTazVxkQB7ibi43D20qNlJVky4aNzxqK+hSV83C9tf9TeqzWfQr1PILZxZUOf10sXVlthciSp8bhIeqXyKdw== priyanka@Priyanka-Macbook-Air
+      
+  richard:
+    public_key:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdxH9/a8/cqMBOJoEgy5v0yCFZGSFPSYjLQXCxyTkOd5ADzQIToiUW1e7koGJ56RmErcIwQDGzOdyMwyL5JBsjRf7TI8mo+nfUjfZssNE1kaAkohF5eIptALOhPCDH+/Zw7iIe9gi99JGp+QiMMkDOun77Bark7CR49lt0O36f7v2VVIflSQylNS8tzNpJMptH4EBo1Mo4g/06PnU5vKjqrGmYoJQJQMJZiSCGugaqTJU7fPkR7sY5AGV7w0qB7qwadnUo/dPNQTnx4UNYoL5jDQv0HfMAI1l7d0hyZAQiI2QU2axkSW1D0eqqxQTytYDzt+HoRL4zh5vGEn/WoLRN myvoice@caerosis

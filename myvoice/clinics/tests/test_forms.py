@@ -1,6 +1,8 @@
 import json
 
 from django.test import TestCase
+from django.utils import timezone
+from datetime import timedelta
 
 from myvoice.core.tests import factories
 
@@ -75,6 +77,8 @@ class TestVisitForm(TestCase):
     def setUp(self):
         self.service = factories.Service.create(code=5)
         self.clinic = factories.Clinic.create(code=1)
+        self.error_msg = 'Error for serial {}. There was a mistake in entering '\
+            '{}. Please check and enter the whole registration code again.'
 
     def test_visit(self):
         """Test that clean_text returns tuple of:
@@ -94,8 +98,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check error message
-        error_msg = 'Error for serial 4000. There is a mistake in '\
-            'CLINIC. Please check and enter the whole registration code again.'
+        error_msg = self.error_msg.format(4000, 'CLINIC')
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_invalid_alpha_clinic(self):
@@ -141,8 +144,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check error message
-        error_msg = 'Error for serial 4. There is a mistake in '\
-            'SERIAL. Please check and enter the whole registration code again.'
+        error_msg = self.error_msg.format(4, 'SERIAL')
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_wrong_service(self):
@@ -152,8 +154,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check error message
-        error_msg = 'Error for serial 400. There is a mistake in '\
-            'SERVICE. Please check and enter the whole registration code again.'
+        error_msg = self.error_msg.format(400, 'SERVICE')
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_wrong_service_and_clinic(self):
@@ -163,8 +164,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check error message
-        error_msg = 'Error for serial 400. There is a mistake in '\
-            'CLINIC, SERVICE. Please check and enter the whole registration code again.'
+        error_msg = self.error_msg.format(400, 'CLINIC, SERVICE')
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_valid_alpha_clinic(self):
@@ -277,3 +277,41 @@ class TestVisitForm(TestCase):
         error_msg = '1 or more parts of your entry are missing, please check and '\
                     'enter the registration again.'
         self.assertEqual(error_msg, form.errors['text'][0])
+
+    def test_same_visit_too_soon(self):
+        """Test that registering 2nd visit with same clinic, mobile, serial
+        and time difference is < 30 mins is invalid."""
+        data = {'text': '1 08122233301 4001 5', 'phone': '+2348022112211'}
+        factories.Visit.create(
+            patient=factories.Patient.create(clinic=self.clinic, serial='4001'),
+            mobile='08122233301',
+            visit_time=timezone.now()-timedelta(minutes=29))
+        form = forms.VisitForm(data)
+        self.assertFalse(form.is_valid())
+
+        # Check Error message is correct
+        error_msg = "This registration was received before. Thank you."
+        self.assertEqual(error_msg, form.errors['text'][0])
+
+    def test_same_visit_after_30_mins(self):
+        """Test that registering 2nd visit with same clinic, mobile, serial
+        and time difference is > 30 mins is valid."""
+        data = {'text': '1 08122233301 4001 5', 'phone': '+2348022112211'}
+        factories.Visit.create(
+            patient=factories.Patient.create(clinic=self.clinic, serial='4001'),
+            mobile='08122233301',
+            visit_time=timezone.now()-timedelta(minutes=31))
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+
+    def test_same_patient_different_clinic(self):
+        """Test that registering 2nd visit with same mobile, serial but different
+        clinic is valid even if time difference is < 30 mins."""
+        data = {'text': '1 08122233301 4001 5', 'phone': '+2348022112211'}
+        factories.Visit.create(
+            patient=factories.Patient.create(
+                clinic=factories.Clinic.create(code=5), serial='4001'),
+            mobile='08122233301',
+            visit_time=timezone.now()-timedelta(minutes=9))
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())

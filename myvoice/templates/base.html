@@ -25,6 +25,8 @@
               href="{% static 'lib/bootstrap-3.2.0/css/bootstrap.min.css' %}">
         <link type="text/css" rel="stylesheet"
               href="{% static 'css/myvoice.css' %}">
+        <link type="text/css" rel="stylesheet" 
+              href="{% static 'css/print.css' %}" media="print">
         <link type="text/css" rel="stylesheet"
               href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,400italic,700italic'>
       {% endblock css %}
@@ -82,7 +84,7 @@
                 {% endif %}
               </li>
               <li class="print-action">
-                <a href="#"><img src="{% static 'img/print-icon.png' %}">print</a>
+                <a href="javascript:window.print()"><img src="{% static 'img/print-icon.png' %}">print</a>
               </li>
             </ul>
           </div>

@@ -103,8 +103,7 @@ class SurveyQuestionResponse(models.Model):
     """An answer to a survey question."""
 
     question = models.ForeignKey('survey.SurveyQuestion')
-    response = models.CharField(
-        max_length=255,
+    response = models.TextField(
         help_text="Normalized response to the question.")
     datetime = models.DateTimeField(
         default=datetime.datetime.now,
@@ -122,6 +121,10 @@ class SurveyQuestionResponse(models.Model):
     service = models.ForeignKey(
         'clinics.Service', null=True, blank=True,
         help_text="The service this response is about, if any.")
+    display_on_dashboard = models.BooleanField(
+        default=True,
+        help_text="Whether or not this response is displayed on the dashboard. "
+        "Valid only for open-ended question responses.")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -129,6 +132,9 @@ class SurveyQuestionResponse(models.Model):
     class Meta:
         verbose_name = 'Response'
         unique_together = [('visit', 'question')]
+        permissions = [
+            ('change_response_text', 'Can change response text'),
+        ]
 
     def __unicode__(self):
         return self.response
