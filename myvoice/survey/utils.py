@@ -25,9 +25,11 @@ def analyze(responses, answer):
     return None
 
 
-def get_mode(responses):
+def get_mode(responses, acceptable_answers=None):
     """Returns the most commonly-reported answer, or None if there are no responses."""
     answers = [r.response for r in responses if r.response]
+    if acceptable_answers is not None:
+        answers = [a for a in answers if a in acceptable_answers]
     if answers:
         return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
     return None
