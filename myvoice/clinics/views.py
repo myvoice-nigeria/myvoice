@@ -252,7 +252,7 @@ class RegionReport(ClinicReport):
             year = request.GET.get('year')
             try:
                 self.curr_date = timezone.datetime(int(year), int(month), int(day))
-            except:
+            except (TypeError, ValueError):
                 self.curr_date = timezone.datetime.now()
         else:
             self.curr_date = timezone.datetime.now()
@@ -263,7 +263,7 @@ class RegionReport(ClinicReport):
         try:
             self.start_date = get_week_start(self.curr_date)
             self.end_date = get_week_end(self.curr_date)
-        except:
+        except (ValueError, AttributeError):
             curr_date = timezone.datetime.now()
             self.start_date = get_week_start(curr_date)
             self.end_date = get_week_end(curr_date)
