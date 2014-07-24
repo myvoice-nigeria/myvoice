@@ -3,6 +3,8 @@
 include:
   - project.user
 
+{% set nr_app_name = pillar['project_name'] ~ ' ' ~ pillar['environment'] %}
+
 newrelic_celery_ini:
   file.managed:
     - name: /etc/newrelic-{{ pillar['project_name'] }}-celery.ini
@@ -13,9 +15,11 @@ newrelic_celery_ini:
     - template: jinja
     - context:
         license_key: {{ pillar['secrets']['NEWRELIC_LICENSE_KEY'] }}
-        app_name: {{ pillar['project_name'] }} (celery);{{ pillar['project_name'] }}
+        app_name: {{ nr_app_name }} (celery);{{ nr_app_name }}
     - require:
         - user: project_user
+    - watch_in:
+      - cmd: supervisor_update
 
 newrelic_gunicorn_ini:
   file.managed:
@@ -27,6 +31,8 @@ newrelic_gunicorn_ini:
     - template: jinja
     - context:
         license_key: {{ pillar['secrets']['NEWRELIC_LICENSE_KEY'] }}
-        app_name: {{ pillar['project_name'] }} (gunicorn);{{ pillar['project_name'] }}
+        app_name: {{ nr_app_name }} (gunicorn);{{ nr_app_name }}
     - require:
         - user: project_user
+    - watch_in:
+      - cmd: supervisor_update
