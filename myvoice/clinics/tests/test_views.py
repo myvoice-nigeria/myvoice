@@ -460,18 +460,48 @@ class TestClinicReportView(TestCase):
         self.assertEqual('First', comments[2]['response'])
 
 
-class RegionReportView(TestCase):
+class TestRegionReportView(TestCase):
 
     def setUp(self):
         geom = GEOSGeometry('MULTIPOLYGON((( 1 1, 1 2, 2 2, 1 1)))')
         self.factory = RequestFactory()
         self.region = factories.Region.create(pk=599, name='Wamba', type='lga', boundary=geom)
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
-        self.questions = []
-        for l in ['Open Facility', 'Respectful Staff Treatment',
-                  'Clean Hospital Materials', 'Charged Fairly',
-                  'Wait Time']:
-            self.questions.append(factories.SurveyQuestion.create(label=l, survey=self.survey))
+
+        open_f = factories.SurveyQuestion.create(label='Open Facility', survey=self.survey)
+        respect = factories.SurveyQuestion.create(
+            label='Respectful Staff Treatment', survey=self.survey, categories='Yes\nNo')
+        factories.SurveyQuestion.create(label='Clean Hospital Materials', survey=self.survey)
+        factories.SurveyQuestion.create(
+            label='Charged Fairly', survey=self.survey, categories='Yes\nNo')
+        factories.SurveyQuestion.create(label='Wait Time', survey=self.survey)
+
+        self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
+
+        v1 = factories.Visit.create(
+            service=factories.Service.create(code=2),
+            visit_time=timezone.now(),
+            survey_sent=timezone.now(),
+            patient=factories.Patient.create(clinic=self.clinic, serial=221)
+        )
+        v2 = factories.Visit.create(
+            service=factories.Service.create(code=3),
+            visit_time=timezone.now(),
+            survey_sent=timezone.now(),
+            patient=factories.Patient.create(clinic=self.clinic, serial=111)
+        )
+
+        factories.SurveyQuestionResponse.create(
+            question=open_f,
+            datetime=timezone.now(),
+            visit=v1,
+            clinic=self.clinic, response='Yes')
+
+        factories.SurveyQuestionResponse.create(
+            question=respect,
+            datetime=timezone.now(),
+            visit=v2,
+            clinic=self.clinic, response='No')
 
     def make_request(self, data=None):
         """Make Test request with POST data."""
@@ -486,3 +516,20 @@ class RegionReportView(TestCase):
         response = self.make_request()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render))
+
+    def test_get_satisfaction_counts(self):
+        """Test get satisfaction counts."""
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+        responses = {'Respectful Staff Treatment': [{'response': 'Yes'}, {'response': 'No'}]}
+        satisf, total = report.get_satisfaction_counts(responses)
+        self.assertEqual(50, satisf)
+        self.assertEqual(2, total)
+
+    def test_get_feedback_by_clinic(self):
+        """Test get feedback by clinic."""
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+        feedback = report.get_feedback_by_clinic()
+        self.assertEqual('TEST1', feedback[0][0])
+        self.assertEqual(('50.0%', 2), feedback[0][1][0])
