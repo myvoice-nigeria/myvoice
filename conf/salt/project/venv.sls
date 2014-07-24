@@ -26,8 +26,10 @@ pip_requirements:
     - bin_env: {{ vars.venv_dir }}
     - requirements: {{ vars.build_path(vars.source_dir, 'requirements/production.txt') }}
     - upgrade: true
+    - extra_index_url: https://pypi.tracelytics.com
     - require:
       - virtualenv: venv
+      - pkg: install-liboboe
 
 project_path:
   file.managed:
