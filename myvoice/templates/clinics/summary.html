@@ -38,16 +38,6 @@
           <th>Most Common<br>Wait Time (hrs)</th>
         </tr>
       </thead>
-      <tfoot>
-        <tr>
-          <th class="special-th">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
-          <th>Open Facility</th>
-          <th>Respectful<br>Staff Treatment</th>
-          <th>Clean<br>Hospital Materials</th>
-          <th>Charged Fairly</th>
-          <th>Most Common<br>Wait Time (hrs)</th>
-        </tr>
-      </tfoot>
       
       <tbody>
         {% for service, service_data in feedback_by_service %}
@@ -124,20 +114,6 @@
           </th>
         </tr>
       </thead>
-      <tfoot>
-          <tr>
-              <th>July 7-13 2014</th>
-              <th>Feedback Participation</th>
-              <th>Patient Satisfaction</th>
-              <th>Quality (Score, Q1)</th>
-              <th>Quantity (Score, Q1)</th>
-              <th>Open Facility</th>
-              <th>Respectful Staff Treatment</th>
-              <th>Clean Hospital Materials</th>
-              <th>Charged Fairly</th>
-              <th>Most Common Wait Time (hrs)</th>
-          </tr>
-      </tfoot>
       <tbody>
       {% for clinic, clinic_data in feedback_by_clinic %}
         <tr>
