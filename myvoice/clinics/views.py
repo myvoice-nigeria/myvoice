@@ -286,14 +286,9 @@ class AnalystSummary(TemplateView):
             # Survey Triggered (Sent) Query Statistics
             st_query = Visit.objects.filter(
                 survey_sent__isnull=False, patient__clinic=a_clinic)
-            if start_date:
-                st_query = st_query.filter(visit_time__gte=start_date)
-
-            if end_date:
-                st_query = st_query.filter(visit_time__lte=end_date)
-
-            if service:
-                st_query = st_query.filter(service__name=service)
+            if start_date: st_query = st_query.filter(visit_time__gte=start_date)
+            if end_date: st_query = st_query.filter(visit_time__lte=end_date)
+            if service: st_query = st_query.filter(service__name=service)
 
             st_count = st_query.count()
             #sr_query = get_registration_count(a_clinic)
@@ -301,15 +296,27 @@ class AnalystSummary(TemplateView):
             st_total += st_count
 
             # Survey Started Query Statistics
-            ss_count = SurveyQuestionResponse.objects\
+            ss_query = SurveyQuestionResponse.objects\
                 .filter(clinic=a_clinic)\
                 .filter(question__label__iexact="Open Facility")\
-                .filter(question__question_type__iexact="multiple-choice").count()
+                .filter(question__question_type__iexact="multiple-choice")
+
+            if start_date: ss_query = ss_query.filter(visit__visit_time__gte=start_date)
+            if end_date: ss_query = ss_query.filter(visit__visit_time__lte=end_date)
+            if service: ss_query = ss_query.filter(service__name=service)
+
+            ss_count = ss_query.count()
             ss_total += ss_count
 
             # Survey Completed Query Statistics
-            sc_count = SurveyQuestionResponse.objects.filter(question__label="Wait Time")\
-                .filter(clinic=a_clinic).count()
+            sc_query = SurveyQuestionResponse.objects.filter(question__label="Wait Time")\
+                .filter(clinic=a_clinic)
+
+            if start_date: sc_query = sc_query.filter(visit__visit_time__gte=start_date)
+            if end_date: sc_query = sc_query.filter(visit__visit_time__lte=end_date)
+            if service: sc_query = sc_query.filter(service__name=service)
+            sc_count = sc_query.count()
+
             sc_total += sc_count
 
             # Survey Percentages
