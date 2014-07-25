@@ -34,8 +34,16 @@ class TestSurveyUtils(TestCase):
         self.assertEqual(25, utils.analyze(self.responses, 'No'))
 
     def test_get_mode(self):
-        "Test that get_mode function finds the most common item."""
+        """Test that get_mode function finds the most common item."""
         for i in range(3):
             self.responses.append(factories.SurveyQuestionResponse.create(
                 response='No', question=self.question))
         self.assertEqual('No', utils.get_mode(self.responses))
+
+    def test_get_mode_acceptable_answers(self):
+        """Test that get_mode respects acceptable answers."""
+        for i in range(3):
+            self.responses.append(factories.SurveyQuestionResponse.create(
+                response='Maybe', question=self.question))
+        self.assertEqual(
+            'Maybe', utils.get_mode(self.responses, acceptable_answers=['No', 'Maybe']))
