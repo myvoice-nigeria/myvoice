@@ -584,6 +584,91 @@ class TestAnalystDashboardView(TestCase):
         # Test we have the right query
         self.assertEqual(sc_query.count(), 2)
 
+class TestFeedbackFilterView(TestCase):
+    def setUp(self):
+        now = datetime.datetime.now(pytz.utc)
+        self.factory = RequestFactory()
+        self.clinic = factories.Clinic.create(code=1)
+        self.service = factories.Service.create(code=5)
+        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
+        self.visit = factories.Visit.create(
+            patient=self.patient, service=self.service, survey_sent=now)
+        self.question = factories.SurveyQuestion.create(
+            label="Wait Time", question_type="open-ended")
+        self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
+            question=self.question, clinic=self.clinic, visit=self.visit)
+
+    def simple_frt_row_test(self, a, row_num):
+        frt = a.get_feedback_rates_table()
+        for row in frt:
+            if row_num in row["row_num"]:
+                self.assertEqual(row["rsp_num"], 1)
+            else:
+                self.assertEqual(row["rsp_num"], 0)
+
+    def test_feedback_rates(self):
+        a = clinics.AnalystSummary()
+        frt = a.get_feedback_rates_table()
+        for row in frt:
+            self.assertEqual(row["rsp_num"], 0)
+
+        # Test 1.1
+        self.question.label="Open Facility"
+        self.question.question_type="multiple-choice"
+        self.question.save()
+        self.simple_frt_row_test(a, "1.1")
+
+        # Test 1.2
+        self.question.question_type="open-ended"
+        self.question.save()
+        self.simple_frt_row_test(a, "1.2")
+
+        # Test 2.1
+        self.question.label="Respectful Staff Treatment"
+        self.question.question_type="multiple-choice"
+        self.question.save()
+        self.simple_frt_row_test(a, "2.1")
+
+        # Test 2.2
+        self.question.question_type="open-ended"
+        self.question.save()
+        self.simple_frt_row_test(a, "2.2")
+
+        # Test 3.1
+        self.question.label="Clean Hospital Materials"
+        self.question.question_type="multiple-choice"
+        self.question.save()
+        self.simple_frt_row_test(a, "3.1")
+
+        # Test 3.2
+        self.question.question_type='open-ended'
+        self.question.save()
+        self.simple_frt_row_test(a, "3.2")
+
+        # Test 4.1
+        self.question.label="Charged Fairly"
+        self.question.question_type="multiple-choice"
+        self.question.save()
+        self.simple_frt_row_test(a, "4.1")
+
+        # Test 4.2
+        self.question.question_type='open-ended'
+        self.question.save()
+        self.simple_frt_row_test(a, "4.2")
+
+        # Test 5.1
+        self.question.label="Wait time"
+        self.question.question_type="multiple-choice"
+        self.question.save()
+        self.simple_frt_row_test(a, "5.1")
+
+        # Test 6.1
+        self.question.label="General Feedback"
+        self.question.question_type='open-ended'
+        self.question.save()
+        self.simple_frt_row_test(a, "6.1")
+
+
 
 class TestRegionReportView(TestCase):
 
