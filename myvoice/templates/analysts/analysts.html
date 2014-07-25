@@ -228,13 +228,6 @@
               console.log("Updating Feedback Table");
               filter_feedback_table();
             });
-
-
-              // Setup - add a text input to each footer cell
-            $('.table tfoot th').each( function () {
-                var title = $('.table tfoot th').eq( $(this).index() ).text();
-                $(this).html( '<input type="text" placeholder="Search '+title+'" />' );
-            } );
             
             // DataTable
             var table = $('.table').DataTable( {
