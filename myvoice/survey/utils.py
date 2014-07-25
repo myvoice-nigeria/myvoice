@@ -14,13 +14,6 @@ REQUIRED_QUESTIONS = ['Open Facility', 'Respectful Staff Treatment',
                       'Wait Time']
 
 
-def analyze_dict(responses, answer):
-    if responses:
-        count = len([r for r in responses if r['response'] == answer])
-        return make_percentage(count, len(responses))
-    return None
-
-
 def analyze(responses, answer):
     """
     Returns the percentage (out of 100) of responses with the given answer, or
@@ -32,10 +25,11 @@ def analyze(responses, answer):
     return None
 
 
-def get_mode_dict(responses):
-    answers = [r['response'] for r in responses if r['response']]
-    if answers:
-        return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
+def analyze_dict(responses, answer):
+    """Same as analyze but taking a list of dictionaries as input."""
+    if responses:
+        count = len([r for r in responses if r['response'] == answer])
+        return make_percentage(count, len(responses))
     return None
 
 
@@ -47,11 +41,12 @@ def get_mode(responses):
     return None
 
 
-def group_response_dicts(responses, ordering, grouping=None):
-    if grouping is None:
-        grouping = ordering
-    ordered = [r for r in sorted(responses, key=itemgetter(ordering))]
-    return [(l, list(r)) for l, r in groupby(ordered, key=itemgetter(grouping))]
+def get_mode_dict(responses):
+    """Same as get_mode but taking a list of dictionaries as input."""
+    answers = [r['response'] for r in responses if r['response']]
+    if answers:
+        return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
+    return None
 
 
 def group_responses(responses, ordering, grouping=None):
@@ -64,6 +59,14 @@ def group_responses(responses, ordering, grouping=None):
         grouping = ordering
     ordered = [r for r in sorted(responses, key=attrgetter(ordering))]
     return [(l, list(r)) for l, r in groupby(ordered, key=attrgetter(grouping))]
+
+
+def group_response_dicts(responses, ordering, grouping=None):
+    """Same as get_responses but taking a list of dictionaries as input."""
+    if grouping is None:
+        grouping = ordering
+    ordered = [r for r in sorted(responses, key=itemgetter(ordering))]
+    return [(l, list(r)) for l, r in groupby(ordered, key=itemgetter(grouping))]
 
 
 def convert_to_local_format(phone):
