@@ -147,3 +147,29 @@ is not given, it will use the default branch defined for this environment in
 
 New requirements or South migrations are detected by parsing the VCS changes and
 will be installed/run automatically.
+
+Release and Deploy to Production
+++++++++++++++++++++++++++++++++
+
+Once the client has quality assured the ``develop`` branch by reviewing the staging
+server, the code should be merge dto the ``master`` branch and deployed to production.
+The steps for releasing are:
+
+1. Merge ``develop`` to ``master``, e.g.::
+
+    git pull
+    git checkout master
+    git update
+    git merge develop
+    git push
+
+2. Tag the release with today's date and a sequential number indicating the release
+   number for the day, e.g.:
+
+    git tag -a vYYYY-MM-DD.N -m "Released vYYYY-MM-DD.N"
+    git push origin --tags
+
+3. Run the deployment::
+
+    fab production deploy
+
