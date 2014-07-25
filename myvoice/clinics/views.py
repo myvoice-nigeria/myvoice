@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
+from django.db.models.aggregates import Max, Min
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.survey import utils as survey_utils
@@ -285,6 +286,9 @@ class RegionReport(ReportMixin, DetailView):
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(
                 visit__visit_time__range=(self.start_date, self.end_date))
+        else:
+            self.start_date = self.responses.aggregate(min_date=Min('datetime'))['min_date']
+            self.end_date = self.responses.aggregate(max_date=Max('datetime'))['max_date']
         self.responses = self.responses.select_related('question', 'service', 'visit')
         return obj
 
@@ -292,6 +296,8 @@ class RegionReport(ReportMixin, DetailView):
         kwargs['responses'] = self.responses
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
+        kwargs['min_date'] = self.start_date
+        kwargs['max_date'] = self.end_date
         data = super(RegionReport, self).get_context_data(**kwargs)
         return data
 
@@ -321,7 +327,7 @@ class RegionReport(ReportMixin, DetailView):
         survey_count = len(responses.get('Open Facility', []))
         visits = models.Visit.objects.filter(
             patient__clinic=clinic, survey_sent__isnull=False)
-        if self.start_date and self.end_date:
+        if self.curr_date:
             visits = visits.filter(visit_time__range=(self.start_date, self.end_date))
         total_visits = visits.count()
 
@@ -361,8 +367,8 @@ class RegionReport(ReportMixin, DetailView):
 
             # Build the data
             clinic_data = [
-                ('{}%'.format(survey_percent), total_visits),
-                ('{}%'.format(satis_percent), satis_total),
+                (survey_percent, total_visits),
+                (satis_percent, satis_total),
                 (None, 0),
                 (None, 0)
             ]

@@ -570,7 +570,7 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        report.get_object()
+        #report.get_object()
         self.assertEqual(3, report.responses.count())
 
     def test_date_from_request_params(self):
@@ -597,7 +597,6 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        report.get_object()
         self.assertEqual(1, report.responses.count())
 
     def test_bad_date_from_request_params(self):
@@ -623,7 +622,6 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        report.get_object()
         self.assertEqual(3, report.responses.count())
 
     def test_feedback_participation(self):
@@ -662,4 +660,4 @@ class TestRegionReportView(TestCase):
         report.get_object()
         feedback = report.get_feedback_by_clinic()
         self.assertEqual('TEST1', feedback[0][0])
-        self.assertEqual(('50.0%', 2), feedback[0][1][0])
+        self.assertEqual((50.0, 2), feedback[0][1][0])
