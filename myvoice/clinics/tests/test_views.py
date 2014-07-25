@@ -570,7 +570,6 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        #report.get_object()
         self.assertEqual(3, report.responses.count())
 
     def test_date_from_request_params(self):
