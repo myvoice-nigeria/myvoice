@@ -157,9 +157,11 @@ The steps for releasing are:
 
 1. Merge ``develop`` to ``master``, e.g.::
 
+    git checkout develop
     git pull
+    git diff -r master # review the changes that are about to be merged
     git checkout master
-    git update
+    git pull # just in case there have been any hot fixes
     git merge develop
     git push
 
