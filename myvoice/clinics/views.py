@@ -371,8 +371,8 @@ class RegionReport(ReportMixin, DetailView):
 
             # Build the data
             clinic_data = [
-                (survey_percent, total_visits),
-                (satis_percent, satis_total),
+                ('{}%'.format(survey_percent), total_visits),
+                ('{}%'.format(satis_percent), satis_total),
                 (None, 0),
                 (None, 0)
             ]
