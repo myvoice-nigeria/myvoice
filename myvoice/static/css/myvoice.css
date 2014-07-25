@@ -40,7 +40,7 @@ h2 {
 
 /* Non-responsive overrides
  *
- * Utilitize the following CSS to disable the responsive-ness of the container,
+ * Utilize the following CSS to disable the responsive-ness of the container,
  * grid system, and navbar.
  */
 
@@ -140,7 +140,6 @@ h2 {
 }
 
 .section-heading h2 {
-<<<<<<< HEAD
     height: 30px;
     margin:0;
     width: 120%;
@@ -172,9 +171,6 @@ h2 {
     margin:0;
     padding-top:2px;
     width:100%;
-=======
-	margin:0;
->>>>>>> develop
 }
 
 

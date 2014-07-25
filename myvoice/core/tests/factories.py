@@ -24,6 +24,14 @@ class User(factory.django.DjangoModelFactory):
     last_name = factory.fuzzy.FuzzyText()
 
 
+class Region(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.Region
+
+    name = factory.fuzzy.FuzzyText()
+    external_id = factory.fuzzy.FuzzyInteger(1)
+    type = factory.fuzzy.FuzzyChoice(clinics.Region.TYPE_CHIOCES)
+
+
 class Clinic(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.Clinic
 

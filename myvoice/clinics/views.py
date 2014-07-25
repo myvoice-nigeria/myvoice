@@ -1,12 +1,14 @@
 from itertools import groupby
 import json
 from dateutil.parser import parse
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
+from django.utils import timezone
+from django.db.models.aggregates import Max, Min
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange, get_date
 from myvoice.survey import utils as survey_utils
@@ -71,9 +73,7 @@ class ClinicReportSelectClinic(FormView):
         return redirect('clinic_report', slug=clinic.slug)
 
 
-class ClinicReport(DetailView):
-    template_name = 'clinics/report.html'
-    model = models.Clinic
+class ReportMixin(object):
 
     def _check_assumptions(self):
         """Fail fast if our hard-coded assumpions are not met."""
@@ -82,6 +82,47 @@ class ClinicReport(DetailView):
                       'Wait Time']:
             if label not in self.questions:
                 raise Exception("Expecting question with label " + label)
+
+    def initialize_data(self, obj):
+        """Called by get_object to initialize state information."""
+        self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
+        self.questions = self.survey.surveyquestion_set.all()
+        self.questions = dict([(q.label, q) for q in self.questions])
+        self._check_assumptions()
+
+    def get_feedback_by_service(self):
+        """Return analyzed feedback by service then question."""
+        data = []
+        responses = self.responses.exclude(service=None)
+        by_service = survey_utils.group_responses(responses, 'service.id', 'service')
+        for service, service_responses in by_service:
+            by_question = survey_utils.group_responses(service_responses, 'question.label')
+            responses_by_question = dict(by_question)
+            service_data = []
+            for label in ['Open Facility', 'Respectful Staff Treatment',
+                          'Clean Hospital Materials', 'Charged Fairly']:
+                if label in responses_by_question:
+                    question = self.questions[label]
+                    question_responses = responses_by_question[label]
+                    total_responses = len(question_responses)
+                    answers = [response.response for response in question_responses]
+                    percentage = survey_utils.analyze(answers, question.primary_answer)
+                    service_data.append(('{}%'.format(percentage), total_responses))
+                else:
+                    service_data.append((None, 0))
+            if 'Wait Time' in responses_by_question:
+                wait_times = [r.response for r in responses_by_question['Wait Time']]
+                mode = survey_utils.get_mode(wait_times)
+                service_data.append((mode, len(wait_times)))
+            else:
+                service_data.append((None, 0))
+            data.append((service, service_data))
+        return data
+
+
+class ClinicReport(ReportMixin, DetailView):
+    template_name = 'clinics/report.html'
+    model = models.Clinic
 
     def _get_patient_satisfaction(self, responses):
         """Patient satisfaction is gauged on their answers to 3 questions."""
@@ -118,42 +159,11 @@ class ClinicReport(DetailView):
 
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
-        self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
-        self.questions = self.survey.surveyquestion_set.all()
-        self.questions = dict([(q.label, q) for q in self.questions])
+        self.initialize_data(obj)
         self.responses = obj.surveyquestionresponse_set.all()
         self.responses = self.responses.select_related('question', 'service', 'visit')
         self.generic_feedback = obj.genericfeedback_set.all()
-        self._check_assumptions()
         return obj
-
-    def get_feedback_by_service(self):
-        """Return analyzed feedback by service then question."""
-        data = []
-        responses = self.responses.exclude(service=None)
-        by_service = survey_utils.group_responses(responses, 'service.id', 'service')
-        for service, service_responses in by_service:
-            by_question = survey_utils.group_responses(service_responses, 'question.label')
-            responses_by_question = dict(by_question)
-            service_data = []
-            for label in ['Open Facility', 'Respectful Staff Treatment',
-                          'Clean Hospital Materials', 'Charged Fairly']:
-                if label in responses_by_question:
-                    question = self.questions[label]
-                    question_responses = responses_by_question[label]
-                    total_responses = len(question_responses)
-                    percentage = survey_utils.analyze(question_responses, question.primary_answer)
-                    service_data.append(('{}%'.format(percentage), total_responses))
-                else:
-                    service_data.append((None, 0))
-            if 'Wait Time' in responses_by_question:
-                wait_times = responses_by_question['Wait Time']
-                mode = survey_utils.get_mode(wait_times)
-                service_data.append((mode, len(wait_times)))
-            else:
-                service_data.append((None, 0))
-            data.append((service, service_data))
-        return data
 
     def get_feedback_by_week(self):
         data = []
@@ -170,16 +180,18 @@ class ClinicReport(DetailView):
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
                     total_responses = len(question_responses)
-                    percentage = survey_utils.analyze(question_responses, question.primary_answer)
+                    answers = [response.response for response in question_responses]
+                    percentage = survey_utils.analyze(answers, question.primary_answer)
                     week_data.append((percentage, total_responses))
                 else:
                     week_data.append((None, 0))
+            wait_times = [r.response for r in responses_by_question.get('Wait Time', [])]
             data.append({
                 'week_start': week_start,
                 'week_end': get_week_end(week_start),
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
-                'wait_time_mode': survey_utils.get_mode(responses_by_question.get('Wait Time', [])),
+                'wait_time_mode': survey_utils.get_mode(wait_times)
             })
         return data
 
@@ -571,9 +583,150 @@ class FeedbackFilter(View):
         return HttpResponse(json.dumps(content), content_type="text/json")
 
 
-class RegionReport(DetailView):
+class RegionReport(ReportMixin, DetailView):
     template_name = 'clinics/summary.html'
     model = models.Region
+
+    def __init__(self, *args, **kwargs):
+        super(RegionReport, self).__init__(*args, **kwargs)
+        self.curr_date = None
+        self.start_date = None
+        self.end_date = None
+
+    def get(self, request, *args, **kwargs):
+        if 'day' in request.GET and 'month' in request.GET and 'year' in request.GET:
+            day = request.GET.get('day')
+            month = request.GET.get('month')
+            year = request.GET.get('year')
+            try:
+                self.curr_date = timezone.now().replace(
+                    year=int(year), month=int(month), day=int(day))
+            except (TypeError, ValueError):
+                pass
+        return super(RegionReport, self).get(request, *args, **kwargs)
+
+    def calculate_date_range(self):
+        try:
+            self.start_date = get_week_start(self.curr_date)
+            self.end_date = get_week_end(self.curr_date)
+        except (ValueError, AttributeError):
+            pass
+
+    def get_object(self, queryset=None):
+        obj = super(RegionReport, self).get_object(queryset)
+        self.calculate_date_range()
+        self.initialize_data(obj)
+        self.responses = SurveyQuestionResponse.objects.filter(clinic__lga__iexact=obj.name)
+        if self.start_date and self.end_date:
+            self.responses = self.responses.filter(
+                visit__visit_time__range=(self.start_date, self.end_date))
+        else:
+            self.start_date = self.responses.aggregate(min_date=Min('datetime'))['min_date']
+            self.end_date = self.responses.aggregate(max_date=Max('datetime'))['max_date']
+        self.responses = self.responses.select_related('question', 'service', 'visit')
+        return obj
+
+    def get_context_data(self, **kwargs):
+        kwargs['responses'] = self.responses
+        kwargs['feedback_by_service'] = self.get_feedback_by_service()
+        kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
+        kwargs['min_date'] = self.start_date
+        kwargs['max_date'] = self.end_date
+        data = super(RegionReport, self).get_context_data(**kwargs)
+        return data
+
+    def get_satisfaction_counts(self, responses):
+        """Return satisfaction percentage and total of survey participants
+
+        responses is already grouped by question."""
+        if not responses:
+            return 0, 0
+        unsatisfied, total = 0, 0
+
+        for question, q_responses in responses.items():
+            if question in ['Respectful Staff Treatment', 'Charged Fairly']:
+                answer = self.questions[question].primary_answer
+                unsatisfied += len([r for r in q_responses if r['response'] != answer])
+            elif question == 'Wait Time':
+                answer = self.questions[question].get_categories()[-1]
+                unsatisfied += len([r for r in q_responses if r['response'] == answer])
+            total += len(q_responses)
+
+        return 100 - make_percentage(unsatisfied, total), total
+
+    def get_feedback_participation(self, responses, clinic):
+        """Return % of surveys responded to to total visits.
+
+        responses already grouped by question."""
+        survey_count = len(responses.get('Open Facility', []))
+        visits = models.Visit.objects.filter(
+            patient__clinic=clinic, survey_sent__isnull=False)
+        if self.curr_date:
+            visits = visits.filter(visit_time__range=(self.start_date, self.end_date))
+        total_visits = visits.count()
+
+        if total_visits:
+            survey_percent = make_percentage(survey_count, total_visits)
+        else:
+            survey_percent = None
+        return survey_percent, total_visits
+
+    def get_feedback_by_clinic(self):
+        """Return analyzed feedback by clinic then question."""
+        data = []
+
+        # So we can get the name of the clinic for the template
+        clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
+
+        responses = self.responses.exclude(clinic=None).values(
+            'clinic', 'question__label', 'response')
+        by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
+
+        # Add clinics without responses back.
+        clinic_ids = [clinic[0] for clinic in by_clinic]
+        rest_clinics = set(clinic_map.keys()).difference(clinic_ids)
+        for _clinic in rest_clinics:
+            by_clinic.append((_clinic, []))
+
+        for clinic, clinic_responses in by_clinic:
+            by_question = survey_utils.group_responses(
+                clinic_responses, 'question__label', keyfunc=itemgetter)
+            responses_by_question = dict(by_question)
+
+            # Get feedback participation
+            survey_percent, total_visits = self.get_feedback_participation(
+                responses_by_question, clinic)
+
+            # Get patient satisfaction
+            satis_percent, satis_total = self.get_satisfaction_counts(responses_by_question)
+
+            # Build the data
+            clinic_data = [
+                ('{}%'.format(survey_percent), total_visits),
+                ('{}%'.format(satis_percent), satis_total),
+                (None, 0),
+                (None, 0)
+            ]
+            for label in ['Open Facility', 'Respectful Staff Treatment',
+                          'Clean Hospital Materials', 'Charged Fairly']:
+                if label in responses_by_question:
+                    question = self.questions[label]
+                    question_responses = responses_by_question[label]
+                    total_responses = len(question_responses)
+                    answers = [response['response'] for response in question_responses]
+                    percentage = survey_utils.analyze(answers, question.primary_answer)
+                    clinic_data.append(('{}%'.format(percentage), total_responses))
+                else:
+                    clinic_data.append((None, 0))
+
+            if 'Wait Time' in responses_by_question:
+                wait_times = [r['response'] for r in responses_by_question['Wait Time']]
+                mode = survey_utils.get_mode(wait_times)
+                clinic_data.append((mode, len(wait_times)))
+            else:
+                clinic_data.append((None, 0))
+            data.append((clinic_map[clinic], clinic_data))
+        return data
 
 
 class FeedbackView(View):

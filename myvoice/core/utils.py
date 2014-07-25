@@ -1,18 +1,19 @@
 import datetime
 from dateutil.parser import parse
+from django.utils import timezone
 
 
 def get_week_start(date):
     """Returns midnight of the Monday prior to the given date."""
     days_since_monday = date.weekday()
-    monday = date - datetime.timedelta(days=days_since_monday)
+    monday = date - timezone.timedelta(days=days_since_monday)
     monday = monday.replace(microsecond=0, second=0, minute=0, hour=0)
     return monday
 
 
 def get_week_end(date):
     """Returns the last microsecond of the Sunday after the given date."""
-    return get_week_start(date) + datetime.timedelta(days=7, microseconds=-1)
+    return get_week_start(date) + timezone.timedelta(days=7, microseconds=-1)
 
 
 def make_percentage(numerator, denominator, places=0):
