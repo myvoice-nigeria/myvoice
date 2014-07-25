@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange, get_date
 from myvoice.survey import utils as survey_utils
 from myvoice.clinics import utils as clinic_utils
 
@@ -388,8 +388,11 @@ class AnalystSummary(TemplateView):
         context['clinics'] = Clinic.objects.all().order_by("name")
         return context
 
-    def get_rates_table(self, service="", clinic="", start_date="", end_date=""):
+    def get_feedback_rates_table(self, service="", clinic="", start_date="", end_date=""):
         rates_table = []
+
+        start_date = get_date(start_date)
+        end_date = get_date(end_date)
 
         sqr_query = SurveyQuestionResponse.objects.all()
         if clinic:
@@ -397,11 +400,9 @@ class AnalystSummary(TemplateView):
         if service:
             sqr_query = sqr_query.filter(service__name__iexact=service)
         if start_date:
-            if type(start_date) is str:
-                sqr_query = sqr_query.filter(visit_time__gte=parse(start_date))
+            sqr_query = sqr_query.filter(visit__visit_time__gte=start_date)
         if end_date:
-            if type(end_date) is str:
-                sqr_query = sqr_query.filter(visit_time__lte=parse(end_date))
+            sqr_query = sqr_query.filter(visit__visit_time__lte=end_date)
 
         rates_table.append({
             "row_num": "1.1",
@@ -548,13 +549,14 @@ class FeedbackFilter(View):
             the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
         else:
             the_start_date = parse(the_start_date)
+
         if not the_end_date or "End Date" in the_end_date:
             the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
         else:
             the_end_date = parse(the_end_date)
 
         a = AnalystSummary()
-        data = a.get_rates_table(
+        data = a.get_feedback_rates_table(
             start_date=the_start_date, end_date=the_end_date,
             service=the_service, clinic=the_clinic)
         content = {"feedback_data": {}}
