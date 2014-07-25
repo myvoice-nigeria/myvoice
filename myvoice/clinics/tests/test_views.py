@@ -460,6 +460,34 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
 
+    def test_hide_invalid_feedback(self):
+        question = factories.SurveyQuestion(
+            label='General', survey=self.survey,
+            question_type=survey_models.SurveyQuestion.OPEN_ENDED)
+        factories.SurveyQuestionResponse(
+            question=question, response='No',
+            visit=factories.Visit(patient__clinic=self.clinic))
+        factories.SurveyQuestionResponse(
+            question=question, response='Hello',
+            visit=factories.Visit(patient__clinic=self.clinic))
+        factories.SurveyQuestionResponse(
+            question=question, response='Staff feedback that was hidden manually',
+            visit=factories.Visit(patient__clinic=self.clinic),
+            display_on_dashboard=False)
+        factories.GenericFeedback(
+            clinic=self.clinic, message_date=timezone.now(), message='No')
+        factories.GenericFeedback(
+            clinic=self.clinic, message_date=timezone.now(), message='Hello2')
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report.get_object()
+        comments = report.get_detailed_comments()
+        self.assertEqual(2, len(comments))
+        self.assertEqual(comments[0]['question'], 'General')
+        self.assertEqual(comments[0]['response'], 'Hello')
+        self.assertEqual(comments[1]['question'], 'General Feedback')
+        self.assertEqual(comments[1]['response'], 'Hello2')
+
 
 class TestAnalystDashboardView(TestCase):
 
@@ -555,30 +583,3 @@ class TestAnalystDashboardView(TestCase):
         # Test we have the right query
         self.assertEqual(sc_query.count(), 2)
 
-    def test_hide_invalid_feedback(self):
-        question = factories.SurveyQuestion(
-            label='General', survey=self.survey,
-            question_type=survey_models.SurveyQuestion.OPEN_ENDED)
-        factories.SurveyQuestionResponse(
-            question=question, response='No',
-            visit=factories.Visit(patient__clinic=self.clinic))
-        factories.SurveyQuestionResponse(
-            question=question, response='Hello',
-            visit=factories.Visit(patient__clinic=self.clinic))
-        factories.SurveyQuestionResponse(
-            question=question, response='Staff feedback that was hidden manually',
-            visit=factories.Visit(patient__clinic=self.clinic),
-            display_on_dashboard=False)
-        factories.GenericFeedback(
-            clinic=self.clinic, message_date=timezone.now(), message='No')
-        factories.GenericFeedback(
-            clinic=self.clinic, message_date=timezone.now(), message='Hello2')
-
-        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
-        report.get_object()
-        comments = report.get_detailed_comments()
-        self.assertEqual(2, len(comments))
-        self.assertEqual(comments[0]['question'], 'General')
-        self.assertEqual(comments[0]['response'], 'Hello')
-        self.assertEqual(comments[1]['question'], 'General Feedback')
-        self.assertEqual(comments[1]['response'], 'Hello2')
