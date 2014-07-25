@@ -1,6 +1,6 @@
 from itertools import groupby
 import json
-from operator import attrgetter
+from operator import attrgetter, itemgetter
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -101,12 +101,13 @@ class ReportMixin(object):
                     question = self.questions[label]
                     question_responses = responses_by_question[label]
                     total_responses = len(question_responses)
-                    percentage = survey_utils.analyze(question_responses, question.primary_answer)
+                    answers = [response.response for response in question_responses]
+                    percentage = survey_utils.analyze(answers, question.primary_answer)
                     service_data.append(('{}%'.format(percentage), total_responses))
                 else:
                     service_data.append((None, 0))
             if 'Wait Time' in responses_by_question:
-                wait_times = responses_by_question['Wait Time']
+                wait_times = [r.response for r in responses_by_question['Wait Time']]
                 mode = survey_utils.get_mode(wait_times)
                 service_data.append((mode, len(wait_times)))
             else:
@@ -175,16 +176,18 @@ class ClinicReport(ReportMixin, DetailView):
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
                     total_responses = len(question_responses)
-                    percentage = survey_utils.analyze(question_responses, question.primary_answer)
+                    answers = [response.response for response in question_responses]
+                    percentage = survey_utils.analyze(answers, question.primary_answer)
                     week_data.append((percentage, total_responses))
                 else:
                     week_data.append((None, 0))
+            wait_times = [r.response for r in responses_by_question.get('Wait Time', [])]
             data.append({
                 'week_start': week_start,
                 'week_end': get_week_end(week_start),
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
-                'wait_time_mode': survey_utils.get_mode(responses_by_question.get('Wait Time', [])),
+                'wait_time_mode': survey_utils.get_mode(wait_times)
             })
         return data
 
@@ -346,7 +349,7 @@ class RegionReport(ReportMixin, DetailView):
 
         responses = self.responses.exclude(clinic=None).values(
             'clinic', 'question__label', 'response')
-        by_clinic = survey_utils.group_response_dicts(responses, 'clinic')
+        by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
 
         # Add clinics without responses back.
         clinic_ids = [clinic[0] for clinic in by_clinic]
@@ -355,7 +358,8 @@ class RegionReport(ReportMixin, DetailView):
             by_clinic.append((_clinic, []))
 
         for clinic, clinic_responses in by_clinic:
-            by_question = survey_utils.group_response_dicts(clinic_responses, 'question__label')
+            by_question = survey_utils.group_responses(
+                clinic_responses, 'question__label', keyfunc=itemgetter)
             responses_by_question = dict(by_question)
 
             # Get feedback participation
@@ -378,15 +382,15 @@ class RegionReport(ReportMixin, DetailView):
                     question = self.questions[label]
                     question_responses = responses_by_question[label]
                     total_responses = len(question_responses)
-                    percentage = survey_utils.analyze_dict(
-                        question_responses, question.primary_answer)
+                    answers = [response['response'] for response in question_responses]
+                    percentage = survey_utils.analyze(answers, question.primary_answer)
                     clinic_data.append(('{}%'.format(percentage), total_responses))
                 else:
                     clinic_data.append((None, 0))
 
             if 'Wait Time' in responses_by_question:
-                wait_times = responses_by_question['Wait Time']
-                mode = survey_utils.get_mode_dict(wait_times)
+                wait_times = [r['response'] for r in responses_by_question['Wait Time']]
+                mode = survey_utils.get_mode(wait_times)
                 clinic_data.append((mode, len(wait_times)))
             else:
                 clinic_data.append((None, 0))

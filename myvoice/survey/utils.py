@@ -20,53 +20,29 @@ def analyze(responses, answer):
     None if there are no responses.
     """
     if responses:
-        count = len([r for r in responses if r.response == answer])
+        count = len([r for r in responses if r == answer])
         return make_percentage(count, len(responses))
     return None
 
 
-def analyze_dict(responses, answer):
-    """Same as analyze but taking a list of dictionaries as input."""
-    if responses:
-        count = len([r for r in responses if r['response'] == answer])
-        return make_percentage(count, len(responses))
-    return None
-
-
-def get_mode(responses):
+def get_mode(answers):
     """Returns the most commonly-reported answer, or None if there are no responses."""
-    answers = [r.response for r in responses if r.response]
     if answers:
         return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
     return None
 
 
-def get_mode_dict(responses):
-    """Same as get_mode but taking a list of dictionaries as input."""
-    answers = [r['response'] for r in responses if r['response']]
-    if answers:
-        return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
-    return None
-
-
-def group_responses(responses, ordering, grouping=None):
+def group_responses(responses, ordering, grouping=None, keyfunc=attrgetter):
     """Returns a grouped list of responses.
 
     responses should use prefetch_related or select_related with the
     given attributes for the best performance.
+    For a ValuesQueryset use keyfunc=itemgetter.
     """
     if grouping is None:
         grouping = ordering
-    ordered = [r for r in sorted(responses, key=attrgetter(ordering))]
-    return [(l, list(r)) for l, r in groupby(ordered, key=attrgetter(grouping))]
-
-
-def group_response_dicts(responses, ordering, grouping=None):
-    """Same as get_responses but taking a list of dictionaries as input."""
-    if grouping is None:
-        grouping = ordering
-    ordered = [r for r in sorted(responses, key=itemgetter(ordering))]
-    return [(l, list(r)) for l, r in groupby(ordered, key=itemgetter(grouping))]
+    ordered = [r for r in sorted(responses, key=keyfunc(ordering))]
+    return [(l, list(r)) for l, r in groupby(ordered, key=keyfunc(grouping))]
 
 
 def convert_to_local_format(phone):
