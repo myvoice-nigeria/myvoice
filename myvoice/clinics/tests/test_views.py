@@ -3,6 +3,8 @@ from django.test.client import RequestFactory
 from django.utils import timezone
 
 import json
+import datetime
+import pytz
 
 from myvoice.core.tests import factories
 
@@ -458,6 +460,7 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
 
+
 class TestAnalystDashboardView(TestCase):
 
     def setUp(self):
@@ -552,7 +555,6 @@ class TestAnalystDashboardView(TestCase):
         # Test we have the right query
         self.assertEqual(sc_query.count(), 2)
 
-
     def test_hide_invalid_feedback(self):
         question = factories.SurveyQuestion(
             label='General', survey=self.survey,
@@ -580,4 +582,3 @@ class TestAnalystDashboardView(TestCase):
         self.assertEqual(comments[0]['response'], 'Hello')
         self.assertEqual(comments[1]['question'], 'General Feedback')
         self.assertEqual(comments[1]['response'], 'Hello2')
-

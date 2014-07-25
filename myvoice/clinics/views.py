@@ -1,15 +1,16 @@
 from itertools import groupby
 import json
-from operator import attrgetter
 from dateutil.parser import parse
+from operator import attrgetter
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange, get_date
 from myvoice.survey import utils as survey_utils
+from myvoice.clinics import utils as clinic_utils
 
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 from myvoice.clinics.models import Clinic, Service, Visit
@@ -255,7 +256,7 @@ class AnalystSummary(TemplateView):
     def get_completion_table(self, clinic="", start_date="", end_date="", service=""):
         completion_table = []
         st_total = 0            # Surveys Triggered
-        ss_total = 0
+        ss_total = 0            # Surveys Started
         sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
@@ -283,40 +284,15 @@ class AnalystSummary(TemplateView):
         # Loop through the Clinics, summating the data required.
         for a_clinic in clinics_to_add:
 
-            # Survey Triggered (Sent) Query Statistics
-            st_query = Visit.objects.filter(
-                survey_sent__isnull=False, patient__clinic=a_clinic)
-            if start_date: st_query = st_query.filter(visit_time__gte=start_date)
-            if end_date: st_query = st_query.filter(visit_time__lte=end_date)
-            if service: st_query = st_query.filter(service__name=service)
-
-            st_count = st_query.count()
-            #sr_query = get_registration_count(a_clinic)
-
+            st_count = clinic_utils.get_triggered_count(a_clinic, service, start_date, end_date)
             st_total += st_count
 
             # Survey Started Query Statistics
-            ss_query = SurveyQuestionResponse.objects\
-                .filter(clinic=a_clinic)\
-                .filter(question__label__iexact="Open Facility")\
-                .filter(question__question_type__iexact="multiple-choice")
-
-            if start_date: ss_query = ss_query.filter(visit__visit_time__gte=start_date)
-            if end_date: ss_query = ss_query.filter(visit__visit_time__lte=end_date)
-            if service: ss_query = ss_query.filter(service__name=service)
-
-            ss_count = ss_query.count()
+            ss_count = survey_utils.get_started_count("", a_clinic, service, start_date, end_date)
             ss_total += ss_count
 
             # Survey Completed Query Statistics
-            sc_query = SurveyQuestionResponse.objects.filter(question__label="Wait Time")\
-                .filter(clinic=a_clinic)
-
-            if start_date: sc_query = sc_query.filter(visit__visit_time__gte=start_date)
-            if end_date: sc_query = sc_query.filter(visit__visit_time__lte=end_date)
-            if service: sc_query = sc_query.filter(service__name=service)
-            sc_count = sc_query.count()
-
+            sc_count = survey_utils.get_completion_qcount("", a_clinic, service, start_date, end_date)
             sc_total += sc_count
 
             # Survey Percentages
