@@ -582,4 +582,3 @@ class TestAnalystDashboardView(TestCase):
 
         # Test we have the right query
         self.assertEqual(sc_query.count(), 2)
-
