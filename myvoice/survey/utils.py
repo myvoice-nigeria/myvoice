@@ -14,20 +14,19 @@ REQUIRED_QUESTIONS = ['Open Facility', 'Respectful Staff Treatment',
                       'Wait Time']
 
 
-def analyze(responses, answer):
+def analyze(answers, correct_answer):
     """
     Returns the percentage (out of 100) of responses with the given answer, or
     None if there are no responses.
     """
-    if responses:
-        count = len([r for r in responses if r.response == answer])
-        return make_percentage(count, len(responses))
+    if answers:
+        count = len([r for r in answers if r == correct_answer])
+        return make_percentage(count, len(answers))
     return None
 
 
-def get_mode(responses, acceptable_answers=None):
+def get_mode(answers, acceptable_answers=None):
     """Returns the most commonly-reported answer, or None if there are no responses."""
-    answers = [r.response for r in responses if r.response]
     if acceptable_answers is not None:
         answers = [a for a in answers if a in acceptable_answers]
     if answers:
@@ -35,16 +34,17 @@ def get_mode(responses, acceptable_answers=None):
     return None
 
 
-def group_responses(responses, ordering, grouping=None):
+def group_responses(responses, ordering, grouping=None, keyfunc=attrgetter):
     """Returns a grouped list of responses.
 
     responses should use prefetch_related or select_related with the
     given attributes for the best performance.
+    For a ValuesQueryset use keyfunc=itemgetter.
     """
     if grouping is None:
         grouping = ordering
-    ordered = [r for r in sorted(responses, key=attrgetter(ordering))]
-    return [(l, list(r)) for l, r in groupby(ordered, key=attrgetter(grouping))]
+    ordered = [r for r in sorted(responses, key=keyfunc(ordering))]
+    return [(l, list(r)) for l, r in groupby(ordered, key=keyfunc(grouping))]
 
 
 def convert_to_local_format(phone):
@@ -86,7 +86,7 @@ def get_completion_count(responses):
 def get_registration_count(clinic):
     """Returns the count of patients who should have received this survey."""
     from myvoice.clinics.models import Visit
-    return Visit.objects.filter(patient__clinic=clinic).count()
+    return Visit.objects.filter(survey_sent__isnull=False, patient__clinic=clinic).count()
 
 
 def get_started_count(responses):

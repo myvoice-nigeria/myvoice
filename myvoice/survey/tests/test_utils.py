@@ -1,8 +1,11 @@
 from django.test import TestCase
 
 from .. import utils
+from .. import models as survey_models
 
 from myvoice.core.tests import factories
+
+from operator import itemgetter
 
 
 class TestDisplayFeedback(TestCase):
@@ -23,27 +26,61 @@ class TestSurveyUtils(TestCase):
 
     def setUp(self):
         self.survey = factories.Survey.create()
-        self.question = factories.SurveyQuestion.create(survey=self.survey)
+        self.question = factories.SurveyQuestion.create(survey=self.survey, label='Test')
         self.responses = [factories.SurveyQuestionResponse.create(
             response=ans, question=self.question)
             for ans in ('Yes', 'Yes', 'Yes', 'No')]
+        self.answers = [r.response for r in self.responses]
 
     def test_analyze(self):
         """Test it returns percentage of responses with a given answer."""
-        self.assertEqual(75, utils.analyze(self.responses, 'Yes'))
-        self.assertEqual(25, utils.analyze(self.responses, 'No'))
+        self.assertEqual(75, utils.analyze(self.answers, 'Yes'))
+        self.assertEqual(25, utils.analyze(self.answers, 'No'))
 
     def test_get_mode(self):
         """Test that get_mode function finds the most common item."""
         for i in range(3):
             self.responses.append(factories.SurveyQuestionResponse.create(
                 response='No', question=self.question))
-        self.assertEqual('No', utils.get_mode(self.responses))
+        answers = [r.response for r in self.responses]
+        self.assertEqual('No', utils.get_mode(answers))
 
     def test_get_mode_acceptable_answers(self):
         """Test that get_mode respects acceptable answers."""
         for i in range(3):
             self.responses.append(factories.SurveyQuestionResponse.create(
                 response='Maybe', question=self.question))
+        answers = [r.response for r in self.responses]
         self.assertEqual(
-            'Maybe', utils.get_mode(self.responses, acceptable_answers=['No', 'Maybe']))
+            'Maybe', utils.get_mode(answers, acceptable_answers=['No', 'Maybe']))
+
+    def test_group_responses(self):
+        """Test group_responses."""
+        question = factories.SurveyQuestion.create(survey=self.survey, label='Test1')
+        for i in range(3):
+            self.responses.append(factories.SurveyQuestionResponse.create(
+                response='Maybe', question=question))
+        grouped_responses = utils.group_responses(self.responses, 'question.label')
+        self.assertEqual(2, len(grouped_responses))
+
+        # Test the content of each group
+        grouped_dict = dict(grouped_responses)
+        self.assertEqual(4, len(grouped_dict['Test']))
+        self.assertEqual(3, len(grouped_dict['Test1']))
+
+    def test_group_responses_valuesqset(self):
+        """Test group_responses with ValuesQueryset."""
+        question = factories.SurveyQuestion.create(survey=self.survey, label='Test1')
+        for i in range(3):
+            self.responses.append(factories.SurveyQuestionResponse.create(
+                response='Maybe', question=question))
+
+        responses = survey_models.SurveyQuestionResponse.objects.values(
+            'question__label', 'response')
+        grouped_responses = utils.group_responses(responses, 'question__label', keyfunc=itemgetter)
+        self.assertEqual(2, len(grouped_responses))
+
+        # Test the content of each group
+        grouped_dict = dict(grouped_responses)
+        self.assertEqual(4, len(grouped_dict['Test']))
+        self.assertEqual(3, len(grouped_dict['Test1']))
