@@ -1,6 +1,7 @@
 import datetime
 from dateutil.parser import parse
 
+
 def get_week_start(date):
     """Returns midnight of the Monday prior to the given date."""
     days_since_monday = date.weekday()
@@ -49,11 +50,12 @@ def daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days)):
         yield start_date + datetime.timedelta(n)
 
+
 def get_date(the_date=""):
-    if string_date:
+    if the_date:
         if isinstance(the_date, datetime.datetime):
             return the_date
-        elif type(start_date) is str:
-            return parse(string_date)
+        elif type(the_date) is str:
+            return parse(the_date)
     else:
         return False

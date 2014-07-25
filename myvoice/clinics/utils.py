@@ -1,5 +1,6 @@
 from myvoice.clinics.models import Visit
 
+
 def get_triggered_count(a_clinic="", service="", start_date="", end_date=""):
     st_query = Visit.objects.filter(survey_sent__isnull=False)
     if a_clinic:

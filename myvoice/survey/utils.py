@@ -130,9 +130,9 @@ def get_registration_count(clinic):
 def get_started_query(responses="", clinic="", service="", start_date="", end_date=""):
     if not responses:
         responses = SurveyQuestionResponse.objects.all()
-    return filter_sqr_query(responses.filter(question__label__iexact="Open Facility")\
-        .filter(question__question_type__iexact="multiple-choice"),\
-        clinic, service, start_date, end_date)
+    return filter_sqr_query(responses.filter(question__label__iexact="Open Facility")
+                            .filter(question__question_type__iexact="multiple-choice"),
+                            clinic, service, start_date, end_date)
 
 
 def get_started_count(responses, clinic="", service="", start_date="", end_date=""):

@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange, get_date
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
 from myvoice.survey import utils as survey_utils
 from myvoice.clinics import utils as clinic_utils
 
@@ -292,7 +292,8 @@ class AnalystSummary(TemplateView):
             ss_total += ss_count
 
             # Survey Completed Query Statistics
-            sc_count = survey_utils.get_completion_qcount("", a_clinic, service, start_date, end_date)
+            sc_count = survey_utils.get_completion_qcount(
+                "", a_clinic, service, start_date, end_date)
             sc_total += sc_count
 
             # Survey Percentages
