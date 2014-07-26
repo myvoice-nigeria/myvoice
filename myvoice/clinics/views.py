@@ -1,6 +1,7 @@
 from itertools import groupby
 import json
 from operator import attrgetter, itemgetter
+from datetime import timedelta
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -9,7 +10,7 @@ from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, get_date, daterange
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
@@ -261,6 +262,7 @@ class RegionReport(ReportMixin, DetailView):
         self.curr_date = None
         self.start_date = None
         self.end_date = None
+        self.weeks = None
 
     def get(self, request, *args, **kwargs):
         if 'day' in request.GET and 'month' in request.GET and 'year' in request.GET:
@@ -281,6 +283,23 @@ class RegionReport(ReportMixin, DetailView):
         except (ValueError, AttributeError):
             pass
 
+    def calculate_weeks_ranges(self):
+        """Returns a list of tuples of dates between self.start_date and self.end_date"""
+#        week_list = [{"start":self.start_date, "end":self.end_date}]
+ #       self.weeks = week_list
+  #      return
+        week_list = []
+        start_date = self.start_date
+        next_monday = self.start_date
+        while(next_monday < self.end_date):
+            next_monday = start_date + timedelta(days=start_date.weekday(), weeks=1)
+            if next_monday > self.end_date:
+                week_list.append({"start":start_date, "end":self.end_date})
+            else:        
+                week_list.append({"start":start_date, "end":next_monday})
+            start_date = next_monday    
+        self.weeks = week_list
+
     def get_object(self, queryset=None):
         obj = super(RegionReport, self).get_object(queryset)
         self.calculate_date_range()
@@ -292,6 +311,7 @@ class RegionReport(ReportMixin, DetailView):
         else:
             self.start_date = self.responses.aggregate(min_date=Min('datetime'))['min_date']
             self.end_date = self.responses.aggregate(max_date=Max('datetime'))['max_date']
+        self.calculate_weeks_ranges()
         self.responses = self.responses.select_related('question', 'service', 'visit')
         return obj
 
@@ -301,6 +321,7 @@ class RegionReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
         kwargs['min_date'] = self.start_date
         kwargs['max_date'] = self.end_date
+        kwargs['weeks'] = self.weeks
         data = super(RegionReport, self).get_context_data(**kwargs)
         return data
 

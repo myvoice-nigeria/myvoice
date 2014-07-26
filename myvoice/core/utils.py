@@ -43,3 +43,18 @@ def extract_qset_data(qset, fld_names):
                 for fld_name in fld_names]
         out.append(line)
     return out
+
+
+def daterange(start_date, end_date, n=1):
+    for d in range(0, int ((end_date - start_date).days), n):
+        yield start_date + timedelta(d)
+
+
+def get_date(the_date=""):
+    if the_date:
+        if isinstance(the_date, datetime.datetime):
+            return the_date
+        elif type(the_date) is str:
+            return parse(the_date)
+    else:
+        return False
