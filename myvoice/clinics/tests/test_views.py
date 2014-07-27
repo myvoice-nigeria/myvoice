@@ -383,7 +383,8 @@ class TestClinicReportView(TestCase):
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
         self.questions = []
 
-        self.questions.append(factories.SurveyQuestion.create(label='Open Facility', survey=self.survey))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Open Facility', survey=self.survey))
         self.questions.append(factories.SurveyQuestion.create(
             label='Respectful Staff Treatment',
             survey=self.survey, categories='Yes\nNo', primary_answer='Yes'))
@@ -392,7 +393,8 @@ class TestClinicReportView(TestCase):
             survey=self.survey))
         self.questions.append(factories.SurveyQuestion.create(
             label='Charged Fairly',
-            survey=self.survey, categories='Fairly charged\nOvercharged', primary_answer='Fairly charged'))
+            survey=self.survey,
+            categories='Fairly charged\nOvercharged', primary_answer='Fairly charged'))
         self.questions.append(factories.SurveyQuestion.create(
             label='Wait Time',
             survey=self.survey, categories='<1 hour\n1-2 hours\n2-4 hours\n>4 hours'))
@@ -536,7 +538,6 @@ class TestClinicReportView(TestCase):
 
         report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
         report.get_object()
-        #import pdb;pdb.set_trace()
         satisfaction = report._get_patient_satisfaction(responses)
         self.assertEqual(67, satisfaction)
 
