@@ -487,6 +487,26 @@ class TestClinicReportView(TestCase):
         self.assertEqual(comments[1]['question'], 'General Feedback')
         self.assertEqual(comments[1]['response'], 'Hello2')
 
+    def test_get_date_range(self):
+        dt1 = timezone.make_aware(timezone.datetime(2014, 7, 14), timezone.utc)
+        dt2 = timezone.make_aware(timezone.datetime(2014, 7, 21), timezone.utc)
+        factories.SurveyQuestionResponse(
+            question=self.questions[0],
+            visit=factories.Visit(patient__clinic=self.clinic, service__code=2),
+            datetime=dt1)
+        factories.SurveyQuestionResponse(
+            question=self.questions[0],
+            visit=factories.Visit(patient__clinic=self.clinic, service__code=3),
+            datetime=dt2)
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report.get_object()
+        start, end = report.get_date_range()
+        self.assertEqual(dt1, start)
+        _dt3 = timezone.datetime(2014, 7, 28) - timezone.timedelta(microseconds=1)
+        dt3 = timezone.make_aware(_dt3, timezone.utc)
+        self.assertEqual(dt3, end)
+
 
 class TestRegionReportView(TestCase):
 
@@ -502,8 +522,8 @@ class TestRegionReportView(TestCase):
         factories.SurveyQuestion.create(label='Clean Hospital Materials', survey=self.survey)
         factories.SurveyQuestion.create(
             label='Charged Fairly', survey=self.survey, categories='Yes\nNo')
-        factories.SurveyQuestion.create(label='Wait Time', survey=self.survey,
-                                        categories='<1 hour\n1-2 hours\n2-3 hours\n4+ hours')
+        wait = factories.SurveyQuestion.create(label='Wait Time', survey=self.survey,
+                                               categories='<1 hour\n1-2 hours\n2-3 hours\n4+ hours')
 
         self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
 
@@ -533,6 +553,12 @@ class TestRegionReportView(TestCase):
             datetime=timezone.now(),
             visit=v2,
             clinic=self.clinic, response='No')
+
+        self.wait_response = factories.SurveyQuestionResponse.create(
+            question=wait,
+            datetime=timezone.now(),
+            visit=v2,
+            clinic=self.clinic, response='<1 hour')
 
     def make_request(self, data=None):
         """Make Test request with POST data."""
@@ -570,7 +596,7 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        self.assertEqual(3, report.responses.count())
+        self.assertEqual(4, report.responses.count())
 
     def test_date_from_request_params(self):
         """Test that the date values from request params determine filter for responses."""
@@ -621,7 +647,7 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        self.assertEqual(3, report.responses.count())
+        self.assertEqual(4, report.responses.count())
 
     def test_feedback_participation(self):
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
@@ -658,5 +684,7 @@ class TestRegionReportView(TestCase):
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
         feedback = report.get_feedback_by_clinic()
+        #import pdb;pdb.set_trace()
         self.assertEqual('TEST1', feedback[0][0])
         self.assertEqual(('50.0%', 2), feedback[0][1][0])
+        self.assertEqual(('<1 hour', 1), feedback[0][1][8])
