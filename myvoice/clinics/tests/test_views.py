@@ -382,10 +382,20 @@ class TestClinicReportView(TestCase):
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
         self.questions = []
-        for l in ['Open Facility', 'Respectful Staff Treatment',
-                  'Clean Hospital Materials', 'Charged Fairly',
-                  'Wait Time']:
-            self.questions.append(factories.SurveyQuestion.create(label=l, survey=self.survey))
+
+        self.questions.append(factories.SurveyQuestion.create(label='Open Facility', survey=self.survey))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Respectful Staff Treatment',
+            survey=self.survey, categories='Yes\nNo', primary_answer='Yes'))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Clean Hospital Materials',
+            survey=self.survey))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Charged Fairly',
+            survey=self.survey, categories='Fairly charged\nOvercharged', primary_answer='Fairly charged'))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Wait Time',
+            survey=self.survey, categories='<1 hour\n1-2 hours\n2-4 hours\n>4 hours'))
 
     def make_request(self, data=None):
         """Make Test request with POST data."""
@@ -506,6 +516,29 @@ class TestClinicReportView(TestCase):
         _dt3 = timezone.datetime(2014, 7, 28) - timezone.timedelta(microseconds=1)
         dt3 = timezone.make_aware(_dt3, timezone.utc)
         self.assertEqual(dt3, end)
+
+    def test_get_patient_satisfaction(self):
+        visit1 = factories.Visit.create()
+        visit2 = factories.Visit.create()
+        visit3 = factories.Visit.create()
+        treat = factories.SurveyQuestionResponse.create(
+            response='Yes', question=self.questions[1], visit=visit1)
+        charge = factories.SurveyQuestionResponse.create(
+            response='Fairly charged', question=self.questions[3], visit=visit1)
+        wait1 = factories.SurveyQuestionResponse.create(
+            response='<1 hour', question=self.questions[4], visit=visit1)
+        wait2 = factories.SurveyQuestionResponse.create(
+            response='>4 hours', question=self.questions[4], visit=visit2)
+        wait3 = factories.SurveyQuestionResponse.create(
+            response='<1 hour', question=self.questions[4], visit=visit3)
+
+        responses = [treat, charge, wait1, wait2, wait3]
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report.get_object()
+        #import pdb;pdb.set_trace()
+        satisfaction = report._get_patient_satisfaction(responses)
+        self.assertEqual(67, satisfaction)
 
 
 class TestRegionReportView(TestCase):
