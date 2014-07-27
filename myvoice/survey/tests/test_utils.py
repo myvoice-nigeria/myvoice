@@ -36,6 +36,7 @@ class TestSurveyUtils(TestCase):
         """Test it returns percentage of responses with a given answer."""
         self.assertEqual(75, utils.analyze(self.answers, 'Yes'))
         self.assertEqual(25, utils.analyze(self.answers, 'No'))
+        self.assertEqual(None, utils.analyze([], 'Yes'))
 
     def test_get_mode(self):
         """Test that get_mode function finds the most common item."""
@@ -44,6 +45,7 @@ class TestSurveyUtils(TestCase):
                 response='No', question=self.question))
         answers = [r.response for r in self.responses]
         self.assertEqual('No', utils.get_mode(answers))
+        self.assertEqual(None, utils.get_mode([]))
 
     def test_get_mode_acceptable_answers(self):
         """Test that get_mode respects acceptable answers."""
@@ -84,3 +86,17 @@ class TestSurveyUtils(TestCase):
         grouped_dict = dict(grouped_responses)
         self.assertEqual(4, len(grouped_dict['Test']))
         self.assertEqual(3, len(grouped_dict['Test1']))
+
+    def test_convert_local_format(self):
+        """Test conversion of phone number to local format."""
+        self.assertEqual('08111111111', utils.convert_to_local_format('08111111111'))
+        self.assertEqual('08111111111', utils.convert_to_local_format('+2348111111111'))
+        self.assertEqual('08111111111', utils.convert_to_local_format('2348111111111'))
+        self.assertEqual(None, utils.convert_to_local_format('234811111111122'))
+
+    def test_convert_international_format(self):
+        """Test conversion of phone number to international format."""
+        self.assertEqual('+2348111111111', utils.convert_to_international_format('+2348111111111'))
+        self.assertEqual('+2348111111111', utils.convert_to_international_format('2348111111111'))
+        self.assertEqual('+2348111111111', utils.convert_to_international_format('08111111111'))
+        self.assertEqual(None, utils.convert_to_international_format('0811111'))
