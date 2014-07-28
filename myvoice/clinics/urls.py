@@ -17,4 +17,6 @@ urlpatterns = [
         name='clinic_report'),
     url(r'^visit/$', views.VisitView.as_view(), name='visit'),
     url(r'^feedback/$', views.FeedbackView.as_view(), name='visit'),
+    url(r'^lga_feedback_filter/$', views.RegionReportFilter.as_view(), name='region_report_filter'),
+
 ]

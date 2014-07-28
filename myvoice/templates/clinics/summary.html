@@ -150,15 +150,51 @@
 
  $(document).ready( function () {
   
-  $("#weeks_filter").change( function() {
-    $( ".weeks_filter" ).each(function( index ) {
-      $( this ).text($("#weeks_filter").val());
+    $("#weeks_filter").change( function() {
+      console.log("Updating Feedback on Services Table");
+      filter_feedback_on_services_table();
+
+      $( ".weeks_filter" ).each(function( index ) {
+        $( this ).text($("#weeks_filter").val());
+      });
     });
-
-    console.log($("#weeks_filter").val());
-
-  });
 });
+    
+  function filter_feedback_on_services_table() {
+    
+    // Completion Rate Table - Get Dates from Selected option.
+    var start_date = $("#weeks_filter").val().split(" - ")[0];
+    var end_date = $("#weeks_filter").val().split(" - ")[1];
+
+    // Send dates via Ajax to our Filter and 
+    $.get("/lga_feedback_filter", {'start_date':start_date, 'end_date':end_date}, function(data,status){
+      $.each(data.clinic_data, function(key, value){
+        $("tr#"+key+" td.clinic_of").text(value.of_num + "("+value.of_perc+"%)");
+        $("tr#"+key+" td.clinic_rst").text(value.rst_num + "("+value.rst_perc+"%)");
+        $("tr#"+key+" td.clinic_chm").text(value.chm_num + "("+value.chm_perc+"%)");
+        $("tr#"+key+" td.clinic_cf").text(value.cf_num + "("+value.cf_perc+"%)");
+        $("tr#"+key+" td.clinic_mcw").text(value.mcw_num + "("+value.mcw_perc+"%)");
+
+      });
+    });
+  }
+
+  function filter_feedback_table() {
+    
+    // Completion Rate Table - Selects
+    var start_date = $("#frt_start_date").val();
+    var end_date = $("#frt_end_date").val();
+    var clinic = $("#frt_clinic").val(); 
+    var service = $("#frt_service").val();
+
+    $.get("/lga_feedback_filter", {'service':service, 'clinic': clinic, 'start_date':start_date, 'end_date':end_date}, function(data,status){
+      $.each(data.feedback_data, function(key, value){
+        $("tr#"+key+" td.feedback_nor").text(value.rsp_num);
+        $("tr#"+key+" td.feedback_prt").text(value.rsp_prt);
+        $("tr#"+key+" td.feedback_srt").text(value.rsp_srt);
+      });
+    });
+  }
 
 </script>
 {% endblock js %}
