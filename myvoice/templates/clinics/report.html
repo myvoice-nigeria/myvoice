@@ -102,9 +102,8 @@
 
     {% for week in feedback_by_week %}
       <div class="col-xs-6 chart-container">
-        <div class="col-xs-12"><h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}</h2></div>
-        <div class="col-xs-6" >
-          <div style="float: left; display: inline; height: 50px; padding: 5px;">{{ week.survey_num }} <br/>Surveys</div>
+        <div class="col-xs-12"><h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }} <br/> {{ week.survey_num }} Surveys</h2></div>
+        <div class="col-xs-6" >  
           <div class="green-box">
             {% if week.patient_satisfaction == None %}
               N/A
