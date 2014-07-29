@@ -686,4 +686,3 @@ class TestAjax(TestCase):
                        HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(list(r.content)[2], '4')
