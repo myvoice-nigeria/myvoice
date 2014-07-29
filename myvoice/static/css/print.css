@@ -24,7 +24,6 @@
 
 @media print {
     .page {
-        margin: 0;
         border: initial;
         border-radius: initial;
         width: initial;
@@ -32,6 +31,7 @@
         box-shadow: initial;
         background: initial;
         page-break-after: always;
+        margin: 14px 0 14px 0;
 
     }
 
@@ -56,6 +56,9 @@
     }
 }
 
+.print-break {
+  page-break-after: always;
+}
 
 /* Account for fixed navbar */
 body {

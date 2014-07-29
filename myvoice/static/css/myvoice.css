@@ -42,6 +42,10 @@ h2 {
   display: none;
 }
 
+.web-only {
+  display: block;
+}
+
 /* Non-responsive overrides
  *
  * Utilitze the following CSS to disable the responsive-ness of the container,
