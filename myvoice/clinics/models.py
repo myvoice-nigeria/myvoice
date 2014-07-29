@@ -177,7 +177,10 @@ class GenericFeedback(models.Model):
     clinic = models.ForeignKey('Clinic', null=True, blank=True)
     message = models.CharField(max_length=200, blank=True)
     message_date = models.DateTimeField(auto_now=True)
-    display_on_dashboard = models.BooleanField(default=True)
+    display_on_dashboard = models.BooleanField(
+        default=True,
+        help_text="Whether or not this response is displayed on the dashboard. "
+        "Valid only for open-ended question responses.")
 
     class Meta:
         verbose_name = 'General Feedback'
