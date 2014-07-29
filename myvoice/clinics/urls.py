@@ -19,5 +19,7 @@ urlpatterns = [
     url(r'^feedback/$', views.FeedbackView.as_view(), name='visit'),
     url(r'^lga_filter_feedback_by_clinic/$',
         views.LGAReportFilterByClinic.as_view(), name='clinic_filter'),
+    url(r'^lga_filter_feedback_by_service/$',
+        views.LGAReportFilterByService.as_view(), name='service_filter'),
 
 ]

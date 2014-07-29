@@ -51,13 +51,13 @@
       
       <tbody>
         {% for service, service_data in feedback_by_service %}
-        <tr>
-            <td>{{ service.name }}</td>
-            {% for result, total_respondents in service_data %}
+        <tr id="service{{ service.id }}">
+            <td id="service_name">{{ service.name }}</td>
+            {% for label, result, total_respondents in service_data %}
             {% if result == None %}
-              <td>N/A (0)</td>
+              <td id="{{ label }}">N/A (0)</td>
             {% else %}
-              <td>{{ result }} ({{ total_respondents }})</td>
+              <td id="{{ label }}">{{ result }} ({{ total_respondents }})</td>
             {% endif %}
             {% endfor %}
         </tr>
@@ -169,7 +169,15 @@
 
     // Send dates via Ajax to our Filter and 
     $.get("/lga_filter_feedback_by_service", {'start_date':start_date, 'end_date':end_date}, function(data,status){
-      $.each(data.clinic_data, function(key, value){
+      $.each(data, function(key, value){
+
+        id = results[0];
+        name = results[1];
+        label = results[2][0][0];
+
+        perc = results[2][0][1];
+        num = results[2][0][2];
+
         $("tr#"+key+" td.clinic_of").text(value.of_num + "("+value.of_perc+"%)");
         $("tr#"+key+" td.clinic_rst").text(value.rst_num + "("+value.rst_perc+"%)");
         $("tr#"+key+" td.clinic_chm").text(value.chm_num + "("+value.chm_perc+"%)");
@@ -187,7 +195,6 @@
     var end_date = $("#weeks_filter").val().split(" - ")[1];
 
     $.get("/lga_filter_feedback_by_clinic", {'start_date':start_date, 'end_date':end_date}, function(data, status){
-      //console.log(data)
       $.each(data, function(num, results ){
         id = results[0];
         name = results[1];
@@ -196,41 +203,7 @@
         perc = results[2][0][1];
         num = results[2][0][2];
         
-        //$("tr#clinic"+results[0]+" td.clinic_name").text(results[1]);
         $("tr#clinic"+id+" td."+label).text(perc + "(" + num + ")");
-        //$("tr#clinic"+id+" td."+label).text(perc + "(" + num + ")");
-
-       /* name = data[0][0]
-        fpp = data[0][1][0][0]
-        fpn = data[0][1][0][1]
-        psp = data[0][1][1][0]
-        psn = data[0][1][1][1]
-        qsp = data[0][1][2][0]
-        qsn = data[0][1][2][1]
-        ofn = data[0][1][3][0]
-        ofp = data[0][1][3][1]
-        rsp = data[0][1][4][0]
-        rsn = data[0][1][4][1]
-        cmp = data[0][1][5][0]
-        cmn = data[0][1][5][1]
-        cfp = data[0][1][6][0]
-        cfn = data[0][1][6][1]
-        cwp = data[0][1][7][0]
-        cwn = data[0][1][7][1]
-        cwp = data[0][1][8][0]
-        cwn = data[0][1][8][1]
-
-
-
-        feedback Participation 
-        Patient Satisfaction  
-        Quality (Score, Q1) 
-        Quantity (Score, Q1) 
-        Open Facility  
-        Respectful Staff Treatment 
-        Clean Hospital Materials  
-        Charged Fairly  
-        Most Common Wait Time*/
       });
     });
   }

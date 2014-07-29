@@ -104,15 +104,15 @@ class ReportMixin(object):
                     total_responses = len(question_responses)
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
-                    service_data.append(('{}%'.format(percentage), total_responses))
+                    service_data.append([label, '{}%'.format(percentage), total_responses])
                 else:
-                    service_data.append((None, 0))
+                    service_data.append([None, None, 0])
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
                 mode = survey_utils.get_mode(wait_times)
-                service_data.append((mode, len(wait_times)))
+                service_data.append(["Wait_Time", mode, len(wait_times)])
             else:
-                service_data.append((None, 0))
+                service_data.append([None, None, 0])
             data.append((service, service_data))
         return data
 
@@ -420,6 +420,34 @@ class RegionReport(ReportMixin, DetailView):
                 clinic_data.append((None, 0))
             data.append((clinic, clinic_map[clinic], clinic_data))
         return data
+
+
+class LGAReportFilterByService(View):
+    def get(self, request):
+        r = ReportMixin()
+        r.initialize_data("fnord")
+        r.responses = SurveyQuestionResponse.objects.all()
+        results = []
+        content = r.get_feedback_by_service()
+
+        titles = ["Open_Facility", "Respectful_Staff",
+                  "Clean_Hospital", "Charged_Fairly", "MC_Wait_Time"]
+
+        # Convert the Service Objects to only names, plus id's for ajax
+        for obj in content:
+
+            new_obj = []
+            counter = 0
+            for data in obj[1]:
+                new_obj.append([titles[counter], data[0], data[1]])
+                counter += 1
+
+            print obj[1]
+            obj = [obj[0].id, obj[0].name, new_obj]
+            print obj
+            results.append(obj)
+
+        return HttpResponse(json.dumps(results), content_type="text/json")
 
 
 class LGAReportFilterByClinic(View):
