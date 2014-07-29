@@ -179,8 +179,7 @@ class GenericFeedback(models.Model):
     message_date = models.DateTimeField(auto_now=True)
     display_on_dashboard = models.BooleanField(
         default=True,
-        help_text="Whether or not this response is displayed on the dashboard. "
-        "Valid only for open-ended question responses.")
+        help_text="Whether or not this response is displayed on the dashboard.")
 
     class Meta:
         verbose_name = 'General Feedback'
