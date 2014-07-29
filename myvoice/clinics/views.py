@@ -363,7 +363,12 @@ class RegionReport(ReportMixin, DetailView):
         # So we can get the name of the clinic for the template
         clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
 
-        responses = self.responses.exclude(clinic=None).values(
+        responses = self.responses.exclude(clinic=None)
+
+        if self.start_date and self.end_date:
+            responses = responses.filter(visit__visit_time__range=(self.start_date, self.end_date))
+
+        responses = responses.values(
             'clinic', 'question__label', 'response')
 
         by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
@@ -371,6 +376,8 @@ class RegionReport(ReportMixin, DetailView):
         # Add clinics without responses back.
         clinic_ids = [clinic[0] for clinic in by_clinic]
         rest_clinics = set(clinic_map.keys()).difference(clinic_ids)
+
+
         for _clinic in rest_clinics:
             by_clinic.append((_clinic, []))
 
@@ -388,10 +395,10 @@ class RegionReport(ReportMixin, DetailView):
 
             # Build the data
             clinic_data = [
-                ('{}%'.format(survey_percent), total_visits),
-                ('{}%'.format(satis_percent), satis_total),
-                (None, 0),
-                (None, 0)
+                ("Participation", '{}%'.format(survey_percent), total_visits),
+                ("Patient_Satisfaction", '{}%'.format(satis_percent), satis_total),
+                ("Quality", None, 0),
+                ("Quantity", None, 0)
             ]
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
@@ -401,20 +408,20 @@ class RegionReport(ReportMixin, DetailView):
                     total_responses = len(question_responses)
                     answers = [response['response'] for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
-                    clinic_data.append(('{}%'.format(percentage), total_responses))
+                    clinic_data.append((label.replace(" ", "_"), '{}%'.format(percentage), total_responses))
                 else:
-                    clinic_data.append((None, 0))
+                    clinic_data.append((None, None, 0))
 
             if 'Wait Time' in responses_by_question:
                 wait_times = [r['response'] for r in responses_by_question['Wait Time']]
                 mode = survey_utils.get_mode(wait_times)
-                clinic_data.append((mode, len(wait_times)))
+                clinic_data.append(("Wait_Time", mode, len(wait_times)))
             else:
                 clinic_data.append((None, 0))
-            data.append((clinic_map[clinic], clinic_data))
+            data.append((clinic, clinic_map[clinic], clinic_data))
         return data
 
-class RegionReportFilter(View):
+class LGAReportFilterByClinic(View):
 
     def get_variable(self, request, variable_name, ignore_value):
         if request.GET.get(variable_name):
@@ -428,18 +435,19 @@ class RegionReportFilter(View):
     def get(self, request):
     
         # Get the variables
-        the_service = self.get_variable(request, "service", "Service")
+        
         the_start_date = self.get_variable(request, "start_date", "Start Date")
         the_end_date = self.get_variable(request, "end_date", "End Date")
-
+        
         r = RegionReport()                  # Create an instance of Report
-        r.start_date = the_start_date
-        r.end_date = the_end_date
+
+        r.start_date = get_date(the_start_date)
+        r.end_date = get_date(the_end_date)
+
         r.calculate_date_range()
         r.initialize_data("")
         r.responses = SurveyQuestionResponse.objects.all() # filter(clinic__lga__iexact=obj.name)
-        # r.get_object("")
-        # r.responses = 
+
         content = r.get_feedback_by_clinic()
 
         # of_num
