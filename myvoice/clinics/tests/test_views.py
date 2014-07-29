@@ -680,9 +680,10 @@ class TestAjax(TestCase):
         self.c = Client()
 
     def test_ajax_clinic(self):
-        
-        r = self.c.get('/lga_filter_feedback_by_clinic/', {'start_date': "July 20 2014", "end_date": "July 21 2014"},
-                              HTTP_X_REQUESTED_WITH='XMLHttpRequest')
 
-        self.assertEqual(r.status_code, 200)                
-        self.assertEqual(list(r.content)[2], '4')           
+        r = self.c.get('/lga_filter_feedback_by_clinic/',
+                       {'start_date': "July 20 2014", "end_date": "July 21 2014"},
+                       HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(list(r.content)[2], '4')

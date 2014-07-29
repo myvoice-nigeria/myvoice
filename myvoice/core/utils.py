@@ -58,7 +58,7 @@ def get_date(the_date=""):
     if the_date:
         if type(the_date) is str or type(the_date) is unicode:
             the_date = parse(the_date)
-        if the_date.tzinfo == None:
-            the_date = the_date.replace(tzinfo = wat)
+        if the_date.tzinfo is None:
+            the_date = the_date.replace(tzinfo=wat)
     else:
         return False
