@@ -104,7 +104,8 @@ class ReportMixin(object):
                     total_responses = len(question_responses)
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
-                    service_data.append([label.replace(" ", "_"), '{}%'.format(percentage), total_responses])
+                    service_data.append([label.replace(" ", "_"),
+                                        '{}%'.format(percentage), total_responses])
                 else:
                     service_data.append([None, 0])
             if 'Wait Time' in responses_by_question:
@@ -424,15 +425,28 @@ class RegionReport(ReportMixin, DetailView):
 
 
 class LGAReportFilterByService(View):
+
+    def get_variable(self, request, variable_name, ignore_value):
+        if request.GET.get(variable_name):
+            the_variable_data = request.GET[variable_name]
+            if str(the_variable_data) is str(ignore_value):
+                the_variable_data = ""
+        else:
+            the_variable_data = ""
+        return the_variable_data
+
     def get(self, request):
+
+        # Get the variables
+        the_start_date = get_date(self.get_variable(request, "start_date", "Start Date"))
+        the_end_date = get_date(self.get_variable(request, "end_date", "End Date"))
+
         r = ReportMixin()
         r.initialize_data("fnord")
-        r.responses = SurveyQuestionResponse.objects.all()
+        r.responses = SurveyQuestionResponse.objects.filter(
+            visit__visit_time__range=(the_start_date, the_end_date))
         results = []
         content = r.get_feedback_by_service()
-
-        titles = ["Open_Facility", "Respectful_Staff",
-                  "Clean_Hospital", "Charged_Fairly", "MC_Wait_Time"]
 
         # Convert the Service Objects to only names, plus id's for ajax
         for obj in content:
