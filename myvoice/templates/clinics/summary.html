@@ -55,9 +55,9 @@
             <td id="service_name">{{ service.name }}</td>
             {% for label, result, total_respondents in service_data %}
             {% if result == None %}
-              <td id="{{ label }}">N/A (0)</td>
+              <td class="{{ label }}">N/A (0)</td>
             {% else %}
-              <td id="{{ label }}">{{ result }} ({{ total_respondents }})</td>
+              <td class="{{ label }}">{{ result }} ({{ total_respondents }})</td>
             {% endif %}
             {% endfor %}
         </tr>
@@ -152,6 +152,8 @@
   
     $("#weeks_filter").change( function() {
       console.log("Updating Feedback on Services Table");
+      filter_feedback_on_services_table();
+      console.log("Updating Feedback on Clinics Table");
       filter_feedback_on_clinics_table();
 
       // Update the Values within the Charts to the Select Value
@@ -169,20 +171,17 @@
 
     // Send dates via Ajax to our Filter and 
     $.get("/lga_filter_feedback_by_service", {'start_date':start_date, 'end_date':end_date}, function(data,status){
-      $.each(data, function(key, value){
+      $.each(data, function(num, results){
 
         id = results[0];
         name = results[1];
         label = results[2][0][0];
-
         perc = results[2][0][1];
         num = results[2][0][2];
 
-        $("tr#"+key+" td.clinic_of").text(value.of_num + "("+value.of_perc+"%)");
-        $("tr#"+key+" td.clinic_rst").text(value.rst_num + "("+value.rst_perc+"%)");
-        $("tr#"+key+" td.clinic_chm").text(value.chm_num + "("+value.chm_perc+"%)");
-        $("tr#"+key+" td.clinic_cf").text(value.cf_num + "("+value.cf_perc+"%)");
-        $("tr#"+key+" td.clinic_mcw").text(value.mcw_num + "("+value.mcw_perc+"%)");
+        console.log(results);
+
+        $("tr#service"+id+" td."+label).text(perc + " ("+num+")");
 
       });
     });

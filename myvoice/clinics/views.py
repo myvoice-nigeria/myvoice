@@ -104,15 +104,16 @@ class ReportMixin(object):
                     total_responses = len(question_responses)
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
-                    service_data.append([label, '{}%'.format(percentage), total_responses])
+                    service_data.append([label.replace(" ", "_"), '{}%'.format(percentage), total_responses])
                 else:
-                    service_data.append([None, None, 0])
+                    service_data.append([None, 0])
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
                 mode = survey_utils.get_mode(wait_times)
                 service_data.append(["Wait_Time", mode, len(wait_times)])
             else:
                 service_data.append([None, None, 0])
+            print service_data
             data.append((service, service_data))
         return data
 
@@ -439,7 +440,7 @@ class LGAReportFilterByService(View):
             new_obj = []
             counter = 0
             for data in obj[1]:
-                new_obj.append([titles[counter], data[0], data[1]])
+                new_obj.append([data[0], data[1], data[2]])
                 counter += 1
 
             print obj[1]
