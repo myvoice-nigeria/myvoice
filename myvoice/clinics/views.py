@@ -114,7 +114,6 @@ class ReportMixin(object):
                 service_data.append(["Wait_Time", mode, len(wait_times)])
             else:
                 service_data.append([None, None, 0])
-            print service_data
             data.append((service, service_data))
         return data
 
@@ -457,9 +456,7 @@ class LGAReportFilterByService(View):
                 new_obj.append([data[0], data[1], data[2]])
                 counter += 1
 
-            print obj[1]
             obj = [obj[0].id, obj[0].name, new_obj]
-            print obj
             results.append(obj)
 
         return HttpResponse(json.dumps(results), content_type="text/json")
