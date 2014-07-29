@@ -10,7 +10,7 @@ from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, get_date, daterange
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, get_date
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
@@ -287,12 +287,12 @@ class RegionReport(ReportMixin, DetailView):
         """Returns a list of tuples of dates between self.start_date and self.end_date"""
         week_list = []
         start_date = get_week_start(self.start_date)
-        end_date = get_week_end(self.end_date)
+
         next_monday = self.start_date
         while(next_monday < self.end_date):
             next_monday = start_date + timedelta(days=0, weeks=1)
-            week_list.append({"start":start_date, "end":next_monday})
-            start_date = next_monday    
+            week_list.append({"start": start_date, "end": next_monday})
+            start_date = next_monday
         self.weeks = week_list
 
     def get_object(self, queryset=None):
@@ -377,7 +377,6 @@ class RegionReport(ReportMixin, DetailView):
         clinic_ids = [clinic[0] for clinic in by_clinic]
         rest_clinics = set(clinic_map.keys()).difference(clinic_ids)
 
-
         for _clinic in rest_clinics:
             by_clinic.append((_clinic, []))
 
@@ -408,7 +407,8 @@ class RegionReport(ReportMixin, DetailView):
                     total_responses = len(question_responses)
                     answers = [response['response'] for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
-                    clinic_data.append((label.replace(" ", "_"), '{}%'.format(percentage), total_responses))
+                    clinic_data.append((label.replace(" ", "_"),
+                                        '{}%'.format(percentage), total_responses))
                 else:
                     clinic_data.append((None, None, 0))
 
@@ -420,6 +420,7 @@ class RegionReport(ReportMixin, DetailView):
                 clinic_data.append((None, 0))
             data.append((clinic, clinic_map[clinic], clinic_data))
         return data
+
 
 class LGAReportFilterByClinic(View):
 
@@ -433,56 +434,25 @@ class LGAReportFilterByClinic(View):
         return the_variable_data
 
     def get(self, request):
-    
+
         # Get the variables
-        
         the_start_date = self.get_variable(request, "start_date", "Start Date")
         the_end_date = self.get_variable(request, "end_date", "End Date")
-        
+
         r = RegionReport()                  # Create an instance of Report
 
         r.start_date = get_date(the_start_date)
         r.end_date = get_date(the_end_date)
+        r.curr_date = r.end_date
 
         r.calculate_date_range()
         r.initialize_data("")
-        r.responses = SurveyQuestionResponse.objects.all() # filter(clinic__lga__iexact=obj.name)
+        r.responses = SurveyQuestionResponse.objects.all()
 
         content = r.get_feedback_by_clinic()
 
-        # of_num
-        #of_num 
-        #of_perc
-        #rst_num 
-        #rst_perc
-        #$("tr#"+key+" td.clinic_chm").text(value.chm_num + "("+value.chm_perc+"%)");
-        #$("tr#"+key+" td.clinic_cf").text(value.cf_num + "("+value.cf_perc+"%)");
-        #$("tr#"+key+" td.clinic_mcw").text(value.mcw_num + "("+value.mcw_perc+"%)");
-
-        #if not the_start_date or "Start Date" in the_start_date:
-        #    the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        #else:
-        #    the_start_date = parse(the_start_date)
-        #if not the_end_date or "End Date" in the_end_date:
-        #    the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
-        #else:
-        #    the_end_date = parse(the_end_date)
-
-        #a = AnalystSummary()
-        #data = a.get_completion_table(
-        #    start_date=the_start_date, end_date=the_end_date, service=the_service)
-        #content = {"clinic_data": {}}
-        #for a_clinic in data:
-        #    content["clinic_data"][a_clinic["clinic_id"]] = {
-        #        "name": a_clinic["clinic_name"],
-        #        "st": a_clinic["st_count"],
-        #        "ss": a_clinic["ss_count"],
-        #        "sc": a_clinic["sc_count"],
-        #        "scp": a_clinic["sc_st_percent"]
-        #    }
-        # content = {"table": "1"}
-
         return HttpResponse(json.dumps(content), content_type="text/json")
+
 
 class FeedbackView(View):
     form_class = forms.FeedbackForm

@@ -48,8 +48,8 @@ def extract_qset_data(qset, fld_names):
 
 
 def daterange(start_date, end_date, n=1):
-    for d in range(0, int ((end_date - start_date).days), n):
-        yield start_date + timedelta(d)
+    for d in range(0, int((end_date - start_date).days), n):
+        yield start_date + datetime.timedelta(d)
 
 
 def get_date(the_date=""):

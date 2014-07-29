@@ -152,8 +152,9 @@
   
     $("#weeks_filter").change( function() {
       console.log("Updating Feedback on Services Table");
-      filter_feedback_on_services_table();
+      filter_feedback_on_clinics_table();
 
+      // Update the Values within the Charts to the Select Value
       $( ".weeks_filter" ).each(function( index ) {
         $( this ).text($("#weeks_filter").val());
       });
@@ -179,19 +180,25 @@
     });
   }
 
-  function filter_feedback_table() {
+  function filter_feedback_on_clinics_table() {
     
     // Completion Rate Table - Selects
-    var start_date = $("#frt_start_date").val();
-    var end_date = $("#frt_end_date").val();
-    var clinic = $("#frt_clinic").val(); 
-    var service = $("#frt_service").val();
+    var start_date = $("#weeks_filter").val().split(" - ")[0];
+    var end_date = $("#weeks_filter").val().split(" - ")[1];
 
-    $.get("/lga_filter_feedback_by_clinic", {'start_date':start_date, 'end_date':end_date}, function(data,status){
-      $.each(data.feedback_data, function(key, value){
-        $("tr#clinic"+key+" td.clinic_name").text(value[1][0]);
-        $("tr#clinic"+key+" td.feedback_fpp").text(value[2][0][0]);
-        $("tr#clinic"+key+" td.feedback_fpn").text(value.[2][0][1]);
+    $.get("/lga_filter_feedback_by_clinic", {'start_date':start_date, 'end_date':end_date}, function(data, status){
+      //console.log(data)
+      $.each(data, function(num, results ){
+        id = results[0];
+        name = results[1];
+        label = results[2][0][0];
+
+        perc = results[2][0][1];
+        num = results[2][0][2];
+        
+        //$("tr#clinic"+results[0]+" td.clinic_name").text(results[1]);
+        $("tr#clinic"+id+" td."+label).text(perc + "(" + num + ")");
+        //$("tr#clinic"+id+" td."+label).text(perc + "(" + num + ")");
 
        /* name = data[0][0]
         fpp = data[0][1][0][0]
