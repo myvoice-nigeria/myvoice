@@ -1,0 +1,12 @@
+{% for clinic, clinic_data in feedback_by_clinic %}
+    <tr>
+        <td>{{ clinic }}</td>
+        {% for result, total_respondents in clinic_data %}
+        {% if result == None %}
+          <td>N/A (0)</td>
+        {% else %}
+          <td>{{ result }} ({{ total_respondents }})</td>
+        {% endif %}
+        {% endfor %}
+    </tr>
+{% endfor %}

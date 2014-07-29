@@ -1,0 +1,12 @@
+{% for service, service_data in feedback_by_service %}
+  <tr>
+    <td>{{ service.name }}</td>
+  {% for result, total_respondents in service_data %}
+    {% if result == None %}
+       <td>N/A (0)</td>
+    {% else %}
+       <td>{{ result }} ({{ total_respondents }})</td>
+    {% endif %}
+  {% endfor %}
+  </tr>
+{% endfor %}

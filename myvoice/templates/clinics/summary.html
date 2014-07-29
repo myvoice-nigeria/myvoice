@@ -38,21 +38,11 @@
           <th>Most Common<br>Wait Time (hrs)</th>
         </tr>
       </thead>
-      
       <tbody>
-        {% for service, service_data in feedback_by_service %}
-        <tr>
-            <td>{{ service.name }}</td>
-            {% for result, total_respondents in service_data %}
-            {% if result == None %}
-              <td>N/A (0)</td>
-            {% else %}
-              <td>{{ result }} ({{ total_respondents }})</td>
-            {% endif %}
-            {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
+      <div id="by_service">
+          {% include "clinics/by_service.html" %}
+      </div> 
+     </tbody>
     </table>
   </div><!-- / #feedback-on-services .container -->
 
@@ -115,18 +105,9 @@
         </tr>
       </thead>
       <tbody>
-      {% for clinic, clinic_data in feedback_by_clinic %}
-        <tr>
-            <td>{{ clinic }}</td>
-            {% for result, total_respondents in clinic_data %}
-            {% if result == None %}
-              <td>N/A (0)</td>
-            {% else %}
-              <td>{{ result }} ({{ total_respondents }})</td>
-            {% endif %}
-            {% endfor %}
-        </tr>
-      {% endfor %}
+      <div id="by_clinic">
+          {% include "clinics/by_clinic.html" %}
+      </div> 
 
       </tbody>
     </table>
