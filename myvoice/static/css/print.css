@@ -19,7 +19,9 @@
 @page {
     size: A4;
     margin: 0;
+
 }
+
 @media print {
     .page {
         margin: 0;
@@ -30,6 +32,27 @@
         box-shadow: initial;
         background: initial;
         page-break-after: always;
+
+    }
+
+    .participation-module .content {
+      background-color: #E5E5E5;
+      padding: 0 16px 20px 16px;
+      height:101px;
+      border: 3px solid #A6A8AB;
+    }
+
+    .section-heading {
+      border: 3px solid #A6A8AB;
+      -webkit-print-color-adjust:exact;
+    }
+
+    .print-only {
+      display: block;
+    }
+
+    .web-only {
+      display: none;
     }
 }
 

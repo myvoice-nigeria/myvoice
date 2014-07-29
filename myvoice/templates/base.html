@@ -100,10 +100,24 @@
       {% block content %}{% endblock content %}
 
       {% block footer %}
-        <div class="footer">
+        <div class="container print-only">
+          <div class="col-xs-5"><img src="{% static 'img/myvoice-logo-dark.png' %}"></div>
+
+          <div class="col-xs-7">
+              <span style="font-weight:700">contact</span><br>
+              If you have any questions or comments about the content of this
+              report, please contact:<br />
+              <span style="font-weight:700">Nonso Jideofor:</span>  0818  332  7178
+          </div>
+
+        </div>
+
+        <div class="footer web-only">
           <div class="container">
             <div class="col-xs-5">
-              <a class="navbar-brand" href="{% url 'home' %}" style="padding-top:30px;"><img src="{% static 'img/myvoice-logo-dark.png' %}"></a>
+              <a class="navbar-brand" href="{% url 'home' %}" style="padding-top:30px;">
+                <img src="{% static 'img/myvoice-logo-dark.png' %}">
+              </a>
             </div>
 
             <div class="col-xs-7">
