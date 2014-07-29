@@ -47,6 +47,13 @@
   </head>
   <body>
     {% block body %}
+      <div class="container print-only">
+        <div class="col-xs-5">
+          <img src="{% static 'img/myvoice-logo-dark.png' %}">
+        </div>
+      </div>
+
+
       {% block navbar %}
         <div class="navbar navbar-fixed-top" role="navigation">
           <div class="container">
