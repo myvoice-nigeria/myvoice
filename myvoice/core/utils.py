@@ -1,6 +1,7 @@
 from django.utils import timezone
 import datetime
 from dateutil.parser import parse
+from dateutil.tz import gettz
 
 
 def get_week_start(date):
@@ -53,10 +54,11 @@ def daterange(start_date, end_date, n=1):
 
 
 def get_date(the_date=""):
+    wat = gettz('WAT')
     if the_date:
-        if isinstance(the_date, datetime.datetime):
-            return the_date
-        elif type(the_date) is str or type(the_date) is unicode:
-            return parse(the_date)
+        if type(the_date) is str or type(the_date) is unicode:
+            the_date = parse(the_date)
+        if the_date.tzinfo == None:
+            the_date = the_date.replace(tzinfo = wat)
     else:
         return False
