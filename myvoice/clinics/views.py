@@ -285,7 +285,7 @@ class RegionReport(ReportMixin, DetailView):
 
     def calculate_weeks_ranges(self):
         """Returns a list of tuples of dates between self.start_date and self.end_date"""
-        week_list = []
+        week_list = [{"start": self.start_date, "end": self.end_date}]
         start_date = get_week_start(self.start_date)
 
         next_monday = self.start_date
