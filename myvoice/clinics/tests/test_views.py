@@ -489,6 +489,11 @@ class TestClinicReportView(TestCase):
             clinic=self.clinic, message_date=timezone.now(), message='No')
         factories.GenericFeedback(
             clinic=self.clinic, message_date=timezone.now(), message='Hello2')
+        factories.GenericFeedback(
+            clinic=self.clinic,
+            message_date=timezone.now(),
+            message='Hello2',
+            display_on_dashboard=False)
 
         report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
         report.get_object()

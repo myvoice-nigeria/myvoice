@@ -156,9 +156,9 @@ class ClinicReport(ReportMixin, DetailView):
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
         self.initialize_data(obj)
-        self.responses = obj.surveyquestionresponse_set.all()
+        self.responses = obj.surveyquestionresponse_set.filter(display_on_dashboard=True)
         self.responses = self.responses.select_related('question', 'service', 'visit')
-        self.generic_feedback = obj.genericfeedback_set.all()
+        self.generic_feedback = obj.genericfeedback_set.filter(display_on_dashboard=True)
         return obj
 
     def get_feedback_by_week(self):
@@ -202,8 +202,7 @@ class ClinicReport(ReportMixin, DetailView):
     def get_detailed_comments(self):
         """Combine open-ended survey comments with General Feedback."""
         open_ended_responses = self.responses.filter(
-            question__question_type=SurveyQuestion.OPEN_ENDED,
-            display_on_dashboard=True)
+            question__question_type=SurveyQuestion.OPEN_ENDED)
         comments = [
             {
                 'question': r.question.label,
