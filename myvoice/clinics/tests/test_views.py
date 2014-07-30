@@ -514,13 +514,13 @@ class TestRegionReportView(TestCase):
 
         service = factories.Service.create(code=2)
 
-        v1 = factories.Visit.create(
+        self.v1 = factories.Visit.create(
             service=service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=221)
         )
-        v2 = factories.Visit.create(
+        self.v2 = factories.Visit.create(
             service=service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
@@ -530,13 +530,13 @@ class TestRegionReportView(TestCase):
         factories.SurveyQuestionResponse.create(
             question=open_f,
             datetime=timezone.now(),
-            visit=v1,
+            visit=self.v1,
             clinic=self.clinic, response='Yes')
 
         factories.SurveyQuestionResponse.create(
             question=self.respect,
             datetime=timezone.now(),
-            visit=v2,
+            visit=self.v2,
             clinic=self.clinic, response='No')
 
     def make_request(self, data=None):
@@ -639,12 +639,53 @@ class TestRegionReportView(TestCase):
         self.assertEqual(2, total)
 
     def test_get_satisfaction_counts(self):
-        """Test get satisfaction counts."""
+        """Test number of visits that patient was not unsatisfied."""
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        responses = {
-            'Respectful Staff Treatment': [{'response': 'Yes'}, {'response': 'No'}],
-            'Wait Time': [{'response': '<1 hour'}, {'response': '1-2 hours'}]}
+        responses = [
+            (1, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+            (2, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'No'},
+                {'question__label': 'Wait Time', 'response': '1-2 hours'},
+            ]),
+            (3, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+            (4, [
+                {'question__label': 'Charged Fairly', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+        ]
+        satisfaction, total = report.get_satisfaction_counts(responses)
+        self.assertEqual(75, satisfaction)
+        self.assertEqual(4, total)
+
+    def test_get_satisfaction_counts_waittime(self):
+        """Test number of visits that patient was not unsatisfied because of Wait Time."""
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+        responses = [
+            (1, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+            (2, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '1-2 hours'},
+            ]),
+            (3, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+            (4, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '4+ hours'},
+            ]),
+        ]
         satisfaction, total = report.get_satisfaction_counts(responses)
         self.assertEqual(75, satisfaction)
         self.assertEqual(4, total)
@@ -653,7 +694,11 @@ class TestRegionReportView(TestCase):
         """Test get satisfaction counts with no responses."""
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        responses = {}
+        responses = [
+            (self.v1.pk, [
+                {'question__label': 'Clean Hospital Materials', 'response': 'Yes'},
+            ]),
+        ]
         satisfaction, total = report.get_satisfaction_counts(responses)
         self.assertEqual(0, satisfaction)
         self.assertEqual(0, total)
