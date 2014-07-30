@@ -21,9 +21,15 @@
   </div><!-- /.container -->
 
   <div id="feedback-on-services" class="container">
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 section-heading web-only">
       <h2>FEEDBACK ON SERVICES</h2>
     </div>
+
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ON SERVICES</h2>
+    </div>
+
 
     <p>Number of patients with this service who reported this feedback.</p>
 
@@ -44,6 +50,7 @@
         <tr>
             <td>{{ service.name }}</td>
             {% for result, total_respondents in service_data %}
+
             {% if result == None %}
               <td>N/A (0)</td>
             {% else %}
@@ -57,13 +64,19 @@
   </div><!-- / #feedback-on-services .container -->
 
   <div id="feedback-facility" class="container">
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 section-heading web-only">
       <h2>FEEDBACK REPORTED BY FACILITY</h2>
     </div>
 
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK REPORTED BY FACILITY</h2>
+    </div>
+      
+
     <p>Number of patients with this service who reported this feedback.</p>
 
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped web-only">
       <thead>
         <tr>
             <th class="special-th">{{ min_date|date:"F j, Y" }}-{{ max_date|date:"F j, Y" }}</th>
@@ -130,5 +143,92 @@
 
       </tbody>
     </table>
+
+      <table class="table table-bordered table-striped print-only">
+      <thead>
+        <tr>
+            <th class="special-th">{{ min_date|date:"F j, Y" }}-{{ max_date|date:"F j, Y" }}</th>
+          <th>
+            Feedback<br>Participation
+          </th>
+          <th>
+            Patient<br>Satisfaction
+          </th>
+          <th>
+            Quality<br>(Score, Q1)
+          </th>
+          <th>
+            Quantity<br>(Score, Q1)
+          </th>
+          <th>
+            Open<br>Facility
+          </th>
+          <th>
+            Respectful<br>Staff Treatment
+          </th>
+          <th>
+            Clean<br>Hospital Materials
+          </th>
+          <th>
+            Charged<br>Fairly
+          </th>
+          <th>
+            Most<br>Common<br>Wait Time<br>(hrs)
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for clinic, clinic_data in feedback_by_clinic %}
+        <tr>
+            <td>{{ clinic }}</td>
+            {% for result, total_respondents in clinic_data %}
+            {% if result == None %}
+              <td>N/A (0)</td>
+            {% else %}
+              <td>{{ result }} ({{ total_respondents }})</td>
+            {% endif %}
+            {% endfor %}
+        </tr>
+        {% if forloop.counter == 3 %}
+          </table>
+          <div class="print-break"></div><br/><br/>
+          <table class="table table-bordered table-striped print-only">
+          <thead>
+            <tr>
+                <th class="special-th">{{ min_date|date:"F j, Y" }}-{{ max_date|date:"F j, Y" }}</th>
+              <th>
+                Feedback<br>Participation
+              </th>
+              <th>
+                Patient<br>Satisfaction
+              </th>
+              <th>
+                Quality<br>(Score, Q1)
+              </th>
+              <th>
+                Quantity<br>(Score, Q1)
+              </th>
+              <th>
+                Open<br>Facility
+              </th>
+              <th>
+                Respectful<br>Staff Treatment
+              </th>
+              <th>
+                Clean<br>Hospital Materials
+              </th>
+              <th>
+                Charged<br>Fairly
+              </th>
+              <th>
+                Most<br>Common<br>Wait Time<br>(hrs)
+              </th>
+            </tr>
+          </thead>
+        {% endif %}
+      {% endfor %}
+      </tbody>
+    </table>
+
   </div><!-- / #feedback-facility .container -->
 {% endblock content %}
