@@ -139,8 +139,9 @@
     {% for week in feedback_by_week %}
       <div class="col-xs-6 chart-container">
         <div class="col-xs-12">
-          <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}</h2>
-          <h6>{{ week.survey_num }} Surveys</h6>
+          <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}<br/>
+            <span class="survey_num">
+          {{ week.survey_num }} Surveys</span></h2>
         </div>
         <div class="col-xs-6" >  
           <div class="green-box">
