@@ -3,7 +3,7 @@
     width: 21cm;
     min-height: 29.7cm;
     padding: 2cm;
-    margin: 1cm auto;
+    margin: 1cm auto !important;
     border: 1px #D3D3D3 solid;
     border-radius: 5px;
     background: white;
@@ -43,7 +43,6 @@
     }
 
     .section-heading {
-      border: 3px solid #A6A8AB;
       -webkit-print-color-adjust:exact;
     }
 
