@@ -290,7 +290,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check Error message is correct
-        error_msg = "This registration was received before. Thank you."
+        error_msg = "Registration for patient with serial 4001 was received before. Thank you."
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_same_visit_after_30_mins(self):

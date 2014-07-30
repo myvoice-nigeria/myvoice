@@ -106,8 +106,8 @@ class VisitForm(forms.Form):
                     patient__serial=int(serial),  # FIXME: serial will change to text
                     patient__clinic=clinic,
                     visit_time__gt=min_wait_time).count():
-                raise forms.ValidationError("This registration was "
-                                            "received before. Thank you.")
+                raise forms.ValidationError("Registration for patient with serial {} was"
+                                            " received before. Thank you.".format(serial))
 
         return clinic, mobile, serial, service, self.cleaned_data['text']
 
