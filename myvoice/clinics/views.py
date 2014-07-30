@@ -177,7 +177,8 @@ class ClinicReport(ReportMixin, DetailView):
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
                     total_responses = len(question_responses)
-                    survey_num += total_responses
+                    if label is 'Open Facility':
+                        survey_num += total_responses
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
                     week_data.append((percentage, total_responses))
