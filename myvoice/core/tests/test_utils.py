@@ -54,6 +54,13 @@ class TestCSVExport(TestCase):
 
         self.qset.__iter__.side_effect = side_effect
 
+    def test_extract_no_name(self):
+        """Test that extract_attr returns None with empty name."""
+        obj = mock.Mock()
+        obj.name = 'test'
+        data = utils.extract_attr(obj, '')
+        self.assertEqual(None, data)
+
     def test_extract_qset_headers(self):
         """Test that we can get the headers of the qset."""
         data = utils.extract_qset_data(self.qset, self.header)

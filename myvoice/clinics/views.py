@@ -187,7 +187,8 @@ class ClinicReport(ReportMixin, DetailView):
                 'week_end': get_week_end(week_start),
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
-                'wait_time_mode': survey_utils.get_mode(wait_times)
+                'wait_time_mode': survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories())
             })
         return data
 
@@ -306,19 +307,31 @@ class RegionReport(ReportMixin, DetailView):
     def get_satisfaction_counts(self, responses):
         """Return satisfaction percentage and total of survey participants
 
-        responses is already grouped by question."""
-        if not responses:
-            return 0, 0
-        unsatisfied, total = 0, 0
+        responses is already grouped by visit"""
+        unsatisfied = 0
+        total = 0
 
-        for question, q_responses in responses.items():
-            if question in ['Respectful Staff Treatment', 'Charged Fairly']:
-                answer = self.questions[question].primary_answer
-                unsatisfied += len([r for r in q_responses if r['response'] != answer])
-            elif question == 'Wait Time':
-                answer = self.questions[question].get_categories()[-1]
-                unsatisfied += len([r for r in q_responses if r['response'] == answer])
-            total += len(q_responses)
+        target_questions = ['Respectful Staff Treatment', 'Charged Fairly', 'Wait Time']
+
+        for visit, visit_responses in responses:
+            if any(r['question__label'] in target_questions for r in visit_responses):
+                total += 1
+            else:
+                continue
+
+            for resp in visit_responses:
+                question = resp['question__label']
+                answer = resp['response']
+                if question in target_questions[:2] and answer != self.questions[
+                        question].primary_answer:
+                    unsatisfied += 1
+                    continue
+                if question == target_questions[2] and answer == self.questions[
+                        question].get_categories()[-1]:
+                    unsatisfied += 1
+
+        if not total:
+            return 0, 0
 
         return 100 - make_percentage(unsatisfied, total), total
 
@@ -347,7 +360,7 @@ class RegionReport(ReportMixin, DetailView):
         clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
 
         responses = self.responses.exclude(clinic=None).values(
-            'clinic', 'question__label', 'response')
+            'clinic', 'question__label', 'response', 'visit')
         by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
 
         # Add clinics without responses back.
@@ -366,7 +379,9 @@ class RegionReport(ReportMixin, DetailView):
                 responses_by_question, clinic)
 
             # Get patient satisfaction
-            satis_percent, satis_total = self.get_satisfaction_counts(responses_by_question)
+            responses_by_visit = survey_utils.group_responses(
+                clinic_responses, 'visit', keyfunc=itemgetter)
+            satis_percent, satis_total = self.get_satisfaction_counts(responses_by_visit)
 
             # Build the data
             clinic_data = [

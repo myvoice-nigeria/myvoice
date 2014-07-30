@@ -382,10 +382,22 @@ class TestClinicReportView(TestCase):
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
         self.questions = []
-        for l in ['Open Facility', 'Respectful Staff Treatment',
-                  'Clean Hospital Materials', 'Charged Fairly',
-                  'Wait Time']:
-            self.questions.append(factories.SurveyQuestion.create(label=l, survey=self.survey))
+
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Open Facility', survey=self.survey))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Respectful Staff Treatment',
+            survey=self.survey, categories='Yes\nNo', primary_answer='Yes'))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Clean Hospital Materials',
+            survey=self.survey))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Charged Fairly',
+            survey=self.survey,
+            categories='Fairly charged\nOvercharged', primary_answer='Fairly charged'))
+        self.questions.append(factories.SurveyQuestion.create(
+            label='Wait Time',
+            survey=self.survey, categories='<1 hour\n1-2 hours\n2-4 hours\n>4 hours'))
 
     def make_request(self, data=None):
         """Make Test request with POST data."""
@@ -492,6 +504,48 @@ class TestClinicReportView(TestCase):
         self.assertEqual(comments[1]['question'], 'General Feedback')
         self.assertEqual(comments[1]['response'], 'Hello2')
 
+    def test_get_date_range(self):
+        dt1 = timezone.make_aware(timezone.datetime(2014, 7, 14), timezone.utc)
+        dt2 = timezone.make_aware(timezone.datetime(2014, 7, 21), timezone.utc)
+        factories.SurveyQuestionResponse(
+            question=self.questions[0],
+            visit=factories.Visit(patient__clinic=self.clinic, service__code=2),
+            datetime=dt1)
+        factories.SurveyQuestionResponse(
+            question=self.questions[0],
+            visit=factories.Visit(patient__clinic=self.clinic, service__code=3),
+            datetime=dt2)
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report.get_object()
+        start, end = report.get_date_range()
+        self.assertEqual(dt1, start)
+        _dt3 = timezone.datetime(2014, 7, 28) - timezone.timedelta(microseconds=1)
+        dt3 = timezone.make_aware(_dt3, timezone.utc)
+        self.assertEqual(dt3, end)
+
+    def test_get_patient_satisfaction(self):
+        visit1 = factories.Visit.create()
+        visit2 = factories.Visit.create()
+        visit3 = factories.Visit.create()
+        treat = factories.SurveyQuestionResponse.create(
+            response='Yes', question=self.questions[1], visit=visit1)
+        charge = factories.SurveyQuestionResponse.create(
+            response='Fairly charged', question=self.questions[3], visit=visit1)
+        wait1 = factories.SurveyQuestionResponse.create(
+            response='<1 hour', question=self.questions[4], visit=visit1)
+        wait2 = factories.SurveyQuestionResponse.create(
+            response='>4 hours', question=self.questions[4], visit=visit2)
+        wait3 = factories.SurveyQuestionResponse.create(
+            response='<1 hour', question=self.questions[4], visit=visit3)
+
+        responses = [treat, charge, wait1, wait2, wait3]
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report.get_object()
+        satisfaction = report._get_patient_satisfaction(responses)
+        self.assertEqual(67, satisfaction)
+
 
 class TestRegionReportView(TestCase):
 
@@ -507,20 +561,20 @@ class TestRegionReportView(TestCase):
         factories.SurveyQuestion.create(label='Clean Hospital Materials', survey=self.survey)
         factories.SurveyQuestion.create(
             label='Charged Fairly', survey=self.survey, categories='Yes\nNo')
-        factories.SurveyQuestion.create(label='Wait Time', survey=self.survey,
-                                        categories='<1 hour\n1-2 hours\n2-3 hours\n4+ hours')
+        wait = factories.SurveyQuestion.create(label='Wait Time', survey=self.survey,
+                                               categories='<1 hour\n1-2 hours\n2-3 hours\n4+ hours')
 
         self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
 
         service = factories.Service.create(code=2)
 
-        v1 = factories.Visit.create(
+        self.v1 = factories.Visit.create(
             service=service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=221)
         )
-        v2 = factories.Visit.create(
+        self.v2 = factories.Visit.create(
             service=service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
@@ -530,14 +584,20 @@ class TestRegionReportView(TestCase):
         factories.SurveyQuestionResponse.create(
             question=open_f,
             datetime=timezone.now(),
-            visit=v1,
+            visit=self.v1,
             clinic=self.clinic, response='Yes')
 
         factories.SurveyQuestionResponse.create(
             question=self.respect,
             datetime=timezone.now(),
-            visit=v2,
+            visit=self.v2,
             clinic=self.clinic, response='No')
+
+        self.wait_response = factories.SurveyQuestionResponse.create(
+            question=wait,
+            datetime=timezone.now(),
+            visit=self.v2,
+            clinic=self.clinic, response='<1 hour')
 
     def make_request(self, data=None):
         """Make Test request with POST data."""
@@ -575,7 +635,7 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        self.assertEqual(3, report.responses.count())
+        self.assertEqual(4, report.responses.count())
 
     def test_date_from_request_params(self):
         """Test that the date values from request params determine filter for responses."""
@@ -626,7 +686,7 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        self.assertEqual(3, report.responses.count())
+        self.assertEqual(4, report.responses.count())
 
     def test_feedback_participation(self):
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
@@ -639,12 +699,53 @@ class TestRegionReportView(TestCase):
         self.assertEqual(2, total)
 
     def test_get_satisfaction_counts(self):
-        """Test get satisfaction counts."""
+        """Test number of visits that patient was not unsatisfied."""
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        responses = {
-            'Respectful Staff Treatment': [{'response': 'Yes'}, {'response': 'No'}],
-            'Wait Time': [{'response': '<1 hour'}, {'response': '1-2 hours'}]}
+        responses = [
+            (1, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+            (2, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'No'},
+                {'question__label': 'Wait Time', 'response': '1-2 hours'},
+            ]),
+            (3, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+            (4, [
+                {'question__label': 'Charged Fairly', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+        ]
+        satisfaction, total = report.get_satisfaction_counts(responses)
+        self.assertEqual(75, satisfaction)
+        self.assertEqual(4, total)
+
+    def test_get_satisfaction_counts_waittime(self):
+        """Test number of visits that patient was not unsatisfied because of Wait Time."""
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+        responses = [
+            (1, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+            (2, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '1-2 hours'},
+            ]),
+            (3, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '<1 hour'},
+            ]),
+            (4, [
+                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__label': 'Wait Time', 'response': '4+ hours'},
+            ]),
+        ]
         satisfaction, total = report.get_satisfaction_counts(responses)
         self.assertEqual(75, satisfaction)
         self.assertEqual(4, total)
@@ -653,7 +754,11 @@ class TestRegionReportView(TestCase):
         """Test get satisfaction counts with no responses."""
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        responses = {}
+        responses = [
+            (self.v1.pk, [
+                {'question__label': 'Clean Hospital Materials', 'response': 'Yes'},
+            ]),
+        ]
         satisfaction, total = report.get_satisfaction_counts(responses)
         self.assertEqual(0, satisfaction)
         self.assertEqual(0, total)
@@ -665,3 +770,4 @@ class TestRegionReportView(TestCase):
         feedback = report.get_feedback_by_clinic()
         self.assertEqual('TEST1', feedback[0][0])
         self.assertEqual(('50.0%', 2), feedback[0][1][0])
+        self.assertEqual(('<1 hour', 1), feedback[0][1][8])
