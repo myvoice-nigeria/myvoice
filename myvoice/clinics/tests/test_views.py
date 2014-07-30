@@ -596,7 +596,7 @@ class TestRegionReportView(TestCase):
         self.wait_response = factories.SurveyQuestionResponse.create(
             question=wait,
             datetime=timezone.now(),
-            visit=v2,
+            visit=self.v2,
             clinic=self.clinic, response='<1 hour')
 
     def make_request(self, data=None):
