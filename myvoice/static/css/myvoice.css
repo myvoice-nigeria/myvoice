@@ -346,6 +346,10 @@ h2 {
 	padding-bottom:15px;
 }
 
+.comment_text {
+  width: 100%;
+}
+
 .special-th {
 	background-color: #E5E6E7;
 	color:#6D6E71;

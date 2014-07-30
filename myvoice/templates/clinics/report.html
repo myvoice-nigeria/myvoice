@@ -169,7 +169,16 @@
   </div><!-- / .container#feedback-analytics -->
   <div class="print-only"><br/><br/></div>
 
+  
   <div id="feedback-on-services" class="container">
+    <div class="col-xs-12 no-padding-left print-only">
+      <h1>
+        <span style="font-weight: 700;">{{ object.name }}</span><br />
+        Facility Report
+      </h1>
+  </div>
+
+
     <div class="col-xs-12 section-heading web-only">
       <h2>FEEDBACK ON SERVICES</h2>
     </div>
@@ -238,7 +247,7 @@
           {% for comment in comment_group.list %}
           <tr id="comment{% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as webcycle %}">
               <td>{{ comment.datetime|date:"d/m/Y" }}</td>
-              <td>{{ comment.response }}</td>
+              <td class="comment_text">{{ comment.response }}</td>
             </tr>
           {% endfor %}
         {% endfor %}
@@ -261,15 +270,31 @@
             </td>
           </tr>
           {% for comment in comment_group.list %}
-            <!-- // {% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as printcycle %} -->
+            <!-- // {% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18  as printcycle %} -->
             {% if printcycle == 10 %}
-              </table>
+              </table></div>
               <div class="print-break"></div><br/><br/>
+              <div class="container">
+              <div class="col-xs-12 no-padding-left print-only" style="border: 0px">
+                  <h1>
+                    <span style="font-weight: 700;">{{ object.name }}</span><br />
+                    Facility Report
+                  </h1>
+              </div>
+            </div><br/>
+          <div id="detailed-comments" class="container">
               <table class="table table-bordered table-striped print-only">
+                <thead>
+                <tr>
+                  <th class="special-th no-bottom-border">Date</th>
+                  <th class="no-bottom-border">Comments</th>
+                </tr>
+              </thead>
+              <tbody>
             {% endif %}
               <tr id="comment{{ printcycle }}">
                 <td>{{ comment.datetime|date:"d/m/Y" }}</td>
-                <td>{{ comment.response }}</td>
+                <td class="comment_text">{{ comment.response }}</td>
               </tr>
           {% endfor %}
         {% endfor %}
