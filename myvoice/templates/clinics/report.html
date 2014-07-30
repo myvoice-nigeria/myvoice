@@ -91,7 +91,7 @@
 
         <div class="content print-only" style="padding: 0px">
           <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 101px; padding:0px;">
-          <div style="position: absolute; top: 57px; left: 35px; width: 100%; height: 100%;">
+          <div style="position: absolute; top: 57px; left: 24px; width: 100%; height: 100%;">
             <h2>SURVEY PARTICIPATION</h2>
             {% if num_registered %}
               <div class="col-xs-4">
@@ -216,7 +216,7 @@
       <h2 style="position: absolute; top: 7px; left: 15px;">DETAILED COMMENTS</h2>
     </div>
 
-    <table id="comments-table" class="table table-bordered table-striped">
+     <table id="comments-table" class="table table-bordered table-striped web-only">
       <thead>
         <tr>
           <th class="special-th no-bottom-border">Date</th>
@@ -232,10 +232,41 @@
             </td>
           </tr>
           {% for comment in comment_group.list %}
-            <tr>
+          <tr id="comment{% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as webcycle %}">
               <td>{{ comment.datetime|date:"d/m/Y" }}</td>
               <td>{{ comment.response }}</td>
             </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table id="comments-table" class="table table-bordered table-striped print-only">
+      <thead>
+        <tr>
+          <th class="special-th no-bottom-border">Date</th>
+          <th class="no-bottom-border">Comments</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% regroup detailed_comments by question as comments %}
+        {% for comment_group in comments %}
+          <tr>
+            <td colspan="6" class="special-table-row">
+              {{ comment_group.grouper|upper }}
+            </td>
+          </tr>
+          {% for comment in comment_group.list %}
+            <!-- // {% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as printcycle %} -->
+            {% if printcycle == 10 %}
+              </table>
+              <div class="print-break"></div><br/><br/>
+              <table class="table table-bordered table-striped print-only">
+            {% endif %}
+              <tr id="comment{{ printcycle }}">
+                <td>{{ comment.datetime|date:"d/m/Y" }}</td>
+                <td>{{ comment.response }}</td>
+              </tr>
           {% endfor %}
         {% endfor %}
       </tbody>
