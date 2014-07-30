@@ -187,7 +187,8 @@ class ClinicReport(ReportMixin, DetailView):
                 'week_end': get_week_end(week_start),
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
-                'wait_time_mode': survey_utils.get_mode(wait_times)
+                'wait_time_mode': survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories())
             })
         return data
 
