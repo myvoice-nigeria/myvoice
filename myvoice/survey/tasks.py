@@ -20,7 +20,7 @@ def _get_survey_start_time():
     eta = timezone.now() + settings.DEFAULT_SURVEY_DELAY
     earliest, latest = settings.SURVEY_TIME_WINDOW
     if eta.hour > latest:  # It's too late in the day - send tomorrow.
-        eta = eta + timezone.timedelta(1)
+        eta = eta + timezone.timedelta(days=1)
         eta = eta.replace(hour=earliest, minute=0, second=0, microsecond=0)
     elif eta.hour < earliest:  # It's too early in the day - send later.
         eta = eta.replace(hour=earliest, minute=0, second=0, microsecond=0)
