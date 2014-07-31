@@ -770,4 +770,4 @@ class TestRegionReportView(TestCase):
         feedback = report.get_feedback_by_clinic()
         self.assertEqual('TEST1', feedback[0][0])
         self.assertEqual(('50.0%', 2), feedback[0][1][0])
-        self.assertEqual(('<1 hour', 1), feedback[0][1][8])
+        self.assertEqual(('<1 hr', 1), feedback[0][1][8])
