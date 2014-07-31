@@ -12,11 +12,11 @@ VISIT_EXPR = '''
 ^                               # Start
 \s*                             # Leading whitespace
 (i|I|\d)+                       # Numbers as clinic
-(\s|\*)+                        # Whitespace or '*'
+(\s|\*|\.)+                     # Whitespace or '*' or '.'
 ((1|i|I)|((i|I|o|O|[0-9])+))    # Either 1 or numbers as mobile
-(\s|\*)+                        # Whitespace or '*'
+(\s|\*|\.)+                     # Whitespace or '*' or '.'
 (i|I|o|O|[0-9])+                # Numbers as serial
-(\s|\*)+                        # Whitespace or '*'
+(\s|\*|\.)+                     # Whitespace or '*' or '.'
 (i|I|o|O|[0-9])+                # Numbers as Service
 \s*                             # Trailing whitespace
 $                               # End
@@ -41,7 +41,7 @@ class VisitForm(forms.Form):
     def replace_alpha(self, text):
         """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
         return text.replace('o', '0').replace('O', '0').replace('i', '1').replace(
-            'I', '1').replace('*', ' ')
+            'I', '1').replace('*', ' ').replace('.', ' ')
 
     def clean_text(self):
         """Validate input text.

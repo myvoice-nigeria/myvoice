@@ -229,6 +229,16 @@ class TestVisitForm(TestCase):
         self.assertTrue('401', form.cleaned_data['text'][2])
         self.assertTrue('5', form.cleaned_data['text'][3])
 
+    def test_period_as_whitespace(self):
+        """Test that '.' is treated as whitespace."""
+        data = {'text': '1.08122233301.401.5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])
+
     def test_asterisk_whitespace_mix(self):
         """Test that '*' mixed with '\n' and <space> is treated as whitespace."""
         data = {'text': '1 * 08122233301\n* 401\n*\n5', 'phone': '+2348022112211'}
