@@ -49,6 +49,9 @@ class TestSurveyUtils(TestCase):
 
     def test_get_mode_acceptable_answers(self):
         """Test that get_mode respects acceptable answers."""
+        # So we have 4 'Yes' and only 3 'Maybe'
+        self.responses.append(factories.SurveyQuestionResponse.create(
+            response='Yes', question=self.question))
         for i in range(3):
             self.responses.append(factories.SurveyQuestionResponse.create(
                 response='Maybe', question=self.question))

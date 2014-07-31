@@ -108,7 +108,8 @@ class ReportMixin(object):
                     service_data.append((None, 0))
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
-                mode = survey_utils.get_mode(wait_times)
+                mode = survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories())
                 service_data.append((mode, len(wait_times)))
             else:
                 service_data.append((None, 0))
@@ -404,7 +405,8 @@ class RegionReport(ReportMixin, DetailView):
 
             if 'Wait Time' in responses_by_question:
                 wait_times = [r['response'] for r in responses_by_question['Wait Time']]
-                mode = survey_utils.get_mode(wait_times)
+                mode = survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories())
                 clinic_data.append((mode, len(wait_times)))
             else:
                 clinic_data.append((None, 0))
