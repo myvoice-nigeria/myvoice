@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from myvoice.core.tests import factories
+from myvoice.survey import utils as survey_utils
 
 from .. import forms
 
@@ -54,6 +55,19 @@ class TestFeedbackForm(TestCase):
         self.assertEqual(form.cleaned_data['values']['clinic'], self.clinic)
         self.assertEqual(form.cleaned_data['values']['message'], 'text')
         self.assertEqual(form.cleaned_data['phone'], '+12065551212')
+
+    def test_blocked_number(self):
+        """Test that feedback from a blocked number is not valid."""
+        phone = '08044442222'
+        factories.Visit.create(sender=phone)
+        values = [
+            {"category": "1", "value": "1", "label": "Clinic"},
+            {"category": "All Responses", "value": "text", "label": "General Feedback"},
+        ]
+        json_data = json.dumps(values)
+        data = {"phone": phone, "values": json_data}
+        form = forms.FeedbackForm(data)
+        self.assertFalse(form.is_valid())
 
     def test_which_clinic(self):
         """Test that with "Which Clinic", we return None for Clinic and a concat

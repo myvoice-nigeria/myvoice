@@ -7,6 +7,8 @@ from datetime import timedelta
 
 from . import models
 
+from myvoice.survey import utils as survey_utils
+
 
 VISIT_EXPR = '''
 ^                               # Start
@@ -133,6 +135,14 @@ class FeedbackForm(forms.Form):
     """
     phone = forms.CharField(max_length=20)
     values = forms.CharField()
+
+    def clean_phone(self):
+        """Validate that phone is not in blocked list."""
+        blocked = models.Visit.objects.exclude(sender='').values_list('sender', flat=True)
+        phone = survey_utils.convert_to_local_format(self.cleaned_data['phone'])
+        if phone in blocked:
+            raise forms.ValidationError('The phone is not allowed')
+        return self.cleaned_data['phone']
 
     def clean_values(self):
         """Return Clinic and Message."""
