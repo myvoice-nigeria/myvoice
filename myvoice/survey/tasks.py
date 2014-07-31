@@ -74,10 +74,11 @@ def handle_new_visits():
     Sends a welcome message to all new visitors and schedules when to start
     the feedback survey.
     """
+    blocked = Visit.objects.exclude(sender='').values_list('sender', flat=True).distinct()
     try:
         # Look for visits for which we haven't sent a welcome message.
         visits = Visit.objects.filter(welcome_sent__isnull=True,
-                                      mobile__isnull=False)
+                                      mobile__isnull=False).exclude(mobile__in=blocked)
 
         # Send a "welcome" message immediately.
         # Grab the phone numbers of all patients from applicable visits.

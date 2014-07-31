@@ -34,6 +34,7 @@ class VisitView(View):
         if form.is_valid():
 
             clnc, mobile, serial, serv, txt = form.cleaned_data['text']
+            sender = survey_utils.convert_to_local_format(form.cleaned_data['phone'])
             try:
                 patient = models.Patient.objects.get(clinic=clnc, serial=serial)
             except models.Patient.DoesNotExist:
@@ -44,7 +45,7 @@ class VisitView(View):
 
             output_msg = self.success_msg.format(serial)
 
-            models.Visit.objects.create(patient=patient, service=serv, mobile=mobile)
+            models.Visit.objects.create(patient=patient, service=serv, mobile=mobile, sender=sender)
             data = json.dumps({'text': output_msg})
         else:
             data = json.dumps({'text': self.get_error_msg(form)})
