@@ -55,6 +55,19 @@ class TestFeedbackForm(TestCase):
         self.assertEqual(form.cleaned_data['values']['message'], 'text')
         self.assertEqual(form.cleaned_data['phone'], '+12065551212')
 
+    def test_blocked_number(self):
+        """Test that feedback from a blocked number is not valid."""
+        phone = '08044442222'
+        factories.Visit.create(sender=phone)
+        values = [
+            {"category": "1", "value": "1", "label": "Clinic"},
+            {"category": "All Responses", "value": "text", "label": "General Feedback"},
+        ]
+        json_data = json.dumps(values)
+        data = {"phone": phone, "values": json_data}
+        form = forms.FeedbackForm(data)
+        self.assertFalse(form.is_valid())
+
     def test_which_clinic(self):
         """Test that with "Which Clinic", we return None for Clinic and a concat
         of Which Clinic value and message value."""
@@ -229,6 +242,16 @@ class TestVisitForm(TestCase):
         self.assertTrue('401', form.cleaned_data['text'][2])
         self.assertTrue('5', form.cleaned_data['text'][3])
 
+    def test_period_as_whitespace(self):
+        """Test that '.' is treated as whitespace."""
+        data = {'text': '1.08122233301.401.5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+        self.assertEqual('08122233301', form.cleaned_data['text'][1])
+        self.assertTrue(self.clinic, form.cleaned_data['text'][0])
+        self.assertTrue('401', form.cleaned_data['text'][2])
+        self.assertTrue('5', form.cleaned_data['text'][3])
+
     def test_asterisk_whitespace_mix(self):
         """Test that '*' mixed with '\n' and <space> is treated as whitespace."""
         data = {'text': '1 * 08122233301\n* 401\n*\n5', 'phone': '+2348022112211'}
@@ -290,7 +313,7 @@ class TestVisitForm(TestCase):
         self.assertFalse(form.is_valid())
 
         # Check Error message is correct
-        error_msg = "This registration was received before. Thank you."
+        error_msg = "Registration for patient with serial 4001 was received before. Thank you."
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_same_visit_after_30_mins(self):

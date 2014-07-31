@@ -136,6 +136,7 @@ class Visit(models.Model):
     welcome_sent = models.DateTimeField(blank=True, null=True)
     survey_sent = models.DateTimeField(blank=True, null=True)
     mobile = models.CharField(max_length=11, blank=True)
+    sender = models.CharField(max_length=11, blank=True)
 
     def __unicode__(self):
         return unicode(self.patient)

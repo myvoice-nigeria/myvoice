@@ -49,12 +49,23 @@ class TestSurveyUtils(TestCase):
 
     def test_get_mode_acceptable_answers(self):
         """Test that get_mode respects acceptable answers."""
+        # So we have 4 'Yes' and only 3 'Maybe'
+        self.responses.append(factories.SurveyQuestionResponse.create(
+            response='Yes', question=self.question))
         for i in range(3):
             self.responses.append(factories.SurveyQuestionResponse.create(
                 response='Maybe', question=self.question))
         answers = [r.response for r in self.responses]
         self.assertEqual(
             'Maybe', utils.get_mode(answers, acceptable_answers=['No', 'Maybe']))
+
+    def test_get_mode_rename_hour_to_hr(self):
+        """Test that get_mode renames hour to hr."""
+        self.responses.append(factories.SurveyQuestionResponse.create(
+            response='2 hours', question=self.question))
+        answers = ['2 hours', '2 hours', '1 hour']
+        self.assertEqual(
+            '2 hrs', utils.get_mode(answers, acceptable_answers=['2 hours', '1 hour']))
 
     def test_group_responses(self):
         """Test group_responses."""

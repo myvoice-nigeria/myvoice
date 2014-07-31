@@ -34,6 +34,7 @@ class VisitView(View):
         if form.is_valid():
 
             clnc, mobile, serial, serv, txt = form.cleaned_data['text']
+            sender = survey_utils.convert_to_local_format(form.cleaned_data['phone'])
             try:
                 patient = models.Patient.objects.get(clinic=clnc, serial=serial)
             except models.Patient.DoesNotExist:
@@ -44,7 +45,7 @@ class VisitView(View):
 
             output_msg = self.success_msg.format(serial)
 
-            models.Visit.objects.create(patient=patient, service=serv, mobile=mobile)
+            models.Visit.objects.create(patient=patient, service=serv, mobile=mobile, sender=sender)
             data = json.dumps({'text': output_msg})
         else:
             data = json.dumps({'text': self.get_error_msg(form)})
@@ -108,7 +109,8 @@ class ReportMixin(object):
                     service_data.append((None, 0))
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
-                mode = survey_utils.get_mode(wait_times)
+                mode = survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories())
                 service_data.append((mode, len(wait_times)))
             else:
                 service_data.append((None, 0))
@@ -404,7 +406,8 @@ class RegionReport(ReportMixin, DetailView):
 
             if 'Wait Time' in responses_by_question:
                 wait_times = [r['response'] for r in responses_by_question['Wait Time']]
-                mode = survey_utils.get_mode(wait_times)
+                mode = survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories())
                 clinic_data.append((mode, len(wait_times)))
             else:
                 clinic_data.append((None, 0))

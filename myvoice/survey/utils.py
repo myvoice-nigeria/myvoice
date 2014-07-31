@@ -30,7 +30,8 @@ def get_mode(answers, acceptable_answers=None):
     if acceptable_answers is not None:
         answers = [a for a in answers if a in acceptable_answers]
     if answers:
-        return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
+        mode = max(Counter(answers).iteritems(), key=itemgetter(1))[0]
+        return mode.replace('hour', 'hr')
     return None
 
 
@@ -100,6 +101,6 @@ def display_feedback(response_text):
     """Returns whether or not the text response should be displayed."""
     if not response_text or len(response_text.strip()) <= 1:
         return False
-    if response_text.strip().lower() in ['55999', 'yes', 'no', 'n0']:
+    if response_text.strip().lower() in ['55999', 'yes', 'no', 'n0', 'start']:
         return False
     return True

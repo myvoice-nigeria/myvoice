@@ -136,3 +136,16 @@ class TestHandleNewVisits(TestCase):
         visit = Visit.objects.get(pk=visit.pk)
         self.assertEqual(visit.welcome_sent, welcome_sent)
         self.assertIsNone(visit.survey_sent)
+
+    def test_blocked_number(self, start_feedback_survey, send_message):
+        """
+        We don't start surveys for blocked numbers which are those that are senders
+        in one or more Visits.
+        """
+        factories.Visit(welcome_sent=None, mobile='01234567890', sender='09876543210')
+        visit2 = factories.Visit(welcome_sent=None, mobile='09876543210')
+        tasks.handle_new_visits()
+        self.assertEqual(send_message.call_count, 1)
+        visit2 = Visit.objects.get(pk=visit2.pk)
+        self.assertIsNone(visit2.welcome_sent)
+        self.assertEqual(start_feedback_survey.call_count, 1)
