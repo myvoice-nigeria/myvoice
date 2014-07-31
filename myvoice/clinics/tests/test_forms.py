@@ -5,7 +5,6 @@ from django.utils import timezone
 from datetime import timedelta
 
 from myvoice.core.tests import factories
-from myvoice.survey import utils as survey_utils
 
 from .. import forms
 
