@@ -7,16 +7,18 @@ from datetime import timedelta
 
 from . import models
 
+from myvoice.survey import utils as survey_utils
+
 
 VISIT_EXPR = '''
 ^                               # Start
 \s*                             # Leading whitespace
 (i|I|\d)+                       # Numbers as clinic
-(\s|\*)+                        # Whitespace or '*'
+(\s|\*|\.)+                     # Whitespace or '*' or '.'
 ((1|i|I)|((i|I|o|O|[0-9])+))    # Either 1 or numbers as mobile
-(\s|\*)+                        # Whitespace or '*'
+(\s|\*|\.)+                     # Whitespace or '*' or '.'
 (i|I|o|O|[0-9])+                # Numbers as serial
-(\s|\*)+                        # Whitespace or '*'
+(\s|\*|\.)+                     # Whitespace or '*' or '.'
 (i|I|o|O|[0-9])+                # Numbers as Service
 \s*                             # Trailing whitespace
 $                               # End
@@ -41,7 +43,7 @@ class VisitForm(forms.Form):
     def replace_alpha(self, text):
         """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
         return text.replace('o', '0').replace('O', '0').replace('i', '1').replace(
-            'I', '1').replace('*', ' ')
+            'I', '1').replace('*', ' ').replace('.', ' ')
 
     def clean_text(self):
         """Validate input text.
@@ -106,8 +108,8 @@ class VisitForm(forms.Form):
                     patient__serial=int(serial),  # FIXME: serial will change to text
                     patient__clinic=clinic,
                     visit_time__gt=min_wait_time).count():
-                raise forms.ValidationError("This registration was "
-                                            "received before. Thank you.")
+                raise forms.ValidationError("Registration for patient with serial {} was"
+                                            " received before. Thank you.".format(serial))
 
         return clinic, mobile, serial, service, self.cleaned_data['text']
 
@@ -133,6 +135,14 @@ class FeedbackForm(forms.Form):
     """
     phone = forms.CharField(max_length=20)
     values = forms.CharField()
+
+    def clean_phone(self):
+        """Validate that phone is not in blocked list."""
+        blocked = models.Visit.objects.exclude(sender='').values_list('sender', flat=True)
+        phone = survey_utils.convert_to_local_format(self.cleaned_data['phone'])
+        if phone in blocked:
+            raise forms.ValidationError('The phone is not allowed')
+        return self.cleaned_data['phone']
 
     def clean_values(self):
         """Return Clinic and Message."""

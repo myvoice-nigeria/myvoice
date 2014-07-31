@@ -196,6 +196,13 @@ class TestVisitView(TestCase):
         visit_count = models.Visit.objects.count()
         self.assertEqual(1, visit_count)
 
+    def test_save_sender(self):
+        """Test that the sender information is saved."""
+        reg_data = {'text': '1 08122233301 4001 5', 'phone': '+2348022112211'}
+        self.make_request(reg_data)
+        obj = models.Visit.objects.all()[0]
+        self.assertEqual('08022112211', obj.sender)
+
     def test_save_mobile(self):
         """Test that mobile number is saved in Visit model."""
         reg_data = {'text': '1 08122233301 4001 5', 'phone': '+2348022112211'}
@@ -770,4 +777,4 @@ class TestRegionReportView(TestCase):
         feedback = report.get_feedback_by_clinic()
         self.assertEqual('TEST1', feedback[0][0])
         self.assertEqual(('50.0%', 2), feedback[0][1][0])
-        self.assertEqual(('<1 hour', 1), feedback[0][1][8])
+        self.assertEqual(('<1 hr', 1), feedback[0][1][8])
