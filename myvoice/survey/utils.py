@@ -14,19 +14,21 @@ REQUIRED_QUESTIONS = ['Open Facility', 'Respectful Staff Treatment',
                       'Wait Time']
 
 
-def analyze(responses, answer):
+def analyze(answers, correct_answer):
     """
     Returns the percentage (out of 100) of responses with the given answer, or
     None if there are no responses.
     """
-    if responses:
-        count = len([r for r in responses if r == answer])
-        return make_percentage(count, len(responses))
+    if answers:
+        count = len([r for r in answers if r == correct_answer])
+        return make_percentage(count, len(answers))
     return None
 
 
-def get_mode(answers):
+def get_mode(answers, acceptable_answers=None):
     """Returns the most commonly-reported answer, or None if there are no responses."""
+    if acceptable_answers is not None:
+        answers = [a for a in answers if a in acceptable_answers]
     if answers:
         return max(Counter(answers).iteritems(), key=itemgetter(1))[0]
     return None
@@ -48,7 +50,7 @@ def group_responses(responses, ordering, grouping=None, keyfunc=attrgetter):
 def convert_to_local_format(phone):
     """Simplistic utility to convert phone number to local Nigerian format."""
     if phone.startswith('0') and len(phone) == 11:
-        return phone  # Aleady in the correct format.
+        return phone  # Already in the correct format.
     elif phone.startswith('+234') and len(phone) == 14:
         return '0' + phone[4:]
     elif phone.startswith('234') and len(phone) == 13:

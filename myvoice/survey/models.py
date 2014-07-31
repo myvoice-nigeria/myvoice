@@ -123,8 +123,7 @@ class SurveyQuestionResponse(models.Model):
         help_text="The service this response is about, if any.")
     display_on_dashboard = models.BooleanField(
         default=True,
-        help_text="Whether or not this response is displayed on the dashboard. "
-        "Valid only for open-ended question responses.")
+        help_text="Whether or not this response is displayed on the dashboard.")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
