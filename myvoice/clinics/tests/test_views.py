@@ -390,8 +390,9 @@ class TestClinicReportView(TestCase):
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
         self.questions = []
 
-        self.questions.append(factories.SurveyQuestion.create(
-            label='Open Facility', survey=self.survey))
+        self.open_facility = factories.SurveyQuestion.create(
+            label='Open Facility', survey=self.survey)
+        self.questions.append(self.open_facility)
         self.questions.append(factories.SurveyQuestion.create(
             label='Respectful Staff Treatment',
             survey=self.survey, categories='Yes\nNo', primary_answer='Yes'))
@@ -477,6 +478,46 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Second', comments[0]['response'])
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
+
+    def test_get_feedback_by_week(self):
+        """Test that get_feedback_by_week works."""
+        visits = []
+        for code, serial in ((2, 221), (3, 111), (4, 121)):
+            visits.append(factories.Visit.create(
+                service=factories.Service.create(code=code),
+                patient=factories.Patient.create(clinic=self.clinic, serial=serial))
+            )
+
+        factories.SurveyQuestionResponse.create(
+            question=self.open_facility,
+            response='Yes',
+            datetime=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
+            visit=visits[0],
+            clinic=self.clinic)
+        factories.SurveyQuestionResponse.create(
+            question=self.open_facility,
+            response='No',
+            datetime=timezone.make_aware(timezone.datetime(2014, 7, 27), timezone.utc),
+            visit=visits[1],
+            clinic=self.clinic)
+        factories.SurveyQuestionResponse.create(
+            question=self.open_facility,
+            response='No',
+            datetime=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
+            visit=visits[2],
+            clinic=self.clinic)
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+
+        report.get_object()
+        feedback = report.get_feedback_by_week()
+
+        # Basic checks
+        self.assertEqual(2, len(feedback))
+
+        # Check survey_num
+        self.assertEqual(2, feedback[0]['survey_num'])
+        self.assertEqual(1, feedback[1]['survey_num'])
 
     def test_hide_invalid_feedback(self):
         question = factories.SurveyQuestion(
