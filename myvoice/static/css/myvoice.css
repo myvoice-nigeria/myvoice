@@ -253,6 +253,7 @@ h2 {
   background-color: #8ac43f;
   border-radius: 50%;
   color:#fff;
+  display: inline;
   text-align: center;
   float: left;
   font-size: 9px;
@@ -262,6 +263,7 @@ h2 {
 
  .green-box-label {
   font-size: 9px;
+  display: inline;
  }
 
   .green-question-dot {
@@ -342,6 +344,10 @@ h2 {
 #comments-table td {
 	padding-top:15px;
 	padding-bottom:15px;
+}
+
+.comment_text {
+  width: 100%;
 }
 
 .special-th {

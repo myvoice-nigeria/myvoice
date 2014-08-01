@@ -172,12 +172,15 @@ class ClinicReport(ReportMixin, DetailView):
             by_question = survey_utils.group_responses(week_responses, 'question.label')
             responses_by_question = dict(by_question)
             week_data = []
+            survey_num = 0
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
                     total_responses = len(question_responses)
+                    if label is 'Open Facility':
+                        survey_num += total_responses
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
                     week_data.append((percentage, total_responses))
@@ -190,7 +193,8 @@ class ClinicReport(ReportMixin, DetailView):
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
                 'wait_time_mode': survey_utils.get_mode(
-                    wait_times, self.questions.get('Wait Time').get_categories())
+                    wait_times, self.questions.get('Wait Time').get_categories()),
+                'survey_num': survey_num
             })
         return data
 
