@@ -153,3 +153,31 @@ class TestHandleNewVisits(TestCase):
         visit2 = Visit.objects.get(pk=visit2.pk)
         self.assertIsNone(visit2.welcome_sent)
         self.assertEqual(start_feedback_survey.call_count, 1)
+
+
+@mock.patch('myvoice.settings')
+class TestGetSurveyStartTime(TestCase):
+
+    def setUp(self):
+        self.t1 = timezone.make_aware(
+            timezone.datetime(2014, 07, 21, 10, 0, 0, 0), timezone.utc)
+
+    def test_get_start_time(self, settings):
+        settings.DEFAULT_SURVEY_DELAY = timezone.timedelta(minutes=5)
+        settings.SURVEY_TIME_WINDOW = (7, 20)
+        eta = tasks._get_survey_start_time(self.t1)
+        self.assertEqual(eta, self.t1.replace(minute=5))
+
+    def test_get_eta_early(self, settings):
+        settings.DEFAULT_SURVEY_DELAY = timezone.timedelta(minutes=5)
+        settings.SURVEY_TIME_WINDOW = (7, 20)
+        tm = self.t1.replace(hour=4)
+        eta = tasks._get_survey_start_time(tm)
+        self.assertEqual(eta, self.t1.replace(hour=7))
+
+    def test_get_eta_late(self, settings):
+        settings.DEFAULT_SURVEY_DELAY = timezone.timedelta(minutes=5)
+        settings.SURVEY_TIME_WINDOW = (7, 20)
+        tm = self.t1.replace(hour=23)
+        eta = tasks._get_survey_start_time(tm)
+        self.assertEqual(eta, self.t1.replace(hour=7, day=22))

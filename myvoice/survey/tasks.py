@@ -15,9 +15,9 @@ from .textit import TextItApi, TextItException
 logger = logging.getLogger(__name__)
 
 
-def _get_survey_start_time():
+def _get_survey_start_time(tm):
     # Schedule the survey to be sent in the future.
-    eta = timezone.now() + settings.DEFAULT_SURVEY_DELAY
+    eta = tm + settings.DEFAULT_SURVEY_DELAY
     earliest, latest = settings.SURVEY_TIME_WINDOW
     if eta.hour > latest:  # It's too late in the day - send tomorrow.
         eta = eta + timezone.timedelta(days=1)
@@ -102,7 +102,7 @@ def handle_new_visits():
             return
 
         # Schedule when to initiate the flow.
-        eta = _get_survey_start_time()
+        eta = _get_survey_start_time(timezone.now())
         for visit in new_visits:
             if visit.survey_sent is not None:
                 logger.debug("Somehow a survey has already been sent for "
