@@ -71,53 +71,42 @@ def start_feedback_survey(visit_pk):
 @task
 def handle_new_visits():
     """
-    Sends a welcome message to all new visitors and schedules when to start
-    the feedback survey.
+    Schedule when feedback survey should start for all new visitors.
+    Except for blocked visitors.
     """
     blocked = Visit.objects.exclude(sender='').values_list('sender', flat=True).distinct()
     try:
-        # Look for visits for which we haven't sent a welcome message.
+        # Look for visits for which we haven't sent surveys.
+        # We use welcome_sent to show that we have not scheduled surveys
+        # can't use survey_sent cos they are async and we may experience
+        # overlaps.
         visits = Visit.objects.filter(welcome_sent__isnull=True,
                                       mobile__isnull=False).exclude(mobile__in=blocked)
 
-        # Send a "welcome" message immediately.
         # Grab the phone numbers of all patients from applicable visits.
-        welcomed_visits = []
+        new_visits = []
         phones = []
         for visit in visits:
-            # Only send a welcome message and schedule the survey to be started if
-            # the phone number can be converted to valid international format.
+            # Only schedule the survey to be started if the phone number
+            # can be converted to valid international format.
             international = survey_utils.convert_to_international_format(visit.mobile)
             if international:
-                welcomed_visits.append(visit)
+                new_visits.append(visit)
                 phones.append(international)
             else:
                 logger.debug("Unable to send welcome message to "
                              "visit {}.".format(visit.pk))
 
-        if not welcomed_visits:
+        if not new_visits:
             # Don't bother continuing if there aren't any new visits.
             return
 
-        try:
-            welcome_message = ("Hi, thank you for your visit to the hospital. "
-                               "We care about your health. Help us make this "
-                               "hospital better. Please reply to the texts we "
-                               "will send you shortly.")
-            TextItApi().send_message(welcome_message, phones)
-        except TextItException:
-            logger.exception("Error sending welcome message to {}".format(phones))
-            # re-raise the exception so Celery knows the task failed
-            raise
-
         # Schedule when to initiate the flow.
-        # Only schedule flows for visits which we were able to welcome.
         eta = _get_survey_start_time()
-        for visit in welcomed_visits:
+        for visit in new_visits:
             if visit.survey_sent is not None:
                 logger.debug("Somehow a survey has already been sent for "
-                             "visit {} even though we hadn't sent the welcome "
-                             "message.".format(visit.pk))
+                             "visit {}.".format(visit.pk))
                 continue
             start_feedback_survey.apply_async(args=[visit.pk], eta=eta)
             logger.debug("Scheduled survey to start for visit "
@@ -125,7 +114,8 @@ def handle_new_visits():
 
         # update visits at the end, since adding a value for welcome_sent prevents
         # us from finding the values we were originally interested in
-        welcomed_ids = [v.pk for v in welcomed_visits]
+        welcomed_ids = [v.pk for v in new_visits]
+        # We update welcome_sent even though we don't send any welcome msg.
         Visit.objects.filter(pk__in=welcomed_ids).update(welcome_sent=timezone.now())
     except:
         logger.exception("Encountered unexpected error while handling new visits.")

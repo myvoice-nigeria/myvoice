@@ -92,8 +92,7 @@ class TestHandleNewVisits(TestCase):
         """
         visit = factories.Visit(welcome_sent=None, mobile='01234567890')
         tasks.handle_new_visits()
-        self.assertEqual(send_message.call_count, 1)
-        self.assertEqual(send_message.call_args[0][1], [u'+2341234567890'])
+        self.assertEqual(send_message.call_count, 0)
         visit = Visit.objects.get(pk=visit.pk)
         self.assertIsNotNone(visit.welcome_sent)
         self.assertEqual(start_feedback_survey.call_count, 1)
@@ -115,8 +114,9 @@ class TestHandleNewVisits(TestCase):
         visit1 = factories.Visit(welcome_sent=None, mobile='invalid')
         visit2 = factories.Visit(welcome_sent=None, mobile='01234567890')
         tasks.handle_new_visits()
-        self.assertEqual(send_message.call_count, 1)
-        self.assertEqual(send_message.call_args[0][1], [u'+2341234567890'])
+
+        # No welcome message sent so send_message.call_count = 0
+        self.assertEqual(send_message.call_count, 0)
         visit1 = Visit.objects.get(pk=visit1.pk)
         self.assertIsNone(visit1.welcome_sent)
         visit2 = Visit.objects.get(pk=visit2.pk)
@@ -131,6 +131,8 @@ class TestHandleNewVisits(TestCase):
         welcome_sent = timezone.now()
         visit = factories.Visit(welcome_sent=welcome_sent, mobile='01234567890')
         tasks.handle_new_visits()
+
+        # No welcome message sent so send_message.call_count = 0
         self.assertEqual(send_message.call_count, 0)
         self.assertEqual(start_feedback_survey.call_count, 0)
         visit = Visit.objects.get(pk=visit.pk)
@@ -145,7 +147,9 @@ class TestHandleNewVisits(TestCase):
         factories.Visit(welcome_sent=None, mobile='01234567890', sender='09876543210')
         visit2 = factories.Visit(welcome_sent=None, mobile='09876543210')
         tasks.handle_new_visits()
-        self.assertEqual(send_message.call_count, 1)
+
+        # No welcome message sent so send_message.call_count = 0
+        self.assertEqual(send_message.call_count, 0)
         visit2 = Visit.objects.get(pk=visit2.pk)
         self.assertIsNone(visit2.welcome_sent)
         self.assertEqual(start_feedback_survey.call_count, 1)
