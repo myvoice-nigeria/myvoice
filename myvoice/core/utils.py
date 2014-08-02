@@ -25,7 +25,7 @@ def make_percentage(numerator, denominator, places=0):
 def extract_attr(obj, name):
     parts = name.split('.')
     # Not likely
-    if not parts:
+    if not name:
         return None
     if len(parts) == 1:
         attr = getattr(obj, name)

@@ -62,7 +62,9 @@
 
     <div class="col-xs-6 participation-module no-padding-right">
       <div class="date">{{ min_date.date|date:"F j, Y" }} - {{ max_date.date|date:"F j, Y" }}</div>
-        <div class="content">
+        
+
+        <div class="content web-only">
           <h2>SURVEY PARTICIPATION</h2>
           {% if num_registered %}
             <div class="col-xs-4">
@@ -86,6 +88,35 @@
           </div>
           {% endcomment %}
         </div>
+
+        <div class="content print-only" style="padding: 0px">
+          <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 101px; padding:0px;">
+          <div style="position: absolute; top: 57px; left: 24px; width: 100%; height: 100%;">
+            <h2>SURVEY PARTICIPATION</h2>
+            {% if num_registered %}
+              <div class="col-xs-3">
+                <h1>{{ num_registered }}</h1> Sent
+              </div>
+              <div class="col-xs-4">
+                <h1>{{ num_started }} <span class="report-percent">({{ percent_started|floatformat:"0" }}%)</span></h1> Started
+              </div>
+              <div class="col-xs-4">
+                <h1>{{ num_completed }} <span class="report-percent">({{ percent_completed|floatformat:"0" }}%)</span></h1> Completed 
+              </div>
+            {% else %}
+              <div class="col-xs-12">
+                <h1>0</h1> Patients registered for survey
+              </div>
+            {% endif %}
+            {% comment %}
+            {# TODO #}
+            <div class="col-xs-4">
+              <h1>{{ participation_rank }}</h1> Participation ranking among facilities
+            </div>
+            {% endcomment %}
+          </div>
+        </div>
+
     </div>
   </div><!-- /.container -->
 
@@ -96,14 +127,23 @@
   </div>
 {% else %}
   <div id="feedback-analytics" class="container print-break">
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 section-heading web-only">
       <h2>FEEDBACK ANALYTICS</h2>
+    </div>
+
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ANALYTICS</h2>
     </div>
 
     {% for week in feedback_by_week %}
       <div class="col-xs-6 chart-container">
-        <div class="col-xs-12"><h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}</h2></div>
-        <div class="col-xs-6">
+        <div class="col-xs-12">
+          <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}<br/>
+            <span class="survey_num">
+          {{ week.survey_num }} Surveys</span></h2>
+        </div>
+        <div class="col-xs-6" >  
           <div class="green-box">
             {% if week.patient_satisfaction == None %}
               N/A
@@ -127,11 +167,25 @@
       </div>
     {% endfor %}
   </div><!-- / .container#feedback-analytics -->
+  <div class="print-only"><br/><br/></div>
 
-
+  
   <div id="feedback-on-services" class="container">
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 no-padding-left print-only">
+      <h1>
+        <span style="font-weight: 700;">{{ object.name }}</span><br />
+        Facility Report
+      </h1>
+  </div>
+
+
+    <div class="col-xs-12 section-heading web-only">
       <h2>FEEDBACK ON SERVICES</h2>
+    </div>
+
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ON SERVICES</h2>
     </div>
 
     <p>Number of patients with this service who reported this feedback.</p>
@@ -166,11 +220,16 @@
 
   {% if detailed_comments %}
   <div id="detailed-comments" class="container">
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 section-heading web-only">
       <h2>DETAILED COMMENTS</h2>
     </div>
 
-    <table id="comments-table" class="table table-bordered table-striped">
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">DETAILED COMMENTS</h2>
+    </div>
+
+     <table id="comments-table" class="table table-bordered table-striped web-only">
       <thead>
         <tr>
           <th class="special-th no-bottom-border">Date</th>
@@ -186,10 +245,57 @@
             </td>
           </tr>
           {% for comment in comment_group.list %}
-            <tr>
+          <tr id="comment{% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as webcycle %}">
               <td>{{ comment.datetime|date:"d/m/Y" }}</td>
-              <td>{{ comment.response }}</td>
+              <td class="comment_text">{{ comment.response }}</td>
             </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table id="comments-table" class="table table-bordered table-striped print-only">
+      <thead>
+        <tr>
+          <th class="special-th no-bottom-border">Date</th>
+          <th class="no-bottom-border">Comments</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% regroup detailed_comments by question as comments %}
+        {% for comment_group in comments %}
+          <tr>
+            <td colspan="6" class="special-table-row">
+              {{ comment_group.grouper|upper }}
+            </td>
+          </tr>
+          {% for comment in comment_group.list %}
+            <!-- // {% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18  as printcycle %} -->
+            {% if printcycle == 10 %}
+              </table></div>
+              <div class="print-break"></div><br/><br/>
+              <div class="container">
+              <div class="col-xs-12 no-padding-left print-only" style="border: 0px">
+                  <h1>
+                    <span style="font-weight: 700;">{{ object.name }}</span><br />
+                    Facility Report
+                  </h1>
+              </div>
+            </div><br/>
+          <div id="detailed-comments" class="container">
+              <table class="table table-bordered table-striped print-only">
+                <thead>
+                <tr>
+                  <th class="special-th no-bottom-border">Date</th>
+                  <th class="no-bottom-border">Comments</th>
+                </tr>
+              </thead>
+              <tbody>
+            {% endif %}
+              <tr id="comment{{ printcycle }}">
+                <td>{{ comment.datetime|date:"d/m/Y" }}</td>
+                <td class="comment_text">{{ comment.response }}</td>
+              </tr>
           {% endfor %}
         {% endfor %}
       </tbody>

@@ -47,6 +47,13 @@
   </head>
   <body>
     {% block body %}
+      <div class="container print-only">
+        <div class="col-xs-5">
+          <img src="{% static 'img/myvoice-logo-gray-sm.jpg' %}">
+        </div>
+      </div>
+
+
       {% block navbar %}
         <div class="navbar navbar-fixed-top" role="navigation">
           <div class="container">
@@ -104,10 +111,16 @@
       {% block content %}{% endblock content %}
 
       {% block footer %}
-        <div class="footer">
+        <div class="container print-only">
+          <div class="col-xs-5"><img src="{% static 'img/myvoice-logo-dark.png' %}"></div>
+        </div>
+
+        <div class="footer web-only">
           <div class="container">
             <div class="col-xs-5">
-              <a class="navbar-brand" href="{% url 'home' %}" style="padding-top:30px;"><img src="{% static 'img/myvoice-logo-dark.png' %}"></a>
+              <a class="navbar-brand" href="{% url 'home' %}" style="padding-top:30px;">
+                <img src="{% static 'img/myvoice-logo-dark.png' %}">
+              </a>
             </div>
 
             <div class="col-xs-7 non-printable">
@@ -132,7 +145,7 @@
         <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
         <script src="{% static 'lib/bootstrap-3.2.0/js/bootstrap.min.js' %}"></script>
         {% compress js %}
-          <script src="{% static 'js/site.js' %}"></script>
+        <script src="{% static 'js/site.js' %}"></script>
         {% endcompress %}
       {% endblock js %}
       {% block extra-js %}{% endblock extra-js %}

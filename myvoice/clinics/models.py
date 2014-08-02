@@ -136,6 +136,7 @@ class Visit(models.Model):
     welcome_sent = models.DateTimeField(blank=True, null=True)
     survey_sent = models.DateTimeField(blank=True, null=True)
     mobile = models.CharField(max_length=11, blank=True)
+    sender = models.CharField(max_length=11, blank=True)
 
     def __unicode__(self):
         return unicode(self.patient)
@@ -177,6 +178,9 @@ class GenericFeedback(models.Model):
     clinic = models.ForeignKey('Clinic', null=True, blank=True)
     message = models.CharField(max_length=200, blank=True)
     message_date = models.DateTimeField(auto_now=True)
+    display_on_dashboard = models.BooleanField(
+        default=True,
+        help_text="Whether or not this response is displayed on the dashboard.")
 
     class Meta:
         verbose_name = 'General Feedback'
