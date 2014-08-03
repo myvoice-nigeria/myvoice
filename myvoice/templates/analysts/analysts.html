@@ -40,25 +40,39 @@
 
 
     </div>
-      <table class="completion_table table-bordered table-striped" style="width:100%">
+      <table class="table completion_table table-bordered table-striped" style="width:100%">
+        <thead>
         <tr>
-            <td class="w200">Clinic</td>
-            <td>Number of Surveys<br/> Triggered</td>
-            <td>Number of Surveys<br/> Started</td>
-            <td>Number of Surveys<br/> Completed</td>
+            <th class="w200">Clinic</th>
+            <th>Number of Surveys<br/> Triggered</th>
+            <th>Number of Surveys<br/> Started</th>
+            <th>Number of Surveys<br/> Completed</th>
         </tr>
+      </thead>
+        <tbody>
         {% for a_clinic in completion_table %} 
-            {% ifequal a_clinic.clinic_name "Total" %}
-            <tr class="bold" id="{{ a_clinic.clinic_id }}">
-            {% else %}
+            {% ifnotequal a_clinic.clinic_name "Total" %}
             <tr id="{{ a_clinic.clinic_id }}">
-            {% endifequal %}
                 <td class="clinic_name">{{ a_clinic.clinic_name }}</td>
                 <td class="center clinic_st">{{ a_clinic.st_count }}</td>
                 <td class="center clinic_ss">{{ a_clinic.ss_count }} ({{ a_clinic.ss_st_percent }}%)</td>
                 <td class="center clinic_sc">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
             </tr>
+            {% endifnotequal %}
         {% endfor %}
+        <tfoot>
+          {% for a_clinic in completion_table %} 
+            {% ifequal a_clinic.clinic_name "Total" %}
+            <tr class="bold" id="{{ a_clinic.clinic_id }}">
+              <td class="clinic_name">{{ a_clinic.clinic_name }}</td>
+              <td class="center clinic_st">{{ a_clinic.st_count }}</td>
+              <td class="center clinic_ss">{{ a_clinic.ss_count }} ({{ a_clinic.ss_st_percent }}%)</td>
+              <td class="center clinic_sc">{{ a_clinic.sc_count }} ({{ a_clinic.sc_st_percent }}%)</td>
+            </tr>
+            {% endifequal %}
+          {% endfor %}
+        </tfoot>
+        </tbody>
       </table>
     </br>
   </div><!-- / #feedback-on-services .container -->
@@ -83,7 +97,7 @@
       </select>
     </div>
 
-    <table class="table datatables table-bordered table-striped">
+    <table class="table datatables table-bordered table-striped" style="width:100%">
       <thead>
         <tr>
           <th class="special-th">Survey Question</th>
@@ -106,14 +120,6 @@
         </tr>
       </thead>
 
-      <tfoot>
-          <tr>
-              <th class="w200">Survey Question</th>
-              <th>Number of Respondents</th>
-              <th>Patient Response Time</th>
-              <th>System Response Time</th>
-          </tr>
-      </tfoot>
       <tbody>
       <tr id="row11">
           <td class="clinic_name">1.1  Hospital Availablilty</td>
