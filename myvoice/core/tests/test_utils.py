@@ -2,6 +2,7 @@ import datetime
 import mock
 
 from django.test import TestCase
+from django.utils import timezone
 
 from .. import utils
 
@@ -115,3 +116,29 @@ class TestCSVExport(TestCase):
         header = ['name', 'address', 'counter', 'parent.name']
         data = utils.extract_qset_data(self.qset, header)
         self.assertEqual(['name', 'address', 'counter', 'parent name'], data[0])
+
+
+class TestGetDate(TestCase):
+
+    def setUp(self):
+        self.dt1 = timezone.datetime(2014, 07, 21)
+
+    def test_date_datetime(self):
+        dt = timezone.datetime(2014, 07, 21)
+        self.assertEqual(self.dt1, utils.get_date(dt))
+
+    def test_date_str(self):
+        dtstr = '2014-07-21'
+        self.assertEqual(self.dt1, utils.get_date(dtstr))
+
+    def test_date_none(self):
+        self.assertIsNone(utils.get_date())
+
+
+class TestDateRange(TestCase):
+
+    def test_daterange(self):
+        start = timezone.datetime(2014, 07, 21)
+        end = timezone.datetime(2014, 07, 24)
+        dtrange = utils.daterange(start, end)
+        self.assertEqual(4, len(list(dtrange)))

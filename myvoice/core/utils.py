@@ -48,15 +48,15 @@ def extract_qset_data(qset, fld_names):
 
 
 def daterange(start_date, end_date):
-    for n in range(int((end_date - start_date).days)):
+    """Yield dates between start_date and end_date inclusive."""
+    for n in range(int((end_date - start_date).days + 1)):
         yield start_date + datetime.timedelta(n)
 
 
-def get_date(the_date=""):
+def get_date(the_date=None):
     if the_date:
         if isinstance(the_date, datetime.datetime):
             return the_date
-        elif type(the_date) is str:
+        elif isinstance(the_date, basestring):
             return parse(the_date)
-    else:
-        return False
+    return None

@@ -354,9 +354,9 @@ class AnalystSummary(TemplateView):
     # Returns a list of Datetime Days between two dates
     def get_date_range(self, start_date, end_date):
         return_dates = []
-        if type(start_date) is str:
+        if isinstance(start_date, basestring):
             start_date = parse(start_date)
-        if type(end_date) is str:
+        if isinstance(end_date, basestring):
             end_date = parse(end_date)
         for single_date in daterange(start_date, end_date):
             return_dates.append(single_date)
