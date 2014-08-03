@@ -12,7 +12,7 @@ from django.db.models.aggregates import Max, Min
 from django.template.loader import get_template
 from django.template import Context
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange, get_date
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
 from myvoice.survey import utils as survey_utils
 from myvoice.clinics import utils as clinic_utils
 
@@ -372,7 +372,8 @@ class AnalystSummary(TemplateView):
         return Visit.objects.filter(survey_sent__isnull=False)
 
     def get_surveys_started_summary(self):
-        return SurveyQuestionResponse.objects.filter(question__question_type__iexact="open-ended")
+        return SurveyQuestionResponse.objects.filter(
+            question__question_type__iexact="open-ended")
 
     def get_surveys_completed_summary(self):
         """Total number of Surveys Completed."""
@@ -412,116 +413,17 @@ class AnalystSummary(TemplateView):
         context['clinics'] = Clinic.objects.all().order_by("name")
         return context
 
-    def get_feedback_rates_table(self, service=None, clinic=None, start_date=None,
-                                 end_date=None):
-        rates_table = []
 
-        start_date = get_date(start_date)
-        end_date = get_date(end_date)
-
-        sqr_query = SurveyQuestionResponse.objects.all()
-        if clinic:
-            sqr_query = sqr_query.filter(clinic__name__iexact=clinic)
-        if service:
-            sqr_query = sqr_query.filter(service__name__iexact=service)
-        if start_date:
-            sqr_query = sqr_query.filter(visit__visit_time__gte=start_date)
-        if end_date:
-            sqr_query = sqr_query.filter(visit__visit_time__lte=end_date)
-
-        rates_table.append({
-            "row_num": "1.1",
-            "row_title": "1.1 Hospital Availability",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Open Facility").filter(
-                question__question_type__iexact='multiple-choice').count()
-            })
-
-        rates_table.append({
-            "row_num": "1.2",
-            "row_title": "1.2 Hospital Availability Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Open Facility").filter(
-                question__question_type__iexact="open-ended").count()
-        })
-
-        rates_table.append({
-            "row_num": "2.1",
-            "row_title": "2.1 Respectful Staff Treatment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Respectful Staff Treatment").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "2.2",
-            "row_title": "2.2 Respectful Staff Treatment Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Respectful Staff Treatment").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "3.1",
-            "row_title": "3.1 Clean Hospital Materials",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Clean Hospital Materials").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "3.2",
-            "row_title": "3.2 Clean Hospital Materials Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Clean Hospital Materials").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "4.1",
-            "row_title": "4.1 Charged Fairly",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Charged Fairly").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "4.2",
-            "row_title": "4.2 Charged Fairly Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Charged Fairly").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "5.1",
-            "row_title": "5.1 Wait Time",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Wait time").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "6.1",
-            "row_title": "6.1  General Feedback",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="General Feedback").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        return rates_table
-
-
-class CompletionFilter(View):
+class FilterMixin(object):
 
     def get_variable(self, request, variable_name, ignore_value):
-        if request.GET.get(variable_name):
-            the_variable_data = request.GET[variable_name]
-            if str(the_variable_data) is str(ignore_value):
-                the_variable_data = ""
-        else:
-            the_variable_data = ""
-        return the_variable_data
+        data = request.GET.get(variable_name, ignore_value)
+        if not data or data == ignore_value:
+            return None
+        return data
+
+
+class CompletionFilter(FilterMixin, View):
 
     def get(self, request):
         the_service = self.get_variable(request, "service", "Service")
@@ -553,16 +455,13 @@ class CompletionFilter(View):
         return HttpResponse(json.dumps(content), content_type="text/json")
 
 
-class FeedbackFilter(View):
+class FeedbackFilter(FilterMixin, View):
 
     def get_variable(self, request, variable_name, ignore_value):
-        if request.GET.get(variable_name):
-            the_variable_data = request.GET[variable_name]
-            if str(the_variable_data) is str(ignore_value):
-                the_variable_data = None
-        else:
-            the_variable_data = None
-        return the_variable_data
+        data = request.GET.get(variable_name, ignore_value)
+        if not data or data == ignore_value:
+            return None
+        return data
 
     def get(self, request):
         the_service = self.get_variable(request, "service", "Service")

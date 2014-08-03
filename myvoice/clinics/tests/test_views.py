@@ -706,6 +706,12 @@ class TestFeedbackFilterView(TestCase):
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
 
+    def test_request(self):
+        url = '/clinics/feedback_filter/?clinic=&service=ANC&start_date&end_date='
+        request = self.factory.get(url)
+        response = clinics.FeedbackFilter.as_view()(request)
+        self.assertEqual(200, response.status_code)
+
     def simple_frt_row_test(self, a, row_num):
         frt = a.get_feedback_rates_table()
         for row in frt:
