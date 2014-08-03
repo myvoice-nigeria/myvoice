@@ -3,12 +3,12 @@ from itertools import groupby
 import logging
 from operator import attrgetter, itemgetter
 
+from django.utils import timezone
+
 from dateutil.parser import parse
 
 from myvoice.core.utils import make_percentage
 from myvoice.survey.models import SurveyQuestionResponse
-from myvoice.clinics.models import Clinic, Service
-
 
 logger = logging.getLogger(__name__)
 
@@ -78,27 +78,23 @@ def convert_to_international_format(phone):
         return None
 
 
-def filter_sqr_query(responses, clinic="", service="", start_date="", end_date=""):
+def filter_sqr_query(responses, clinic=None, service=None, start_date=None, end_date=None):
     """Returns the query of survey question responses which are completed, based on filters"""
-    if clinic:
-        if isinstance(clinic, str) or isinstance(clinic, unicode):
-            clinic = Clinic.objects.get(name__iexact=clinic)
-        responses = responses.filter(clinic=clinic)
+    params = {}
+    if isinstance(clinic, basestring):
+        params.update({'clinic__name__iexact': clinic})
 
-    if service:
-        if isinstance(service, str) or isinstance(service, unicode):
-            service = Service.objects.get(name__iexact=service)
-        responses = responses.filter(service=service)
+    if isinstance(service, basestring):
+        params.update({'service__name__iexact': service})
 
-    if start_date:
-        if isinstance(start_date, str) or isinstance(start_date, unicode):
-            start_date = parse(start_date)
-        responses = responses.filter(visit__visit_time__gte=start_date)
+    if isinstance(start_date, basestring):
+        start_date = timezone.make_aware(parse(start_date), timezone.utc)
+        params.update({'visit__visit_time__gte': start_date})
 
-    if end_date:
-        if isinstance(end_date, str) or isinstance(end_date, unicode):
-            end_date = parse(end_date)
-        responses = responses.filter(visit__visit_time__lte=end_date)
+    if isinstance(end_date, basestring):
+        end_date = timezone.make_aware(parse(end_date), timezone.utc)
+        params.update({'visit__visit_time__lte': end_date})
+    responses = responses.filter(**params)
 
     return responses
 
@@ -113,14 +109,16 @@ def get_completion_count(responses):
     return len([r for r in results if all([l in r for l in REQUIRED_QUESTIONS])])
 
 
-def get_completion_query(responses="", clinic="", service="", start_date="", end_date=""):
+def get_completion_query(responses=None, clinic=None, service=None,
+                         start_date=None, end_date=None):
     if not responses:
         responses = SurveyQuestionResponse.objects.all()
     return filter_sqr_query(responses.filter(
         question__label="Wait Time"), clinic, service, start_date, end_date)
 
 
-def get_completion_qcount(responses="", clinic="", service="", start_date="", end_date=""):
+def get_completion_qcount(responses=None, clinic=None, service=None,
+                          start_date=None, end_date=None):
     return get_completion_query(responses, clinic, service, start_date, end_date).count()
 
 
@@ -130,7 +128,8 @@ def get_registration_count(clinic):
     return Visit.objects.filter(survey_sent__isnull=False, patient__clinic=clinic).count()
 
 
-def get_started_query(responses="", clinic="", service="", start_date="", end_date=""):
+def get_started_query(responses=None, clinic=None, service=None,
+                      start_date=None, end_date=None):
     if not responses:
         responses = SurveyQuestionResponse.objects.all()
     return filter_sqr_query(responses.filter(question__label__iexact="Open Facility")
@@ -138,7 +137,8 @@ def get_started_query(responses="", clinic="", service="", start_date="", end_da
                             clinic, service, start_date, end_date)
 
 
-def get_started_count(responses, clinic="", service="", start_date="", end_date=""):
+def get_started_count(responses, clinic=None, service=None,
+                      start_date=None, end_date=None):
     """Returns the count of responses which are started."""
     return get_started_query(responses, clinic, service, start_date, end_date).count()
 
