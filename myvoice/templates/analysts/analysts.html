@@ -66,7 +66,7 @@
       </select>
     </div>
 
-    <div id="rates"><!-- rates-table container -->
+    <div id="id_rates"><!-- rates-table container -->
         {% include "analysts/_rates.html" %}
     </div><!-- end rates-table container -->
   </div><!-- / #feedback-facility .container -->
@@ -100,11 +100,12 @@
             var service = $("#frt_service").val();
 
             $.get("/feedback_filter", {'service':service, 'clinic': clinic, 'start_date':start_date, 'end_date':end_date}, function(data,status){
-              $.each(data.feedback_data, function(key, value){
+              $('#id_rates').html(data);
+              /*$.each(data.feedback_data, function(key, value){
                 $("tr#"+key+" td.feedback_nor").text(value.rsp_num);
                 $("tr#"+key+" td.feedback_prt").text(value.rsp_prt);
                 $("tr#"+key+" td.feedback_srt").text(value.rsp_srt);
-              });
+              });*/
             });
           }
 

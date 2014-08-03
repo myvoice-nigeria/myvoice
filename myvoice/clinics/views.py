@@ -9,6 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
+from django.template.loader import get_template
+from django.template import Context
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange, get_date
 from myvoice.survey import utils as survey_utils
@@ -362,6 +364,9 @@ class AnalystSummary(TemplateView):
             return_dates.append(single_date)
         return return_dates
 
+    def get_survey_question_responses(self):
+        return SurveyQuestionResponse.objects.all()
+
     def get_surveys_triggered_summary(self):
         """Total number of Surveys Triggered."""
         return Visit.objects.filter(survey_sent__isnull=False)
@@ -378,6 +383,7 @@ class AnalystSummary(TemplateView):
         context = super(AnalystSummary, self).\
             get_context_data(**kwargs)
 
+        context['responses'] = self.get_survey_question_responses()
         context['completion_table'] = self.get_completion_table()
         context['st'] = self.get_surveys_triggered_summary()
         context['st_count'] = context['st'].count()
@@ -400,13 +406,14 @@ class AnalystSummary(TemplateView):
 
         # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
-        first_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        last_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+        first_date = Visit.objects.aggregate(Min('visit_time'))['visit_time__min'].date()
+        last_date = Visit.objects.aggregate(Max('visit_time'))['visit_time__max'].date()
         context['date_range'] = self.get_date_range(first_date, last_date)
         context['clinics'] = Clinic.objects.all().order_by("name")
         return context
 
-    def get_feedback_rates_table(self, service="", clinic="", start_date="", end_date=""):
+    def get_feedback_rates_table(self, service=None, clinic=None, start_date=None,
+                                 end_date=None):
         rates_table = []
 
         start_date = get_date(start_date)
@@ -552,9 +559,9 @@ class FeedbackFilter(View):
         if request.GET.get(variable_name):
             the_variable_data = request.GET[variable_name]
             if str(the_variable_data) is str(ignore_value):
-                the_variable_data = ""
+                the_variable_data = None
         else:
-            the_variable_data = ""
+            the_variable_data = None
         return the_variable_data
 
     def get(self, request):
@@ -563,30 +570,16 @@ class FeedbackFilter(View):
         the_start_date = self.get_variable(request, "start_date", "Start Date")
         the_end_date = self.get_variable(request, "end_date", "End Date")
 
-        if not the_start_date or "Start Date" in the_start_date:
-            the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        else:
-            the_start_date = parse(the_start_date)
+        qset = SurveyQuestionResponse.objects.all()
+        responses = survey_utils.filter_sqr_query(
+            qset, clinic=the_clinic, service=the_service,
+            start_date=the_start_date, end_date=the_end_date)
 
-        if not the_end_date or "End Date" in the_end_date:
-            the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
-        else:
-            the_end_date = parse(the_end_date)
-
-        a = AnalystSummary()
-        data = a.get_feedback_rates_table(
-            start_date=the_start_date, end_date=the_end_date,
-            service=the_service, clinic=the_clinic)
-        content = {"feedback_data": {}}
-        for a_rate_row in data:
-            content["feedback_data"]["row"+a_rate_row["row_num"].replace(".", "")] = {
-                "row_title": a_rate_row["row_title"],
-                "rsp_num": a_rate_row["rsp_num"],
-                "rsp_prt": "--:--",
-                "rsp_srt": "--:--"
-            }
-
-        return HttpResponse(json.dumps(content), content_type="text/json")
+        # Render template with responses as context
+        tmpl = get_template('analysts/_rates.html')
+        ctx = Context({'responses': responses})
+        html = tmpl.render(ctx)
+        return HttpResponse(html, content_type='text/html')
 
 
 class RegionReport(ReportMixin, DetailView):
