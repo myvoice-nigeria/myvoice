@@ -457,12 +457,6 @@ class CompletionFilter(FilterMixin, View):
 
 class FeedbackFilter(FilterMixin, View):
 
-    def get_variable(self, request, variable_name, ignore_value):
-        data = request.GET.get(variable_name, ignore_value)
-        if not data or data == ignore_value:
-            return None
-        return data
-
     def get(self, request):
         the_service = self.get_variable(request, "service", "Service")
         the_clinic = self.get_variable(request, "clinic", "Clinic")
