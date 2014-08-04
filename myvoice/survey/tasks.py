@@ -78,7 +78,7 @@ def handle_new_visits():
     try:
         # Look for visits for which we haven't sent surveys.
         # We use welcome_sent to show that we have not scheduled surveys
-        # can't use survey_sent cos they are async and we may experience
+        # We can't use survey_sent because they are async and we may experience
         # overlaps.
         visits = Visit.objects.filter(welcome_sent__isnull=True,
                                       mobile__isnull=False).exclude(mobile__in=blocked)
