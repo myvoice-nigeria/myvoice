@@ -502,6 +502,14 @@ class AnalystSummary(TemplateView):
                 question__question_type__iexact='open-ended').count()
         })
 
+        rates_table.append({
+            "row_num": "7.1",
+            "row_title": "7.1 Out-of-Clinic Survey",
+            "rsp_num": sqr_query.filter(
+                question__label__iexact="General Feedback").filter(
+                question__question_type__iexact='multiple-choice').count()
+        })
+
         return rates_table
 
 
