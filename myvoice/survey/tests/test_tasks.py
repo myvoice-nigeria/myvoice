@@ -155,7 +155,7 @@ class TestHandleNewVisits(TestCase):
         self.assertEqual(start_feedback_survey.call_count, 1)
 
 
-@mock.patch('myvoice.settings')
+@mock.patch('myvoice.survey.tasks.settings')
 class TestGetSurveyStartTime(TestCase):
 
     def setUp(self):
