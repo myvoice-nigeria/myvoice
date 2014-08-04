@@ -133,6 +133,10 @@ class Visit(models.Model):
     service = models.ForeignKey('Service', blank=True, null=True)
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
     visit_time = models.DateTimeField(default=timezone.now)
+
+    # welcome_sent is used to signify that a message is new (value is null).
+    # Welcome messages are no longer sent.
+    # See issue: https://github.com/myvoice-nigeria/myvoice/issues/207
     welcome_sent = models.DateTimeField(blank=True, null=True)
     survey_sent = models.DateTimeField(blank=True, null=True)
     mobile = models.CharField(max_length=11, blank=True)
