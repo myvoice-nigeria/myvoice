@@ -518,7 +518,7 @@ class CompletionFilter(View):
     def get_variable(self, request, variable_name, ignore_value):
         if request.GET.get(variable_name):
             the_variable_data = request.GET[variable_name]
-            if str(the_variable_data) is str(ignore_value):
+            if the_variable_data.encode('utf8') == ignore_value.encode('utf8'):
                 the_variable_data = ""
         else:
             the_variable_data = ""
@@ -559,7 +559,7 @@ class FeedbackFilter(View):
     def get_variable(self, request, variable_name, ignore_value):
         if request.GET.get(variable_name):
             the_variable_data = request.GET[variable_name]
-            if str(the_variable_data) is str(ignore_value):
+            if the_variable_data.encode('utf8') == ignore_value.encode('utf8'):
                 the_variable_data = ""
         else:
             the_variable_data = ""

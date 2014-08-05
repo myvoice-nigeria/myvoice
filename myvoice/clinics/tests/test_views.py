@@ -606,7 +606,7 @@ class TestAnalystDashboardView(TestCase):
         self.service = factories.Service.create(code=5)
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.visit = factories.Visit.create(
-            patient=self.patient, service=self.service, survey_sent=now)
+            patient=self.patient, service=self.service, survey_sent=now, visit_time=timezone.now())
         self.question = factories.SurveyQuestion.create(
             label="Wait Time", question_type="open-ended")
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
@@ -635,7 +635,8 @@ class TestAnalystDashboardView(TestCase):
             patient=factories.Patient.create(
                 clinic=self.clinic,
                 serial=221),
-            survey_sent=now
+            survey_sent=now,
+            visit_time=timezone.now()
         )
 
         self.assertEqual(st_query.count(), 2)
@@ -691,6 +692,38 @@ class TestAnalystDashboardView(TestCase):
         # Test we have the right query
         self.assertEqual(sc_query.count(), 2)
 
+    def test_ct_get_variable(self):
+        ct = clinics.CompletionFilter()
+        request = self.factory.get('/completion_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
+        self.assertEqual(ct.get_variable(request, "clinic", "Clinic"), "Kwarra PHC")
+
+        request = self.factory.get('/completion_filter/?service=&clinic=Clinic&start_date=&end_date=')
+        self.assertEqual(ct.get_variable(request, "clinic", "Clinic"), "")
+
+        request = self.factory.get('/completion_filter/?service=&clinic=&start_date=&end_date=')
+        self.assertEqual(ct.get_variable(request, "clinic", "Clinic"), "")
+
+    def test_get_completion_filter(self):
+        ct = clinics.CompletionFilter()
+        request = self.factory.get('/completion_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
+        #self.assertEqual(ct.get(request).status_code, 200)
+
+    def test_ff_get_variable(self):
+        ff = clinics.FeedbackFilter()
+        request = self.factory.get('/feedback_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
+        self.assertEqual(ff.get_variable(request, "clinic", "Clinic"), "Kwarra PHC")
+
+        request = self.factory.get('/feedback_filter/?service=&clinic=Clinic&start_date=&end_date=')
+        self.assertEqual(ff.get_variable(request, "clinic", "Clinic"), "")
+
+        request = self.factory.get('/feedback_filter/?service=&clinic=&start_date=&end_date=')
+        self.assertEqual(ff.get_variable(request, "clinic", "Clinic"), "")
+
+    def test_get_feedback_filter(self):
+        ff = clinics.FeedbackFilter()
+        request = self.factory.get('/feedback_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
+        self.assertEqual(ff.get(request).status_code, 200)
+
 
 class TestFeedbackFilterView(TestCase):
     def setUp(self):
@@ -706,7 +739,22 @@ class TestFeedbackFilterView(TestCase):
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
 
+    def make_request(self, data):
+        """Make test request with POST data."""
+
+        request = self.factory.post('/feedback_filter/', data=data)
+        return clinics.FeedbackView.as_view()(request)
+
+    def test_feedback_status(self):
+        """Test that feedback view returns status_code 200."""
+        feedback_data = {
+            "clinic": self.clinic,
+        }
+        response = self.make_request(feedback_data)
+        self.assertEqual(200, response.status_code)
+
     def simple_frt_row_test(self, a, row_num):
+        a = clinics.AnalystSummary()
         frt = a.get_feedback_rates_table()
         for row in frt:
             if row_num in row["row_num"]:
