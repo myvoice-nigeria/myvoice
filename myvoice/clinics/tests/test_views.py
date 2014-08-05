@@ -602,13 +602,14 @@ class TestAnalystDashboardView(TestCase):
     def setUp(self):
         now = timezone.now()
         self.factory = RequestFactory()
+        self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
         self.clinic = factories.Clinic.create(code=1)
         self.service = factories.Service.create(code=5)
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.visit = factories.Visit.create(
             patient=self.patient, service=self.service, survey_sent=now)
         self.question = factories.SurveyQuestion.create(
-            label="Wait Time", question_type="open-ended")
+            survey=self.survey, label="Wait Time", question_type="open-ended")
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
 
@@ -618,11 +619,42 @@ class TestAnalystDashboardView(TestCase):
 
         self.patient1 = factories.Patient.create(serial='2111', clinic=self.clinic1)
         self.patient2 = factories.Patient.create(serial='2222', clinic=self.clinic2)
+        visit_time = timezone.make_aware(timezone.datetime(2014, 7, 1), timezone.utc)
 
-        factories.Visit.create(patient=self.patient1, survey_sent=now, service=self.service)
-        factories.Visit.create(patient=self.patient1, survey_sent=now, service=self.service)
-        factories.Visit.create(patient=self.patient2, survey_sent=now, service=self.service)
-        factories.Visit.create(patient=self.patient1, survey_sent=None, service=self.service)
+        factories.Visit.create(
+            patient=self.patient1,
+            survey_sent=now,
+            service=self.service,
+            visit_time=visit_time)
+
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=now, service=self.service)
+        factories.Visit.create(
+            patient=self.patient2, survey_sent=now, service=self.service)
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=None, service=self.service)
+
+        q1 = factories.SurveyQuestion.create(
+            survey=self.survey, label='Open Facility', question_type='multiple-choice')
+
+        factories.SurveyQuestionResponse(
+            question=q1,
+            clinic=self.clinic1,
+            visit=factories.Visit.create(
+                patient=self.patient1, service=self.service)
+        )
+        factories.SurveyQuestionResponse(
+            question=q1,
+            clinic=self.clinic1,
+            visit=factories.Visit.create(
+                patient=self.patient1, service=self.service)
+        )
+        factories.SurveyQuestionResponse(
+            question=q1,
+            clinic=self.clinic2,
+            visit=factories.Visit.create(
+                patient=self.patient2, service=self.service)
+        )
 
     def make_request(self, data=None):
         """Make test request."""
@@ -705,7 +737,7 @@ class TestAnalystDashboardView(TestCase):
 
     def test_get_visit_count_by_clinic(self):
         """Test that get_visit_by_clinic returns count of all visits to clinics."""
-        counts = clinics.AnalystSummary().get_clinic_visit_counts(self.clinics)
+        counts = clinics.AnalystSummary().get_visit_counts(self.clinics)
         self.assertEqual(2, len(counts))
 
         self.assertEqual(2, counts[self.clinic1])
@@ -721,7 +753,7 @@ class TestAnalystDashboardView(TestCase):
         factories.Visit.create(patient=self.patient1, survey_sent=now, service=service1)
         factories.Visit.create(patient=self.patient2, survey_sent=now, service=service1)
 
-        counts = clinics.AnalystSummary().get_clinic_visit_counts(
+        counts = clinics.AnalystSummary.get_visit_counts(
             self.clinics, service=service1)
         self.assertEqual(2, len(counts))
 
@@ -749,8 +781,17 @@ class TestAnalystDashboardView(TestCase):
 
         start = timezone.make_aware(timezone.datetime(2014, 7, 21), timezone.utc)
         end = timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc)
-        counts = clinics.AnalystSummary().get_clinic_visit_counts(
+        counts = clinics.AnalystSummary.get_visit_counts(
             _clinics, start_date=start, end_date=end)
+        self.assertEqual(2, len(counts))
+
+        self.assertEqual(2, counts[self.clinic1])
+        self.assertEqual(1, counts[self.clinic2])
+
+    def test_get_survey_started_counts(self):
+        """Test that get_started_survey_counts returns
+        count of all surveys started by clinic."""
+        counts = clinics.AnalystSummary.get_started_survey_counts(self.clinics)
         self.assertEqual(2, len(counts))
 
         self.assertEqual(2, counts[self.clinic1])

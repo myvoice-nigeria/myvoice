@@ -273,11 +273,12 @@ class AnalystSummary(TemplateView):
         response['allow'] = ','.join([self.allowed_methods])
         return response
 
-    def get_clinic_visit_counts(cls, clinics, **kwargs):
+    @classmethod
+    def get_visit_counts(cls, clinics, **kwargs):
         """Get the count of visits to each of clinics for service
         and between start_date and end_date.
 
-        Return dict of clinic: count_of_visits"""
+        Return dict of clinic: count_of_visits."""
         visit_counts = {}
         start_date = kwargs.get('start_date', None)
         end_date = kwargs.get('end_date', None)
@@ -286,13 +287,11 @@ class AnalystSummary(TemplateView):
         # Build filter params
         params = {'survey_sent__isnull': False}
         if service:
-            params.update({'service': service})
+            params.update({'service__name': service})
         if start_date:
             params.update({'visit_time__gte': start_date})
         if end_date:
             params.update({'visit_time__lte': end_date})
-        if clinics:
-            params.update({'patient__clinic': clinics})
 
         visits = models.Visit.objects.filter(**params)
 
@@ -300,28 +299,60 @@ class AnalystSummary(TemplateView):
             visit_counts.update({clinic: visits.filter(patient__clinic=clinic).count()})
         return visit_counts
 
-    def get_completion_table(self, clinic=None, start_date=None, end_date=None, service=None):
+    @classmethod
+    def get_survey_counts(cls, qset, clinics, **kwargs):
+        """Get the count of surveys for each clinic for service,
+        and between start_date and end_date.
+
+        Return dict of clinic: count_of_started survey."""
+        counts = {}
+
+        start_date = kwargs.get('start_date', None)
+        end_date = kwargs.get('end_date', None)
+        service = kwargs.get('service', None)
+
+        # Build filter params and apply to qset
+        params = {}
+        if service:
+            params.update({'service': service})
+        if start_date:
+            params.update({'visit__visit_time__gte': start_date})
+        if end_date:
+            params.update({'visit__visit_time__lte': end_date})
+
+        qset = qset.filter(**params)
+
+        for clinic in clinics:
+            counts.update({clinic: qset.filter(clinic=clinic).count()})
+        return counts
+
+    def get_completion_table(self, start_date=None, end_date=None, service=None):
         completion_table = []
         st_total = 0            # Surveys Triggered
         ss_total = 0            # Surveys Started
         sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
-        clinics_to_add = Clinic.objects.all().order_by("name")
+        all_clinics = Clinic.objects.all().order_by("name")
 
-        # Filter for Start Date, End Date and Service
-        if start_date:
-            if type(start_date) is str:
-                start_date = parse(start_date)
+        # Build params for to filter by start_date, end_date and service
+        visit_params = {'survey_sent__isnull': False}
+        survey_params = {}
+        if start_date and isinstance(start_date, basestring):
+            visit_params.update({'visit_time__gte': parse(start_date)})
+            survey_params.update({'visit__visit_time__gte': parse(start_date)})
+        if end_date and isinstance(end_date, basestring):
+            visit_params.update({'visit_time__lte': parse(end_date)})
+            survey_params.update({'visit__visit_time_lte': parse(end_date)})
+        if service and isinstance(service, basestring):
+            visit_params.update({'service__name': service})
+            survey_params.update({'service__name': service})
 
-        if end_date:
-            if type(end_date) is str:
-                end_date = parse(end_date)
-
-        if service:
-            if type(service) is str:
-                service = Service.objects.get(name__iexact=service)
-
+        visit_counts = self.get_visit_counts(all_clinics, **visit_params)
+        started_qset = SurveyQuestionResponse.objects.filter(
+            question__label__iexact='Open Facility',
+            question__question_type__iexact='multiple-choice')
+        started_counts = self.get_survey_counts(started_qset, **survey_params)
         # Loop through the Clinics, summating the data required.
         for a_clinic in clinics_to_add:
 
