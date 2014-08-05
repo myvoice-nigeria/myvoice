@@ -435,8 +435,8 @@ class AnalystSummary(TemplateView):
             "row_num": "1.2",
             "row_title": "1.2 Hospital Availability Comment",
             "rsp_num": sqr_query.filter(
-                question__label__iexact="Open Facility").filter(
-                question__question_type__iexact="open-ended").count()
+                question__label__iexact="Facility Availability").filter(
+                question__question_type__iexact='open-ended').count()
         })
 
         rates_table.append({
@@ -451,7 +451,7 @@ class AnalystSummary(TemplateView):
             "row_num": "2.2",
             "row_title": "2.2 Respectful Staff Treatment Comment",
             "rsp_num": sqr_query.filter(
-                question__label__iexact="Respectful Staff Treatment").filter(
+                question__label__iexact="Staff Treatment").filter(
                 question__question_type__iexact='open-ended').count()
         })
 
@@ -467,7 +467,7 @@ class AnalystSummary(TemplateView):
             "row_num": "3.2",
             "row_title": "3.2 Clean Hospital Materials Comment",
             "rsp_num": sqr_query.filter(
-                question__label__iexact="Clean Hospital Materials").filter(
+                question__label__iexact="Hospital Materials").filter(
                 question__question_type__iexact='open-ended').count()
         })
 
@@ -483,7 +483,7 @@ class AnalystSummary(TemplateView):
             "row_num": "4.2",
             "row_title": "4.2 Charged Fairly Comment",
             "rsp_num": sqr_query.filter(
-                question__label__iexact="Charged Fairly").filter(
+                question__label__iexact="Charge for Services").filter(
                 question__question_type__iexact='open-ended').count()
         })
 
