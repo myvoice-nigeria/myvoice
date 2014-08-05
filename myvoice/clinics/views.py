@@ -15,7 +15,7 @@ from myvoice.survey import utils as survey_utils
 from myvoice.clinics import utils as clinic_utils
 
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
-from myvoice.clinics.models import Clinic, Service, Visit
+from myvoice.clinics.models import Clinic, Service, Visit, GenericFeedback
 
 from . import forms
 from . import models
@@ -404,6 +404,7 @@ class AnalystSummary(TemplateView):
         last_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
         context['date_range'] = self.get_date_range(first_date, last_date)
         context['clinics'] = Clinic.objects.all().order_by("name")
+        context['gfb_count'] = GenericFeedback.objects.all().count()
         return context
 
     def get_feedback_rates_table(self, service="", clinic="", start_date="", end_date=""):
@@ -505,9 +506,7 @@ class AnalystSummary(TemplateView):
         rates_table.append({
             "row_num": "7.1",
             "row_title": "7.1 Out-of-Clinic Survey",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="General Feedback").filter(
-                question__question_type__iexact='multiple-choice').count()
+            "rsp_num": GenericFeedback.objects.all().count()
         })
 
         return rates_table
