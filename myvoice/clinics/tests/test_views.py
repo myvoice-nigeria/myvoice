@@ -694,10 +694,12 @@ class TestAnalystDashboardView(TestCase):
 
     def test_ct_get_variable(self):
         ct = clinics.CompletionFilter()
-        request = self.factory.get('/completion_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
+        request = self.factory.get(
+            '/completion_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
         self.assertEqual(ct.get_variable(request, "clinic", "Clinic"), "Kwarra PHC")
 
-        request = self.factory.get('/completion_filter/?service=&clinic=Clinic&start_date=&end_date=')
+        request = self.factory.get(
+            '/completion_filter/?service=&clinic=Clinic&start_date=&end_date=')
         self.assertEqual(ct.get_variable(request, "clinic", "Clinic"), "")
 
         request = self.factory.get('/completion_filter/?service=&clinic=&start_date=&end_date=')
@@ -705,12 +707,14 @@ class TestAnalystDashboardView(TestCase):
 
     def test_get_completion_filter(self):
         ct = clinics.CompletionFilter()
-        request = self.factory.get('/completion_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
-        #self.assertEqual(ct.get(request).status_code, 200)
+        request = self.factory.get(
+            '/completion_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
+        self.assertEqual(ct.get(request).status_code, 200)
 
     def test_ff_get_variable(self):
         ff = clinics.FeedbackFilter()
-        request = self.factory.get('/feedback_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
+        request = self.factory.get(
+            '/feedback_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
         self.assertEqual(ff.get_variable(request, "clinic", "Clinic"), "Kwarra PHC")
 
         request = self.factory.get('/feedback_filter/?service=&clinic=Clinic&start_date=&end_date=')
@@ -721,7 +725,8 @@ class TestAnalystDashboardView(TestCase):
 
     def test_get_feedback_filter(self):
         ff = clinics.FeedbackFilter()
-        request = self.factory.get('/feedback_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
+        request = self.factory.get(
+            '/feedback_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
         self.assertEqual(ff.get(request).status_code, 200)
 
 
