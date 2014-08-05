@@ -273,20 +273,41 @@ class AnalystSummary(TemplateView):
         response['allow'] = ','.join([self.allowed_methods])
         return response
 
-    def get_completion_table(self, clinic="", start_date="", end_date="", service=""):
+    def get_clinic_visit_counts(cls, clinics, **kwargs):
+        """Get the count of visits to each of clinics for service
+        and between start_date and end_date.
+
+        Return dict of clinic: count_of_visits"""
+        visit_counts = {}
+        start_date = kwargs.get('start_date', None)
+        end_date = kwargs.get('end_date', None)
+        service = kwargs.get('service', None)
+
+        # Build filter params
+        params = {'survey_sent__isnull': False}
+        if service:
+            params.update({'service': service})
+        if start_date:
+            params.update({'visit_time__gte': start_date})
+        if end_date:
+            params.update({'visit_time__lte': end_date})
+        if clinics:
+            params.update({'patient__clinic': clinics})
+
+        visits = models.Visit.objects.filter(**params)
+
+        for clinic in clinics:
+            visit_counts.update({clinic: visits.filter(patient__clinic=clinic).count()})
+        return visit_counts
+
+    def get_completion_table(self, clinic=None, start_date=None, end_date=None, service=None):
         completion_table = []
         st_total = 0            # Surveys Triggered
         ss_total = 0            # Surveys Started
         sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
-        if not clinic:
-            clinics_to_add = Clinic.objects.all().order_by("name")
-        else:
-            if type(clinic) == str:
-                clinics_to_add = Clinic.objects.get(name=clinic)
-            else:
-                clinics_to_add = clinic
+        clinics_to_add = Clinic.objects.all().order_by("name")
 
         # Filter for Start Date, End Date and Service
         if start_date:

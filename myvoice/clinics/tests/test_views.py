@@ -600,7 +600,7 @@ class TestClinicReportView(TestCase):
 class TestAnalystDashboardView(TestCase):
 
     def setUp(self):
-        now = datetime.datetime.now(pytz.utc)
+        now = timezone.now()
         self.factory = RequestFactory()
         self.clinic = factories.Clinic.create(code=1)
         self.service = factories.Service.create(code=5)
@@ -611,6 +611,18 @@ class TestAnalystDashboardView(TestCase):
             label="Wait Time", question_type="open-ended")
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
+
+        self.clinic1 = factories.Clinic.create(code=2)
+        self.clinic2 = factories.Clinic.create(code=3)
+        self.clinics = clinics.Clinic.objects.filter(code__in=[2, 3])
+
+        self.patient1 = factories.Patient.create(serial='2111', clinic=self.clinic1)
+        self.patient2 = factories.Patient.create(serial='2222', clinic=self.clinic2)
+
+        factories.Visit.create(patient=self.patient1, survey_sent=now, service=self.service)
+        factories.Visit.create(patient=self.patient1, survey_sent=now, service=self.service)
+        factories.Visit.create(patient=self.patient2, survey_sent=now, service=self.service)
+        factories.Visit.create(patient=self.patient1, survey_sent=None, service=self.service)
 
     def make_request(self, data=None):
         """Make test request."""
@@ -690,6 +702,59 @@ class TestAnalystDashboardView(TestCase):
 
         # Test we have the right query
         self.assertEqual(sc_query.count(), 2)
+
+    def test_get_visit_count_by_clinic(self):
+        """Test that get_visit_by_clinic returns count of all visits to clinics."""
+        counts = clinics.AnalystSummary().get_clinic_visit_counts(self.clinics)
+        self.assertEqual(2, len(counts))
+
+        self.assertEqual(2, counts[self.clinic1])
+        self.assertEqual(1, counts[self.clinic2])
+
+    def test_get_visit_count_by_clinic_service(self):
+        """Test that get_visit_by_clinic returns count of all visits to clinics
+        filtered by service."""
+        now = timezone.now()
+
+        service1 = factories.Service.create(code=4)
+
+        factories.Visit.create(patient=self.patient1, survey_sent=now, service=service1)
+        factories.Visit.create(patient=self.patient2, survey_sent=now, service=service1)
+
+        counts = clinics.AnalystSummary().get_clinic_visit_counts(
+            self.clinics, service=service1)
+        self.assertEqual(2, len(counts))
+
+        self.assertEqual(1, counts[self.clinic1])
+        self.assertEqual(1, counts[self.clinic2])
+
+    def test_get_visit_count_by_clinic_dates(self):
+        """Test that get_visit_by_clinic returns count of all visits to clinics
+        filtered by dates."""
+        now = timezone.now()
+
+        _clinics = clinics.Clinic.objects.filter(code__in=[2, 3])
+
+        dt1 = timezone.make_aware(timezone.datetime(2014, 7, 20), timezone.utc)
+        dt2 = timezone.make_aware(timezone.datetime(2014, 7, 25), timezone.utc)
+
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=now, visit_time=dt1, service=self.service)
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=now, visit_time=dt2, service=self.service)
+        factories.Visit.create(
+            patient=self.patient2, survey_sent=now, visit_time=dt2, service=self.service)
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=now, visit_time=dt2, service=self.service)
+
+        start = timezone.make_aware(timezone.datetime(2014, 7, 21), timezone.utc)
+        end = timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc)
+        counts = clinics.AnalystSummary().get_clinic_visit_counts(
+            _clinics, start_date=start, end_date=end)
+        self.assertEqual(2, len(counts))
+
+        self.assertEqual(2, counts[self.clinic1])
+        self.assertEqual(1, counts[self.clinic2])
 
 
 class TestFeedbackFilterView(TestCase):
