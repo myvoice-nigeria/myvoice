@@ -4,10 +4,13 @@ from django.utils import timezone
 import json
 import re
 from datetime import timedelta
+import logging
 
 from . import models
 
 from myvoice.survey import utils as survey_utils
+
+logger = logging.getLogger(__name__)
 
 
 VISIT_EXPR = '''
@@ -36,9 +39,6 @@ class VisitForm(forms.Form):
     serial_max = 6
     min_wait_time = 1800  # Minimum time between visits by same patient in seconds
 
-    def __init__(self, *args, **kwargs):
-        super(VisitForm, self).__init__(*args, **kwargs)
-
     def replace_alpha(self, text):
         """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
         return text.replace('o', '0').replace('O', '0').replace('i', '1').replace(
@@ -55,10 +55,12 @@ class VisitForm(forms.Form):
 
         cleaned_data = self.replace_alpha(self.cleaned_data['text'].strip())
         clnc, mobile, serial, srvc = cleaned_data.split()
+        logger.debug("text from {0} is {1}".format(sender, cleaned_data))
 
         # Check if mobile is correct
         if len(mobile) not in [1, 11]:
             error_list.append('mobile')
+            logger.debug("Wrong mobile entered: {}".format(mobile))
 
         # Check if clinic is valid
         try:
@@ -70,6 +72,7 @@ class VisitForm(forms.Form):
         # Check if serial is valid
         if len(serial) < self.serial_min or len(serial) > self.serial_max:
             error_list.append('serial')
+            logger.debug("Wrong serial entered: {}".format(serial))
 
         # Check if Service is valid
         try:
@@ -83,6 +86,7 @@ class VisitForm(forms.Form):
         # As long as mobile is ok.
         if len(error_list) > 0:
             fld_list = ', '.join(error_list).upper()
+            logger.debug("The errors in error_list are {}".format(fld_list))
             if models.VisitRegistrationError.objects.filter(
                     sender=sender).count() >= 2 and 'mobile' not in error_list:
                 # Save error log
@@ -100,7 +104,11 @@ class VisitForm(forms.Form):
                     '{1}. Please check and enter the whole registration '\
                     'code again.'.format(serial, fld_list)
                 raise forms.ValidationError(error_msg)
-        else:  # No errors, check if a duplicate in 30 mins
+        else:
+            # Clear Current Error state
+            models.VisitRegistrationError.objects.filter(
+                sender=sender).delete()
+            # Check if a duplicate in 30 mins
             min_wait_time = timezone.now() - timedelta(
                 seconds=self.min_wait_time)
             if models.Visit.objects.filter(
