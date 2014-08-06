@@ -761,6 +761,10 @@ class TestFeedbackFilterView(TestCase):
     def simple_frt_row_test(self, a, row_num):
         a = clinics.AnalystSummary()
         frt = a.get_feedback_rates_table()
+        print " -------------------- "
+        print row_num
+        print frt
+        print " -------------------- "
         for row in frt:
             if row_num in row["row_num"]:
                 self.assertEqual(row["rsp_num"], 1)
@@ -770,6 +774,7 @@ class TestFeedbackFilterView(TestCase):
     def test_feedback_rates(self):
         a = clinics.AnalystSummary()
         frt = a.get_feedback_rates_table()
+        print frt
         for row in frt:
             self.assertEqual(row["rsp_num"], 0)
 
@@ -780,6 +785,7 @@ class TestFeedbackFilterView(TestCase):
         self.simple_frt_row_test(a, "1.1")
 
         # Test 1.2
+        self.question.label = "Facility Availability"
         self.question.question_type = "open-ended"
         self.question.save()
         self.simple_frt_row_test(a, "1.2")
@@ -791,6 +797,7 @@ class TestFeedbackFilterView(TestCase):
         self.simple_frt_row_test(a, "2.1")
 
         # Test 2.2
+        self.question.label = "Staff Treatment"
         self.question.question_type = "open-ended"
         self.question.save()
         self.simple_frt_row_test(a, "2.2")
@@ -802,6 +809,7 @@ class TestFeedbackFilterView(TestCase):
         self.simple_frt_row_test(a, "3.1")
 
         # Test 3.2
+        self.question.label = "Hospital Materials"
         self.question.question_type = 'open-ended'
         self.question.save()
         self.simple_frt_row_test(a, "3.2")
@@ -813,6 +821,7 @@ class TestFeedbackFilterView(TestCase):
         self.simple_frt_row_test(a, "4.1")
 
         # Test 4.2
+        self.question.label = "Charge for Services"
         self.question.question_type = 'open-ended'
         self.question.save()
         self.simple_frt_row_test(a, "4.2")
