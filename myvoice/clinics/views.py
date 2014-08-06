@@ -34,6 +34,8 @@ class VisitView(View):
 
             clnc, mobile, serial, serv, txt = form.cleaned_data['text']
             sender = survey_utils.convert_to_local_format(form.cleaned_data['phone'])
+            if not sender:
+                sender = form.cleaned_data['phone']
             try:
                 patient = models.Patient.objects.get(clinic=clnc, serial=serial)
             except models.Patient.DoesNotExist:

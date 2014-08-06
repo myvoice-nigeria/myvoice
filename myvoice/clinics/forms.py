@@ -4,10 +4,13 @@ from django.utils import timezone
 import json
 import re
 from datetime import timedelta
+import logging
 
 from . import models
 
 from myvoice.survey import utils as survey_utils
+
+logger = logging.getLogger(__name__)
 
 
 VISIT_EXPR = '''
@@ -52,10 +55,12 @@ class VisitForm(forms.Form):
 
         cleaned_data = self.replace_alpha(self.cleaned_data['text'].strip())
         clnc, mobile, serial, srvc = cleaned_data.split()
+        logger.debug("text from {0} is {1}".format(sender, cleaned_data))
 
         # Check if mobile is correct
         if len(mobile) not in [1, 11]:
             error_list.append('mobile')
+            logger.debug("Wrong mobile entered: {}".format(mobile))
 
         # Check if clinic is valid
         try:
@@ -67,6 +72,7 @@ class VisitForm(forms.Form):
         # Check if serial is valid
         if len(serial) < self.serial_min or len(serial) > self.serial_max:
             error_list.append('serial')
+            logger.debug("Wrong serial entered: {}".format(serial))
 
         # Check if Service is valid
         try:
@@ -80,6 +86,7 @@ class VisitForm(forms.Form):
         # As long as mobile is ok.
         if len(error_list) > 0:
             fld_list = ', '.join(error_list).upper()
+            logger.debug("The errors in error_list are {}".format(fld_list))
             if models.VisitRegistrationError.objects.filter(
                     sender=sender).count() >= 2 and 'mobile' not in error_list:
                 # Save error log
