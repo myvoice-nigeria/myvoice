@@ -36,9 +36,6 @@ class VisitForm(forms.Form):
     serial_max = 6
     min_wait_time = 1800  # Minimum time between visits by same patient in seconds
 
-    def __init__(self, *args, **kwargs):
-        super(VisitForm, self).__init__(*args, **kwargs)
-
     def replace_alpha(self, text):
         """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
         return text.replace('o', '0').replace('O', '0').replace('i', '1').replace(
