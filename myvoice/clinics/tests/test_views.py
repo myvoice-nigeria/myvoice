@@ -72,7 +72,7 @@ class TestVisitView(TestCase):
         self.assertEqual(1, models.Visit.objects.count())
 
     def test_wrong_right_wrong_clinic_entries(self):
-        """Test that a right clinic entry after wrong entry clears the slate.
+        """Test that a right entry after wrong entry clears the slate.
 
         1. wrong entry
         2. right entry
@@ -86,15 +86,26 @@ class TestVisitView(TestCase):
         reg_data = {'text': '2 08122233301 4001 5', 'phone': '+2348022112211'}
         self.make_request(reg_data)
 
+        self.assertEqual(1, models.VisitRegistrationError.objects.filter(
+            sender='+2348022112211').count())
+
         # 2nd entry, Clinic is right
         reg_data = {'text': '1 08122233301 4001 5', 'phone': '+2348022112211'}
         self.make_request(reg_data)
+
+        # Errors are cleared
+        self.assertEqual(0, models.VisitRegistrationError.objects.filter(
+            sender='+2348022112211').count())
 
         # 3rd entry, Clinic is wrong
         reg_data = {'text': '2 08122233301 4001 5', 'phone': '+2348022112211'}
         msg = self.error_msg % (4001, 'CLINIC')
         response = self.make_request(reg_data)
         self.assertEqual(response.content, msg)
+
+        # Errors is back
+        self.assertEqual(1, models.VisitRegistrationError.objects.filter(
+            sender='+2348022112211').count())
 
     def test_multiple_invalid_entries(self):
         """Test mobile and clinic are incorrect, prioritize mobile."""

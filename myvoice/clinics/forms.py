@@ -104,7 +104,11 @@ class VisitForm(forms.Form):
                     '{1}. Please check and enter the whole registration '\
                     'code again.'.format(serial, fld_list)
                 raise forms.ValidationError(error_msg)
-        else:  # No errors, check if a duplicate in 30 mins
+        else:
+            # Clear Current Error state
+            models.VisitRegistrationError.objects.filter(
+                sender=sender).delete()
+            # Check if a duplicate in 30 mins
             min_wait_time = timezone.now() - timedelta(
                 seconds=self.min_wait_time)
             if models.Visit.objects.filter(
