@@ -38,7 +38,6 @@ class VisitForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(VisitForm, self).__init__(*args, **kwargs)
-        self.error_list = []
 
     def replace_alpha(self, text):
         """Convert 'o' and 'O' to '0', and 'i', 'I' to '1'."""
@@ -50,6 +49,7 @@ class VisitForm(forms.Form):
 
         text is in format: CLINIC MOBILE SERIAL SERVICE
         """
+        error_list = []
         # How come this is available here?
         sender = self.cleaned_data['phone']
 
@@ -58,33 +58,33 @@ class VisitForm(forms.Form):
 
         # Check if mobile is correct
         if len(mobile) not in [1, 11]:
-            self.error_list.append('mobile')
+            error_list.append('mobile')
 
         # Check if clinic is valid
         try:
             clinic = models.Clinic.objects.get(code=clnc)
         except (models.Clinic.DoesNotExist, ValueError):
-            self.error_list.append('clinic')
+            error_list.append('clinic')
             clinic = None
 
         # Check if serial is valid
         if len(serial) < self.serial_min or len(serial) > self.serial_max:
-            self.error_list.append('serial')
+            error_list.append('serial')
 
         # Check if Service is valid
         try:
             service = models.Service.objects.get(code=srvc)
         except models.Service.DoesNotExist:
-            self.error_list.append('service')
+            error_list.append('service')
             service = None
 
         # Check if there are errors.
         # If 2 previous validation errors exist, allow entry to pass
         # As long as mobile is ok.
-        if len(self.error_list) > 0:
-            fld_list = ', '.join(self.error_list).upper()
+        if len(error_list) > 0:
+            fld_list = ', '.join(error_list).upper()
             if models.VisitRegistrationError.objects.filter(
-                    sender=sender).count() >= 2 and 'mobile' not in self.error_list:
+                    sender=sender).count() >= 2 and 'mobile' not in error_list:
                 # Save error log
                 models.VisitRegistrationErrorLog.objects.create(
                     sender=sender,
