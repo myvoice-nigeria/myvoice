@@ -272,7 +272,7 @@ TEXTIT_PASSWORD = os.environ.get('TEXTIT_PASSWORD', '')
 
 # Amount of time that should elapse between when we first process a visit
 # and when we send a survey to the patient.
-DEFAULT_SURVEY_DELAY = datetime.timedelta(minutes=5)
+DEFAULT_SURVEY_DELAY = datetime.timedelta(minutes=0)
 
 # Hours, in UTC, between which we can send surveys. Send dates outside of this
 # window will be sent the next day.
