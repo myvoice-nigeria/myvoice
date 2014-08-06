@@ -18,7 +18,7 @@ from . import models
 
 
 class VisitView(View):
-    form_class = forms.VisitForm
+    # form_class = forms.VisitForm
     success_msg = "Entry received for patient with serial number {}. Thank you."
     error_msg = "1 or more of your entry are missing, please check and enter "\
                 "the registration agian."
@@ -30,7 +30,8 @@ class VisitView(View):
         return super(VisitView, self).dispatch(*args, **kwargs)
 
     def post(self, request):
-        form = self.form_class(request.POST)
+        form = forms.VisitForm(request.POST)
+        # form = self.form_class(request.POST)
         if form.is_valid():
 
             clnc, mobile, serial, serv, txt = form.cleaned_data['text']
