@@ -761,10 +761,6 @@ class TestFeedbackFilterView(TestCase):
     def simple_frt_row_test(self, a, row_num):
         a = clinics.AnalystSummary()
         frt = a.get_feedback_rates_table()
-        print " -------------------- "
-        print row_num
-        print frt
-        print " -------------------- "
         for row in frt:
             if row_num in row["row_num"]:
                 self.assertEqual(row["rsp_num"], 1)
@@ -774,7 +770,6 @@ class TestFeedbackFilterView(TestCase):
     def test_feedback_rates(self):
         a = clinics.AnalystSummary()
         frt = a.get_feedback_rates_table()
-        print frt
         for row in frt:
             self.assertEqual(row["rsp_num"], 0)
 
