@@ -1,6 +1,7 @@
 from itertools import groupby
 import json
 from operator import attrgetter, itemgetter
+import logging
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -15,6 +16,8 @@ from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
 from . import forms
 from . import models
+
+logger = logging.getLogger(__name__)
 
 
 class VisitView(View):
@@ -33,6 +36,8 @@ class VisitView(View):
         if form.is_valid():
 
             clnc, mobile, serial, serv, txt = form.cleaned_data['text']
+            logger.debug("visit form text is {}".format(txt))
+
             sender = survey_utils.convert_to_local_format(form.cleaned_data['phone'])
             if not sender:
                 sender = form.cleaned_data['phone']
@@ -45,6 +50,7 @@ class VisitView(View):
                     mobile=mobile)
 
             output_msg = self.success_msg.format(serial)
+            logger.debug("Output message for serial {0} is {1}".format(serial, output_msg))
 
             models.Visit.objects.create(patient=patient, service=serv, mobile=mobile, sender=sender)
             data = json.dumps({'text': output_msg})
@@ -59,6 +65,8 @@ class VisitView(View):
 
     def get_error_msg(self, form):
         """Extract the first error message from the form's 'text' field."""
+        msgs = ", ".join(form.errors['text'])
+        logger.debug("visit form error messages are {}".format(msgs))
         return form.errors['text'][0]
 
 
