@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dt=$(date +"%H:%M %p")
+dt=$(date +"%b %d %H:%M %p")
 msg="Hi,+this+is+a+direct+message+by+$dt.+Please+reply+with+the+time+you+received+it,+then+the+time+you+sent+your+response,+eg+4:03pm+4:15pm"
 # Airtel users
 curl "http://107.170.157.165:13013/cgi-bin/sendsms?user=$AIRTEL_KANNEL_USER&pass=$AIRTEL_KANNEL_PASS&to=2348122356701&text=$msg"
