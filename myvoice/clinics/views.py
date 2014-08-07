@@ -21,17 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 class VisitView(View):
-    success_msg = "Entry received for patient with serial number {}. Thank you."
-    error_msg = "1 or more of your entry are missing, please check and enter "\
-                "the registration agian."
-    serial_min = 3
-    serial_max = 6
 
     @csrf_exempt
     def dispatch(self, *args, **kwargs):
         return super(VisitView, self).dispatch(*args, **kwargs)
 
     def post(self, request):
+        success_msg = "Entry received for patient with serial number {}. Thank you."
         form = forms.VisitForm(request.POST)
         if form.is_valid():
 
@@ -49,7 +45,7 @@ class VisitView(View):
                     serial=serial,
                     mobile=mobile)
 
-            output_msg = self.success_msg.format(serial)
+            output_msg = success_msg.format(serial)
             logger.debug("Output message for serial {0} is {1}".format(serial, output_msg))
 
             models.Visit.objects.create(patient=patient, service=serv, mobile=mobile, sender=sender)
