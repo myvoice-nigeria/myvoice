@@ -61,7 +61,13 @@
     </div>
 
     <div class="col-xs-6 participation-module no-padding-right">
-      <div class="date">{{ min_date.date|date:"F j, Y" }} - {{ max_date.date|date:"F j, Y" }}</div>
+      <div class="date">
+        <select id="service-feedback-weeks">
+            {% for week in weeks %}
+              <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>
+            {% endfor %}
+        </select>
+        </div>
         <div class="content">
           <h2>SURVEY PARTICIPATION</h2>
           {% if num_registered %}
@@ -139,7 +145,9 @@
     <table class="table table-bordered table-striped" id="feedback_on_services">
       <thead>
         <tr>
-          <th class="special-th"><select id="service-feedback-weeks"><option>{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</option></select></th>
+          <th class="special-th">
+            {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}
+          </th>
           <th>Open Facility</th>
           <th>Respectful<br />Staff Treatment</th>
           <th>Clean<br />Hospital Materials</th>

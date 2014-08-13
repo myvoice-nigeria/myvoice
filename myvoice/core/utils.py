@@ -60,5 +60,17 @@ def get_date(the_date=""):
             the_date = parse(the_date)
         if the_date.tzinfo is None:
             the_date = the_date.replace(tzinfo=wat)
-            
+
     return the_date
+
+def calculate_weeks_ranges(start_date, end_date):
+    """Returns a list of tuples of dates between self.start_date and self.end_date"""
+    week_list = [{"start": start_date, "end": end_date}]
+    start_date = get_week_start(start_date)
+
+    next_monday = start_date
+    while(next_monday < end_date):
+        next_monday = start_date + datetime.timedelta(days=0, weeks=1)
+        week_list.append({"start": start_date, "end": next_monday})
+        start_date = next_monday
+    return week_list

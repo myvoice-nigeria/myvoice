@@ -10,7 +10,7 @@ from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, get_date
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, get_date, calculate_weeks_ranges
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
@@ -249,6 +249,7 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['percent_started'] = percent_started
         kwargs['num_completed'] = num_completed
         kwargs['percent_completed'] = percent_completed
+        kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
 
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
