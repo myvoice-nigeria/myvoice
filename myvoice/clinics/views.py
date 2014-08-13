@@ -291,14 +291,17 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
         # c.calculate_date_range()
         # c.initialize_data("")
-        c.responses = SurveyQuestionResponse.objects.all()
+        c.responses = SurveyQuestionResponse.objects.filter(clinic_id=1, datetime__gte=c.start_date, datetime__lte=c.end_date)
         c.questions = SurveyQuestion.objects.all()
         c.questions = dict([(q.label, q) for q in c.questions])
-        content = c.get_feedback_by_week()        
+        content = c.get_feedback_by_service()     
 
-        print content
+        new_content = []
+        for row in content:
+            new_row = (row[0].name, row[1])
+            new_content.append(new_row)
         # content = "fnord"
-        return HttpResponse(json.dumps(content, cls=DjangoJSONEncoder), content_type="text/json")
+        return HttpResponse(json.dumps(new_content, cls=DjangoJSONEncoder), content_type="text/json")
 
 
 class RegionReport(ReportMixin, DetailView):
