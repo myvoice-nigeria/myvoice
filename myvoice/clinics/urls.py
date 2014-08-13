@@ -15,6 +15,8 @@ urlpatterns = [
     url(r'^reports/facility/(?P<slug>[ \w-]+)/$',
         views.ClinicReport.as_view(),
         name='clinic_report'),
+    url(r'^report_filter_feedback_by_week/$',
+        views.ClinicReportFilterByWeek.as_view(), name='report_filter'),
     url(r'^visit/$', views.VisitView.as_view(), name='visit'),
     url(r'^feedback/$', views.FeedbackView.as_view(), name='visit'),
     url(r'^lga_filter_feedback_by_clinic/$',

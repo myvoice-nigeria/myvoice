@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
+from django.core.serializers.json import DjangoJSONEncoder
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.core.utils import get_date, calculate_weeks_ranges
@@ -262,6 +263,42 @@ class ClinicReport(ReportMixin, DetailView):
 
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
+
+
+class ClinicReportFilterByWeek(ReportMixin, DetailView):
+
+    def get_variable(self, request, variable_name, ignore_value):
+        if request.GET.get(variable_name):
+            the_variable_data = request.GET[variable_name]
+            if str(the_variable_data) is str(ignore_value):
+                the_variable_data = ""
+        else:
+            the_variable_data = ""
+        return the_variable_data
+
+    def get(self, request):
+
+        # Get the variables
+        the_start_date = self.get_variable(request, "start_date", "Start Date")
+        the_end_date = self.get_variable(request, "end_date", "End Date")
+
+        c = ClinicReport()                  # Create an instance of Report
+
+        c.start_date = get_date(the_start_date)
+        c.end_date = get_date(the_end_date)
+        c.curr_date = c.end_date
+
+
+        # c.calculate_date_range()
+        # c.initialize_data("")
+        c.responses = SurveyQuestionResponse.objects.all()
+        c.questions = SurveyQuestion.objects.all()
+        c.questions = dict([(q.label, q) for q in c.questions])
+        content = c.get_feedback_by_week()        
+
+        print content
+        # content = "fnord"
+        return HttpResponse(json.dumps(content, cls=DjangoJSONEncoder), content_type="text/json")
 
 
 class RegionReport(ReportMixin, DetailView):
