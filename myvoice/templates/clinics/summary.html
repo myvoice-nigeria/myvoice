@@ -177,10 +177,10 @@
         name = results[1];
         core_data = results[2];
 
-        $.each(core_data, function(num, results){
-          label = results[0];
-          perc = results[1];
-          num = results[2];
+        $.each(core_data, function(num, results2){
+          label = results2[0];
+          perc = results2[1];
+          num = results2[2];
           
           $("tr#service"+id+" td."+label).text(perc + " ("+num+")");
         });
@@ -198,12 +198,15 @@
       $.each(data, function(num, results ){
         id = results[0];
         name = results[1];
-        label = results[2][0][0];
+        core_data = results[2];
 
-        perc = results[2][0][1];
-        num = results[2][0][2];
-        
-        $("tr#clinic"+id+" td."+label).text(perc + "(" + num + ")");
+        $.each(core_data, function(num, results2){
+          label = results2[0];
+          perc = results2[1];
+          num = results2[2];
+                  
+          $("tr#clinic"+id+" td."+label).text(perc + "(" + num + ")");
+        });
       });
     });
   }
