@@ -366,9 +366,6 @@ class RegionReport(ReportMixin, DetailView):
 
         responses = self.responses.exclude(clinic=None)
 
-        print self.start_date
-        print self.end_date
-
         if self.start_date and self.end_date:
             responses = responses.filter(visit__visit_time__range=(self.start_date, self.end_date))
 

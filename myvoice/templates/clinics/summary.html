@@ -172,15 +172,26 @@
     // Send dates via Ajax to our Filter and 
     $.get("/lga_filter_feedback_by_service", {'start_date':start_date, 'end_date':end_date}, function(data,status){
       $.each(data, function(num, results){
-
+      
         id = results[0];
+        console.log(id);
+
         name = results[1];
-        label = results[2][0][0];
-        perc = results[2][0][1];
-        num = results[2][0][2];
+        console.log(name);
 
-        $("tr#service"+id+" td."+label).text(perc + " ("+num+")");
+        core_data = results[2];
 
+        $.each(core_data, function(num, results){
+
+          label = results[0];
+          perc = results[1];
+          num = results[2];
+          console.log(label);
+          console.log(perc);
+          console.log(num);
+          
+          $("tr#service"+id+" td."+label).text(perc + " ("+num+")");
+        });
       });
     });
   }
