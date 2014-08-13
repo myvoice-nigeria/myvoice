@@ -10,7 +10,8 @@ from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, get_date, calculate_weeks_ranges
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage
+from myvoice.core.utils import get_date, calculate_weeks_ranges
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
@@ -35,6 +36,7 @@ class VisitView(View):
         if form.is_valid():
 
             clnc, mobile, serial, serv, txt = form.cleaned_data['text']
+            sender = survey_utils.convert_to_local_format(form.cleaned_data['phone'])
             try:
                 patient = models.Patient.objects.get(clinic=clnc, serial=serial)
             except models.Patient.DoesNotExist:
@@ -45,7 +47,7 @@ class VisitView(View):
 
             output_msg = self.success_msg.format(serial)
 
-            models.Visit.objects.create(patient=patient, service=serv, mobile=mobile)
+            models.Visit.objects.create(patient=patient, service=serv, mobile=mobile, sender=sender)
             data = json.dumps({'text': output_msg})
         else:
             data = json.dumps({'text': self.get_error_msg(form)})
@@ -110,8 +112,11 @@ class ReportMixin(object):
                     service_data.append([None, 0])
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
-                mode = survey_utils.get_mode(wait_times)
-                service_data.append(["Wait_Time", mode, len(wait_times)])
+
+                mode = survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories())
+                service_data.append((mode, len(wait_times)))
+
             else:
                 service_data.append([None, None, 0])
             data.append((service, service_data))
@@ -158,9 +163,9 @@ class ClinicReport(ReportMixin, DetailView):
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
         self.initialize_data(obj)
-        self.responses = obj.surveyquestionresponse_set.all()
+        self.responses = obj.surveyquestionresponse_set.filter(display_on_dashboard=True)
         self.responses = self.responses.select_related('question', 'service', 'visit')
-        self.generic_feedback = obj.genericfeedback_set.all()
+        self.generic_feedback = obj.genericfeedback_set.filter(display_on_dashboard=True)
         return obj
 
     def get_feedback_by_week(self):
@@ -172,12 +177,15 @@ class ClinicReport(ReportMixin, DetailView):
             by_question = survey_utils.group_responses(week_responses, 'question.label')
             responses_by_question = dict(by_question)
             week_data = []
+            survey_num = 0
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
                     total_responses = len(question_responses)
+                    if label is 'Open Facility':
+                        survey_num += total_responses
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
                     week_data.append((percentage, total_responses))
@@ -189,7 +197,9 @@ class ClinicReport(ReportMixin, DetailView):
                 'week_end': get_week_end(week_start),
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
-                'wait_time_mode': survey_utils.get_mode(wait_times)
+                'wait_time_mode': survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories()),
+                'survey_num': survey_num
             })
         return data
 
@@ -203,8 +213,7 @@ class ClinicReport(ReportMixin, DetailView):
     def get_detailed_comments(self):
         """Combine open-ended survey comments with General Feedback."""
         open_ended_responses = self.responses.filter(
-            question__question_type=SurveyQuestion.OPEN_ENDED,
-            display_on_dashboard=True)
+            question__question_type=SurveyQuestion.OPEN_ENDED)
         comments = [
             {
                 'question': r.question.label,
@@ -325,19 +334,31 @@ class RegionReport(ReportMixin, DetailView):
     def get_satisfaction_counts(self, responses):
         """Return satisfaction percentage and total of survey participants
 
-        responses is already grouped by question."""
-        if not responses:
-            return 0, 0
-        unsatisfied, total = 0, 0
+        responses is already grouped by visit"""
+        unsatisfied = 0
+        total = 0
 
-        for question, q_responses in responses.items():
-            if question in ['Respectful Staff Treatment', 'Charged Fairly']:
-                answer = self.questions[question].primary_answer
-                unsatisfied += len([r for r in q_responses if r['response'] != answer])
-            elif question == 'Wait Time':
-                answer = self.questions[question].get_categories()[-1]
-                unsatisfied += len([r for r in q_responses if r['response'] == answer])
-            total += len(q_responses)
+        target_questions = ['Respectful Staff Treatment', 'Charged Fairly', 'Wait Time']
+
+        for visit, visit_responses in responses:
+            if any(r['question__label'] in target_questions for r in visit_responses):
+                total += 1
+            else:
+                continue
+
+            for resp in visit_responses:
+                question = resp['question__label']
+                answer = resp['response']
+                if question in target_questions[:2] and answer != self.questions[
+                        question].primary_answer:
+                    unsatisfied += 1
+                    continue
+                if question == target_questions[2] and answer == self.questions[
+                        question].get_categories()[-1]:
+                    unsatisfied += 1
+
+        if not total:
+            return 0, 0
 
         return 100 - make_percentage(unsatisfied, total), total
 
@@ -371,7 +392,7 @@ class RegionReport(ReportMixin, DetailView):
             responses = responses.filter(visit__visit_time__range=(self.start_date, self.end_date))
 
         responses = responses.values(
-            'clinic', 'question__label', 'response')
+            'clinic', 'question__label', 'response', 'visit')
 
         by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
 
@@ -392,7 +413,9 @@ class RegionReport(ReportMixin, DetailView):
                 responses_by_question, clinic)
 
             # Get patient satisfaction
-            satis_percent, satis_total = self.get_satisfaction_counts(responses_by_question)
+            responses_by_visit = survey_utils.group_responses(
+                clinic_responses, 'visit', keyfunc=itemgetter)
+            satis_percent, satis_total = self.get_satisfaction_counts(responses_by_visit)
 
             # Build the data
             clinic_data = [
@@ -416,8 +439,11 @@ class RegionReport(ReportMixin, DetailView):
 
             if 'Wait Time' in responses_by_question:
                 wait_times = [r['response'] for r in responses_by_question['Wait Time']]
-                mode = survey_utils.get_mode(wait_times)
-                clinic_data.append(("Wait_Time", mode, len(wait_times)))
+
+                mode = survey_utils.get_mode(
+                    wait_times, self.questions.get('Wait Time').get_categories())
+                clinic_data.append((mode, len(wait_times)))
+
             else:
                 clinic_data.append((None, 0))
             data.append((clinic, clinic_map[clinic], clinic_data))

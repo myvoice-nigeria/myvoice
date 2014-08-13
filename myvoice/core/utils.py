@@ -26,7 +26,7 @@ def make_percentage(numerator, denominator, places=0):
 def extract_attr(obj, name):
     parts = name.split('.')
     # Not likely
-    if not parts:
+    if not name:
         return None
     if len(parts) == 1:
         attr = getattr(obj, name)
@@ -62,6 +62,7 @@ def get_date(the_date=""):
             the_date = the_date.replace(tzinfo=wat)
 
     return the_date
+
 
 def calculate_weeks_ranges(start_date, end_date):
     """Returns a list of tuples of dates between self.start_date and self.end_date"""

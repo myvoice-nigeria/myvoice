@@ -20,7 +20,7 @@ def _get_survey_start_time():
     eta = timezone.now() + settings.DEFAULT_SURVEY_DELAY
     earliest, latest = settings.SURVEY_TIME_WINDOW
     if eta.hour > latest:  # It's too late in the day - send tomorrow.
-        eta = eta.replace(day=eta.day + 1)
+        eta = eta + timezone.timedelta(days=1)
         eta = eta.replace(hour=earliest, minute=0, second=0, microsecond=0)
     elif eta.hour < earliest:  # It's too early in the day - send later.
         eta = eta.replace(hour=earliest, minute=0, second=0, microsecond=0)
@@ -74,10 +74,11 @@ def handle_new_visits():
     Sends a welcome message to all new visitors and schedules when to start
     the feedback survey.
     """
+    blocked = Visit.objects.exclude(sender='').values_list('sender', flat=True).distinct()
     try:
         # Look for visits for which we haven't sent a welcome message.
         visits = Visit.objects.filter(welcome_sent__isnull=True,
-                                      mobile__isnull=False)
+                                      mobile__isnull=False).exclude(mobile__in=blocked)
 
         # Send a "welcome" message immediately.
         # Grab the phone numbers of all patients from applicable visits.
