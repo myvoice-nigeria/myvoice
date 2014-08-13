@@ -366,6 +366,9 @@ class RegionReport(ReportMixin, DetailView):
 
         responses = self.responses.exclude(clinic=None)
 
+        print self.start_date
+        print self.end_date
+
         if self.start_date and self.end_date:
             responses = responses.filter(visit__visit_time__range=(self.start_date, self.end_date))
 
@@ -441,7 +444,7 @@ class LGAReportFilterByService(View):
         the_end_date = get_date(self.get_variable(request, "end_date", "End Date"))
 
         r = ReportMixin()
-        r.initialize_data("fnord")
+        r.initialize_data("")
         r.responses = SurveyQuestionResponse.objects.filter(
             visit__visit_time__range=(the_start_date, the_end_date))
         results = []
@@ -453,7 +456,10 @@ class LGAReportFilterByService(View):
             new_obj = []
             counter = 0
             for data in obj[1]:
-                new_obj.append([data[0], data[1], data[2]])
+                try:
+                    new_obj.append([data[0], data[1], data[2]])
+                except:
+                    pass
                 counter += 1
 
             obj = [obj[0].id, obj[0].name, new_obj]

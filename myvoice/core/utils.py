@@ -60,5 +60,5 @@ def get_date(the_date=""):
             the_date = parse(the_date)
         if the_date.tzinfo is None:
             the_date = the_date.replace(tzinfo=wat)
-    else:
-        return False
+            
+    return the_date
