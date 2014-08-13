@@ -174,21 +174,13 @@
       $.each(data, function(num, results){
       
         id = results[0];
-        console.log(id);
-
         name = results[1];
-        console.log(name);
-
         core_data = results[2];
 
         $.each(core_data, function(num, results){
-
           label = results[0];
           perc = results[1];
           num = results[2];
-          console.log(label);
-          console.log(perc);
-          console.log(num);
           
           $("tr#service"+id+" td."+label).text(perc + " ("+num+")");
         });
