@@ -1,11 +1,12 @@
 from django.conf.urls import url
 from django.core.urlresolvers import reverse_lazy
+from django.contrib.auth.decorators import login_required
 
 from . import views
 
 
 urlpatterns = [
-    url(r'^$', views.Home.as_view(), name='home'),
+    url(r'^$', login_required(views.Home.as_view()), name='home'),
 
     # TODO - implement "Remember Me" functionality
     url(r'^accounts/login/$',
