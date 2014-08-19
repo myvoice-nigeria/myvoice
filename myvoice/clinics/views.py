@@ -2,6 +2,7 @@ from itertools import groupby
 import json
 from dateutil.parser import parse
 from operator import attrgetter, itemgetter
+import logging
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -20,25 +21,26 @@ from myvoice.clinics.models import Clinic, Service, Visit, GenericFeedback
 from . import forms
 from . import models
 
+logger = logging.getLogger(__name__)
+
 
 class VisitView(View):
-    form_class = forms.VisitForm
-    success_msg = "Entry received for patient with serial number {}. Thank you."
-    error_msg = "1 or more of your entry are missing, please check and enter "\
-                "the registration agian."
-    serial_min = 3
-    serial_max = 6
 
     @csrf_exempt
     def dispatch(self, *args, **kwargs):
         return super(VisitView, self).dispatch(*args, **kwargs)
 
     def post(self, request):
-        form = self.form_class(request.POST)
+        success_msg = "Entry received for patient with serial number {}. Thank you."
+        form = forms.VisitForm(request.POST)
         if form.is_valid():
 
             clnc, mobile, serial, serv, txt = form.cleaned_data['text']
+            logger.debug("visit form text is {}".format(txt))
+
             sender = survey_utils.convert_to_local_format(form.cleaned_data['phone'])
+            if not sender:
+                sender = form.cleaned_data['phone']
             try:
                 patient = models.Patient.objects.get(clinic=clnc, serial=serial)
             except models.Patient.DoesNotExist:
@@ -47,7 +49,8 @@ class VisitView(View):
                     serial=serial,
                     mobile=mobile)
 
-            output_msg = self.success_msg.format(serial)
+            output_msg = success_msg.format(serial)
+            logger.debug("Output message for serial {0} is {1}".format(serial, output_msg))
 
             models.Visit.objects.create(patient=patient, service=serv, mobile=mobile, sender=sender)
             data = json.dumps({'text': output_msg})
@@ -62,6 +65,8 @@ class VisitView(View):
 
     def get_error_msg(self, form):
         """Extract the first error message from the form's 'text' field."""
+        msgs = ", ".join(form.errors['text'])
+        logger.debug("visit form error messages are {}".format(msgs))
         return form.errors['text'][0]
 
 
