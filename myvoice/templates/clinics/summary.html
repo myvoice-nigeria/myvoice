@@ -26,7 +26,11 @@
       <h1>
         <select id="weeks_filter">
           {% for week in weeks %}
-            <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>
+            {% if forloop.first %} 
+              <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">All Weeks</option>
+            {% else %}
+              <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>            
+            {% endif %}
           {% endfor %}
         </select>
       </h1>
