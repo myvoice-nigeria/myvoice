@@ -24,7 +24,8 @@
   <div id="feedback-on-services" class="container">
     <div class="col-xs-12 no-padding-left web-only">
       <h1>
-        <select id="weeks_filter">
+      <div class="styled-select full-width">
+        <select id="weeks_filter" dir="rtl" class="float-right">
           {% for week in weeks %}
             {% if forloop.first %} 
               <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">All Weeks</option>
@@ -33,6 +34,7 @@
             {% endif %}
           {% endfor %}
         </select>
+      </div>
       </h1>
     </div>
     <div class="col-xs-12 section-heading">

@@ -63,18 +63,26 @@ h2 {
   top: 7px; 
 }
 
+.full-width {
+  width: 565px !important;
+  padding: 0px;
+}
+
+.float-right {
+  float:right;
+}
+
 .styled-select select, option {
    background: transparent;
    width: 268px;
    padding: 2px;
-   padding-right: 40px;
+   padding-right: 25px;
    font-size: 15px;
    line-height: 1.2;
    border: 0;
    border-bottom: 1px solid #fff;
    border-radius: 0;
    height: 30px;
-   
    -webkit-appearance: none;
    background: url(/static/img/grey_upsidedown_arrow.png) no-repeat right #fff;
 }
