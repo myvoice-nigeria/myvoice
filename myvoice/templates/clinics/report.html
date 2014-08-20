@@ -346,9 +346,31 @@
     return results
   }
 
+  function showAllCharts() {
+    $("div.chart-container").each(function(){
+      $(this).show();
+    });
+  }
+
+  function hideOtherCharts() {
+    // Hide Charts to show only Selected and Previous Three Charts.
+    var start_date = new Date($("#service-feedback-weeks").val().split(" - ")[0]);
+    var three_weeks = getLastThreeWeeks(start_date);
+
+    // Loop All Charts
+    $("div.chart-container").each(function(){
+      $(this).hide();
+
+      for(var i=0; i<three_weeks.length; i++)
+        if(new Date($(this).attr("id")).getTime() == three_weeks[i].getTime())
+          $(this).show();       // Maybe it was hidden from a previous cycle of this..          
+    });
+  }
+
  $(document).ready( function () {
   
     $("#service-feedback-weeks").change( function() {
+      
       // Update the Feedback on Services Table by Week
       console.log("Updating Feedback on Services Table by Week");
       filter_feedback_by_week();
@@ -358,21 +380,11 @@
         $( this ).text($("#service-feedback-weeks").val());
       });
 
-      // Hide Charts to show only Selected and Previous Three Charts.
-      var start_date = new Date($("#service-feedback-weeks").val().split(" - ")[0]);
-      var three_weeks = getLastThreeWeeks(start_date);
-
-      // Loop All Charts
-      $("div.chart-container").each(function(){
-        console.log("checking: " + $(this).attr("id"));
-        $(this).hide();
-
-        for(var i=0; i<three_weeks.length; i++)
-          if(new Date($(this).attr("id")).getTime() == three_weeks[i].getTime())
-            $(this).show();       // Maybe it was hidden from a previous cycle of this..
-            console.log("show");
-            
-      });
+      // Show / Hide Charts
+      if($('#service-feedback-weeks option:selected').text() == "All Weeks")
+        showAllCharts();
+      else
+        hideOtherCharts();
 
       /*for(var i=0; i<three_weeks.length; i++)
         if(new Date(start_date).getTime() == three_weeks[i].getTime())
