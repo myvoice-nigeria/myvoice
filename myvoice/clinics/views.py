@@ -334,18 +334,6 @@ class RegionReport(ReportMixin, DetailView):
         except (ValueError, AttributeError):
             pass
 
-    def calculate_weeks_ranges(self):
-        """Returns a list of tuples of dates between self.start_date and self.end_date"""
-        week_list = [{"start": self.start_date, "end": self.end_date}]
-        start_date = get_week_start(self.start_date)
-
-        next_monday = self.start_date
-        while(next_monday < self.end_date):
-            next_monday = start_date + timedelta(days=0, weeks=1)
-            week_list.append({"start": start_date, "end": next_monday - timedelta(days=1, weeks=0)})
-            start_date = next_monday
-        self.weeks = week_list
-
     def get_object(self, queryset=None):
         obj = super(RegionReport, self).get_object(queryset)
         self.calculate_date_range()
@@ -357,7 +345,7 @@ class RegionReport(ReportMixin, DetailView):
         else:
             self.start_date = self.responses.aggregate(min_date=Min('datetime'))['min_date']
             self.end_date = self.responses.aggregate(max_date=Max('datetime'))['max_date']
-        self.calculate_weeks_ranges()
+        # self.calculate_weeks_ranges()
         self.responses = self.responses.select_related('question', 'service', 'visit')
         return obj
 
@@ -367,7 +355,7 @@ class RegionReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
         kwargs['min_date'] = self.start_date
         kwargs['max_date'] = self.end_date
-        kwargs['weeks'] = self.weeks
+        kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
         data = super(RegionReport, self).get_context_data(**kwargs)
         return data
 
