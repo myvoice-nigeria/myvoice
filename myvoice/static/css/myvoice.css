@@ -66,15 +66,19 @@ h2 {
 .styled-select select, option {
    background: transparent;
    width: 268px;
-   padding: 5px;
-   font-size: 16px;
+   padding: 2px;
+   padding-right: 40px;
+   font-size: 15px;
    line-height: 1.2;
    border: 0;
+   border-bottom: 1px solid #fff;
    border-radius: 0;
-   height: 34px;
-   direction: rtl;
+   height: 30px;
+   
    -webkit-appearance: none;
+   background: url(/static/img/grey_upsidedown_arrow.png) no-repeat right #fff;
 }
+
 /* Non-responsive overrides
  *
  * Utilitze the following CSS to disable the responsive-ness of the container,
@@ -223,11 +227,11 @@ h2 {
 
 .dropdown-menu {
   background-color: #8ac43f;
-      padding-top:20px;
-    box-shadow: none;
-    border: none;
-    text-transform: none;
-    border-radius: 0;
+  padding-top:20px;
+  box-shadow: none;
+  border: none;
+  text-transform: none;
+  border-radius: 0;
 }
 
 .dropdown-menu > li > a {
@@ -280,16 +284,16 @@ h2 {
  }
 
   .green-question-dot {
-  border-radius: 50%;
-  width:12px;
-  background-color: #8ac43f;
-  color:#fff;
-  height: 12px;
-  text-align: center;
-  font-size:8px;
-  font-weight: 700;
-  padding-top: 1px;
-  margin-bottom:2px;
+    border-radius: 50%;
+    width:12px;
+    background-color: #8ac43f;
+    color:#fff;
+    height: 12px;
+    text-align: center;
+    font-size:8px;
+    font-weight: 700;
+    padding-top: 1px;
+    margin-bottom:2px;
  }
 
 .popover {
