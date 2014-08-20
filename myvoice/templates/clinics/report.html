@@ -66,6 +66,8 @@
             {% for week in weeks %}
               {% if forloop.first %} 
                 <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">All Weeks</option>
+              {% elif forloop.counter == 2 %}
+                <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">Current Week</option>
               {% else %}
                 <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>            
               {% endif %}
@@ -145,7 +147,7 @@
     </div>
 
     {% for week in feedback_by_week %}
-      <div class="col-xs-6 chart-container">
+      <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F-j-Y" }}">
         <div class="col-xs-12">
           <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}<br/>
             <span class="survey_num">
@@ -321,16 +323,62 @@
 <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
 <script>
 
+  var m_names = new Array("January", "February", "March", 
+      "April", "May", "June", "July", "August", "September", 
+      "October", "November", "December"); 
+      // I wish there was a better solution to this but new Date().format doesn't work any longer.
+
+  function getLastWeek(start_date){
+
+    var start_date = start_date;
+    var lastWeek = new Date(start_date.getFullYear(), start_date.getMonth(), start_date.getDate() - 7);
+    return lastWeek ;
+  }
+
+  function getLastThreeWeeks(start_date) {
+    var results = []
+    results.push(start_date);
+    for(i=0; i<3; i++){ 
+      start_date = getLastWeek(start_date);
+      results.push(start_date);
+    }
+    
+    return results
+  }
+
  $(document).ready( function () {
   
     $("#service-feedback-weeks").change( function() {
-      console.log("Updating Feedback by Week");
+      // Update the Feedback on Services Table by Week
+      console.log("Updating Feedback on Services Table by Week");
       filter_feedback_by_week();
 
       // Update the Values within the Charts to the Select Value
       $( ".service-feedback-weeks" ).each(function( index ) {
         $( this ).text($("#service-feedback-weeks").val());
       });
+
+      // Hide Charts to show only Selected and Previous Three Charts.
+      var start_date = new Date($("#service-feedback-weeks").val().split(" - ")[0]);
+      var three_weeks = getLastThreeWeeks(start_date);
+
+      // Loop All Charts
+      $("div.chart-container").each(function(){
+        console.log("checking: " + $(this).attr("id"));
+        $(this).hide();
+
+        for(var i=0; i<three_weeks.length; i++)
+          if(new Date($(this).attr("id")).getTime() == three_weeks[i].getTime())
+            $(this).show();       // Maybe it was hidden from a previous cycle of this..
+            console.log("show");
+            
+      });
+
+      /*for(var i=0; i<three_weeks.length; i++)
+        if(new Date(start_date).getTime() == three_weeks[i].getTime())
+          date_string = m_names[three_weeks[i].getMonth()] + "-" + three_weeks[i].getDate() + "-" + three_weeks[i].getFullYear() 
+          console.log("fnord: " + date_string);*/
+
     });
 });
     
