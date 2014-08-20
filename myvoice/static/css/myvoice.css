@@ -62,6 +62,19 @@ h2 {
   position: absolute; 
   top: 7px; 
 }
+
+.styled-select select, option {
+   background: transparent;
+   width: 268px;
+   padding: 5px;
+   font-size: 16px;
+   line-height: 1.2;
+   border: 0;
+   border-radius: 0;
+   height: 34px;
+   direction: rtl;
+   -webkit-appearance: none;
+}
 /* Non-responsive overrides
  *
  * Utilitze the following CSS to disable the responsive-ness of the container,
