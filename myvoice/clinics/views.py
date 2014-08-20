@@ -342,7 +342,7 @@ class RegionReport(ReportMixin, DetailView):
         next_monday = self.start_date
         while(next_monday < self.end_date):
             next_monday = start_date + timedelta(days=0, weeks=1)
-            week_list.append({"start": start_date, "end": next_monday})
+            week_list.append({"start": start_date, "end": next_monday - timedelta(days=1, weeks=0)})
             start_date = next_monday
         self.weeks = week_list
 
