@@ -209,13 +209,13 @@
       </thead>
       <tbody>
         {% for service, service_data in feedback_by_service %}
-          <tr id="service{{service.id}}">
+          <tr id="service{{service.name}}">
             <td>{{ service.name }}</td>
             {% for label, result, total_respondents in service_data %}
               {% if result == None %}
                 <td>N/A (0)</td>
               {% else %}
-                <td class="{{ label }}">{{ result }} ({{ total_respondents }})</td>
+                <td class="label{{ forloop.counter }}">{{ result }} ({{ total_respondents }})</td>
               {% endif %}
             {% endfor %}
           </tr>
@@ -338,22 +338,19 @@
 
     // Send dates via Ajax to our Filter and 
     $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date}, function(data,status){
+      
       $.each(data, function(num, results){
       
-        id = results[0];
-        name = results[1];
-        core_data = results[2];
-        console.log(id);
-        console.log(name);
-        console.log(core_data);
-        console.log(" --- ")
+        service_name = results[0];
+        core_data = results[1];
+        label_counter=0;
 
         $.each(core_data, function(num, results2){
           label = results2[0];
           perc = results2[1];
           num = results2[2];
-          
-          $("tr#service"+id+" td."+label).text(perc + " ("+num+")");
+          label_counter++;
+          $("tr#service"+service_name+" td.label"+label_counter).text(perc + " ("+num+")");
         });
       });
     });
