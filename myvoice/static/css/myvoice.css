@@ -371,9 +371,13 @@ h2 {
 	padding-bottom:15px;
 }
 
-.comment_text {
+.width100 {
   width: 100%;
 }
+
+.comment_text { width: 100%; }
+.special-table-row { width: 100%; }
+.no-comments { width: 100%; }
 
 .special-th {
 	background-color: #E5E6E7;

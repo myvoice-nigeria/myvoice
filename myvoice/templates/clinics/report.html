@@ -245,19 +245,19 @@
       <thead>
         <tr>
           <th class="special-th no-bottom-border">Date</th>
-          <th class="no-bottom-border">Comments</th>
+          <th class="no-bottom-border width100">Comments</th>
         </tr>
       </thead>
       <tbody>
         {% regroup detailed_comments by question as comments %}
         {% for comment_group in comments %}
-          <tr>
+          <tr class="comment-head">
             <td colspan="6" class="special-table-row">
               {{ comment_group.grouper|upper }}
             </td>
           </tr>
           {% for comment in comment_group.list %}
-          <tr id="comment{% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as webcycle %}">
+          <tr class="comment" id="comment{% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as webcycle %}">
               <td>{{ comment.datetime|date:"d/m/Y" }}</td>
               <td class="comment_text">{{ comment.response }}</td>
             </tr>
@@ -276,8 +276,8 @@
       <tbody>
         {% regroup detailed_comments by question as comments %}
         {% for comment_group in comments %}
-          <tr>
-            <td colspan="6" class="special-table-row">
+          <tr class="special-table-row">
+            <td colspan="6">
               {{ comment_group.grouper|upper }}
             </td>
           </tr>
@@ -381,16 +381,17 @@
       });
 
       // Show / Hide Charts
-      if($('#service-feedback-weeks option:selected').text() == "All Weeks")
+      if($('#service-feedback-weeks option:selected').text().indexOf("All Weeks") > -1)
         showAllCharts();
       else
         hideOtherCharts();
 
+      // Show / Hide Comments
+      hideOtherComments();
+
     });
 
-    $( "#week_filter_span" ).click(function() {
-      $( "#service-feedback-weeks" ).trigger( "change" );
-    });
+
 });
     
   function filter_feedback_by_week() {
@@ -399,10 +400,10 @@
     var start_date = $("#service-feedback-weeks").val().split(" - ")[0];
     var end_date = $("#service-feedback-weeks").val().split(" - ")[1];
 
-    // Send dates via Ajax to our Filter and 
+    // Send dates via Ajax to our Filter and parse the results.
     $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date}, function(data,status){
       
-      $.each(data, function(num, results){
+      $.each(data.fos, function(num, results){
       
         service_name = results[0];
         core_data = results[1];
@@ -418,6 +419,60 @@
       });
     });
   }
+
+  function parseDate(input) {
+    var str= input.split('/');
+    return new Date(str[2], str[1]-1, str[0]); 
+  }
+
+  function hideOtherComments() {
+
+    // Hide Charts to show only Selected and Previous Three Charts.
+    var start_date_text = $("#service-feedback-weeks").val().split(" - ")[0];
+    var end_date_text = $("#service-feedback-weeks").val().split(" - ")[1];
+    var start_date = new Date(start_date_text);
+    var end_date = new Date(end_date_text);
+
+    // Loop Comments Table Entries
+    $("table#comments-table tbody tr.comment").each(function(){
+
+      // Look for the first td which has a date in it.
+      comment_date = parseDate($(this).children(":first").text());
+      if(start_date <= comment_date && comment_date <= end_date) {
+        $(this).show();
+      }
+      else { 
+        $(this).hide();
+      }
+    });
+
+    // Hide Individual Sections if there are no comments
+    $("table#comments-table tbody tr.comment-head").each(function(){
+      if($(this).nextUntil( "tr.comment-head", "tr.comment:visible").length == 0) {
+        $(this).hide();
+      }
+      else
+        $(this).show();
+    });
+
+    // Hide Entire Comment Sections if all the comments within are hidden, replace with text stating no comments.
+    hidden_comments_num = $("table#comments-table tbody tr.comment:hidden").length
+    visible_comments_num = $("table#comments-table tbody tr.comment:visible").length
+    console.log("Visible comments: " + visible_comments_num);
+    console.log("Hidden comments: " + hidden_comments_num);
+
+    // Add the no comments message
+    if(visible_comments_num == 0) {
+      $("table#comments-table tbody tr").hide();
+      $("table#comments-table tbody").prepend("<tr class='no-comments'><td colspan=2>No comments during "+start_date_text+" - "+end_date_text+"</td></tr>");
+    }
+
+    else {    
+      // Remove all 'No Comments' rows for housekeeping purposes.
+      $(".no-comments").remove();
+    }
+  }
+
 
 </script>
 {% endblock js %}
