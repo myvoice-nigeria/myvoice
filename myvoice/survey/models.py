@@ -49,6 +49,14 @@ class Survey(models.Model):
         return self.name
 
 
+class DisplayLabel(models.Model):
+    """Labels for reporting."""
+    name = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return self.name
+
+
 class SurveyQuestion(models.Model):
     """A node in a TextIt flow."""
 
@@ -73,6 +81,7 @@ class SurveyQuestion(models.Model):
         "for now.")
     label = models.CharField(
         max_length=255, help_text='Must match TextIt question label.')
+    display_label = models.ForeignKey(DisplayLabel, null=True, blank=True)
     categories = models.TextField(
         blank=True,
         help_text="For multiple-choice questions. List each category on a "
