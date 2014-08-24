@@ -99,6 +99,9 @@ class SurveyQuestion(models.Model):
         help_text="For questions with categories, it indicates that the "
         "last item is a negative (used for 'wait time')")
 
+    for_satisfaction = models.BooleanField(
+        default=False,
+        help_text="For questions used to guage patient satisfaction.")
     # The required fields are used for reporting.
     # In order to find out if a survey is completed, we need to
     # make sure all the required fields are completed.
