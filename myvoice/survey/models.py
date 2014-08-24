@@ -50,7 +50,7 @@ class Survey(models.Model):
 
 
 class DisplayLabel(models.Model):
-    """Labels for reporting."""
+    """Labels for reporting. Used for all required questions."""
     name = models.CharField(max_length=200)
 
     def __unicode__(self):
@@ -86,10 +86,27 @@ class SurveyQuestion(models.Model):
         blank=True,
         help_text="For multiple-choice questions. List each category on a "
         "separate line. This field is disregarded for other question types.")
+
+    # For questions with categories, the convention is:
+    # 1. First item means primary answer, e.g. 'Open Facility' - answers are
+    # 'Yes' or 'No', with 'Yes' meaning the patient is satisfied.
+    # or
+    # 2. Last item means negative answer, e.g. 'Wait Time' - the last item
+    # > 4 hours means a patient is dis-satisfied.
+    # last_negative field indicates that the field is of the 2nd kind.
     last_negative = models.BooleanField(
         default=False,
         help_text="For questions with categories, it indicates that the "
         "last item is a negative (used for 'wait time')")
+
+    # The required fields are used for reporting.
+    # In order to find out if a survey is completed, we need to
+    # make sure all the required fields are completed.
+    # the last_required field indicates that all other required
+    # survey questions have been answered.
+    last_required = models.BooleanField(
+        default=False,
+        help_text="The last question on the survey that is required.")
     question = models.CharField(max_length=255, blank=True)
 
     class Meta:
