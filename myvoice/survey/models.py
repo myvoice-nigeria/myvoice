@@ -137,6 +137,9 @@ class SurveyQuestionResponse(models.Model):
     display_on_dashboard = models.BooleanField(
         default=True,
         help_text="Whether or not this response is displayed on the dashboard.")
+    positive_response = models.NullBooleanField(
+        default=None,
+        help_text="Whether or not this response is a positive value in reports.")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
