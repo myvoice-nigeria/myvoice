@@ -11,15 +11,23 @@ class Migration(DataMigration):
         # Note: Don't use "from appname.models import ModelName".
         # Use orm.ModelName to refer to models in this application,
         # and orm['appname.ModelName'] for models in other applications.
-        question = orm.SurveyQuestion.objects.get(label='Wait Time')
-        question.last_negative = True
-        question.save()
+        try:
+            question = orm.SurveyQuestion.objects.get(label='Wait Time')
+        except orm.SurveyQuestion.DoesNotExist:
+            pass
+        else:
+            question.last_negative = True
+            question.save()
 
     def backwards(self, orm):
         "Write your backwards methods here."
-        question = orm.SurveyQuestion.objects.get(label='Wait Time')
-        question.last_negative = False
-        question.save()
+        try:
+            question = orm.SurveyQuestion.objects.get(label='Wait Time')
+        except orm.SurveyQuestion.DoesNotExist:
+            pass
+        else:
+            question.last_negative = False
+            question.save()
 
     models = {
         u'auth.group': {
