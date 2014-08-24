@@ -86,6 +86,10 @@ class SurveyQuestion(models.Model):
         blank=True,
         help_text="For multiple-choice questions. List each category on a "
         "separate line. This field is disregarded for other question types.")
+    last_negative = models.BooleanField(
+        default=False,
+        help_text="For questions with categories, it indicates that the "
+        "last item is a negative (used for 'wait time')")
     question = models.CharField(max_length=255, blank=True)
 
     class Meta:
