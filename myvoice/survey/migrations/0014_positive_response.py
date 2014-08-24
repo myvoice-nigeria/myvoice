@@ -15,10 +15,10 @@ class Migration(DataMigration):
             categories = response.question.categories.splitlines()
             if categories:
                 if response.question.last_negative:
-                    if response.response != response.question.categories[-1]:
+                    if response.response != categories[-1]:
                         response.positive_response = True
                 else:
-                    if response.response == response.question.categories[0]:
+                    if response.response == categories[0]:
                         response.positive_response = True
             response.save()
 

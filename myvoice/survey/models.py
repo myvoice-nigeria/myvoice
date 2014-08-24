@@ -151,6 +151,7 @@ class SurveyQuestionResponse(models.Model):
     service = models.ForeignKey(
         'clinics.Service', null=True, blank=True,
         help_text="The service this response is about, if any.")
+
     display_on_dashboard = models.BooleanField(
         default=True,
         help_text="Whether or not this response is displayed on the dashboard.")
@@ -172,10 +173,23 @@ class SurveyQuestionResponse(models.Model):
         return self.response
 
     def save(self, *args, **kwargs):
-        """Set the associated clinic and service."""
+        """Set the associated clinic and service.
+        Also set various de-normalising variables on Visit
+        and SurveyQuestionResponse."""
         self.clinic_id = self.service_id = None
         if self.visit:
             self.service_id = self.visit.service_id
             if self.visit.patient:
                 self.clinic_id = self.visit.patient.clinic_id
+
+        # Find if response is positive
+        categories = self.question.categories.splitlines()
+        if categories:
+            if self.question.last_negative:
+                if self.response != categories[-1]:
+                    self.positive_response = True
+            else:
+                if self.response == categories[0]:
+                    self.positive_response = True
+
         super(SurveyQuestionResponse, self).save(*args, **kwargs)
