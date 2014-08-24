@@ -195,4 +195,32 @@ class SurveyQuestionResponse(models.Model):
                 if self.response == categories[0]:
                     self.positive_response = True
 
+        # Find patient satisfaction for the visit
+
+        # Visit.satisfied can be changed from True to False
+        # But if False, cannot be changed again.
+        if self.visit:
+            # Find patient satisfaction for the visit
+
+            # Visit.satisfied can be changed from True to False
+            # But if False, cannot be changed again.
+            if self.visit.satisfied is False:
+                pass  # Already calculated, ignore.
+            else:
+                if self.question.for_satisfaction:
+                    if self.positive_response:
+                        self.visit.satisfied = True
+                    else:
+                        self.visit.satisfied = False
+
+            # Save survey participation
+            self.visit.survey_started = True
+
+            # If question is the last required question,
+            # then survey is completed.
+            if self.question.last_required:
+                self.visit.survey_completed = True
+
+            self.visit.save()
+
         super(SurveyQuestionResponse, self).save(*args, **kwargs)
