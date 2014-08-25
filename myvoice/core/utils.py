@@ -78,6 +78,7 @@ def calculate_weeks_ranges(start_date, end_date):
     next_monday = start_date
     while(next_monday < end_date):
         next_monday = start_date + datetime.timedelta(days=0, weeks=1)
-        week_list.append({"start": start_date, "end": next_monday - datetime.timedelta(days=1, weeks=0)})
+        week_list.append({"start": start_date,
+                          "end": next_monday - datetime.timedelta(days=1, weeks=0)})
         start_date = next_monday
     return week_list

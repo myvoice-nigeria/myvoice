@@ -1,7 +1,6 @@
 from itertools import groupby
 import json
 from operator import attrgetter, itemgetter
-from datetime import timedelta
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -219,7 +218,8 @@ class ClinicReport(ReportMixin, DetailView):
         if start_date:
             # SurveyQuestionResponse.objects.filter(
             # visit__visit_time__range=(the_start_date, the_end_date))
-            open_ended_responses = open_ended_responses.filter(datetime__range=(get_date(start_date), get_date(end_date)))
+            open_ended_responses = open_ended_responses.filter(
+                datetime__range=(get_date(start_date), get_date(end_date)))
 
         comments = [
             {
@@ -230,7 +230,7 @@ class ClinicReport(ReportMixin, DetailView):
             for r in open_ended_responses
             if survey_utils.display_feedback(r.response)
         ]
-        
+
         feedback_label = self.generic_feedback.model._meta.verbose_name
         for feedback in self.generic_feedback:
             if survey_utils.display_feedback(feedback.message):
@@ -289,7 +289,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         the_end_date = self.get_variable(request, "end_date", "End Date")
 
         # Create an instance of a ClinicReport
-        c = ClinicReport() 
+        c = ClinicReport()
 
         c.start_date = get_date(the_start_date)
         c.end_date = get_date(the_end_date)
@@ -299,28 +299,23 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         survey_part_data = []
 
         # Calculate the Data for Feedback on Services (later summarized as 'fos')
-        c.responses = SurveyQuestionResponse.objects.filter(clinic_id=1, datetime__gte=c.start_date, datetime__lte=c.end_date)
+        c.responses = SurveyQuestionResponse.objects.filter(
+            clinic_id=1, datetime__gte=c.start_date, datetime__lte=c.end_date)
         c.questions = SurveyQuestion.objects.all()
         c.questions = dict([(q.label, q) for q in c.questions])
-        fos = c.get_feedback_by_service()     
+        fos = c.get_feedback_by_service()
 
         fos_array = []
         for row in fos:
             new_row = (row[0].name, row[1])
             fos_array.append(new_row)
-        
+
         # Collect the Comments filtered by the weeks
         # weeks_comments = c.get_detailed_comments(c.start_date, c.end_date)
 
-        return HttpResponse(json.dumps({"surp": survey_part_data, "fos": fos_array}, cls=DjangoJSONEncoder), content_type="text/json")
-
-        # X 0) Change your new_content to be running via a dict 
-        # X 1) Change the new_content to be fos: new_content,
-        # ? 2) Add comments: to dict with currently generated from function get_detailed_comments
-        # 3) Add participation: to dict using data from num_registered, num_started, num_completed
-        # 4) Tweak the .css for comments and for participation (adding labels, etc)
-        # 5) Add new jquery functions so that the comments and participation data is pumped into css.
-        # 6) Fix whatever weird bugs you're getting, such as when we use all.
+        return HttpResponse(json.dumps(
+            {"surp": survey_part_data, "fos": fos_array}, cls=DjangoJSONEncoder),
+            content_type="text/json")
 
 
 class RegionReport(ReportMixin, DetailView):

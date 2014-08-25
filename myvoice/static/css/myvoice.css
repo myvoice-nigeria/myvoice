@@ -72,20 +72,29 @@ h2 {
   float:right;
 }
 
-.styled-select select, option {
-   background: transparent;
-   width: 268px;
-   padding: 2px;
-   padding-right: 25px;
-   font-size: 15px;
-   line-height: 1.2;
-   border: 0;
+.styled-select select {
+   background: url(/static/img/grey_upsidedown_arrow.png) no-repeat right #fff;
+   border: none;
    border-bottom: 1px solid #fff;
    border-radius: 0;
+   font-size: 15px;
+   line-height: 1.2;
    height: 30px;
+   padding: 2px;
+   padding-right: 25px;
+   padding: 2px 30px 2px 2px;
+   
+   text-indent: 1px;
+   text-overflow: '';
+   width: 268px;
    -webkit-appearance: none;
-   -moz-appearance:window;
-   background: url(/static/img/grey_upsidedown_arrow.png) no-repeat right #fff;
+   -moz-appearance: none;
+   
+}
+
+/* MSIE Select - remove dropdown arrow */
+select::-ms-expand {
+    display: none;
 }
 
 @-moz-document url-prefix() {
