@@ -391,23 +391,14 @@ class TestFeedbackView(TestCase):
         self.assertIsNone(obj.clinic)
 
     def test_long_feedback(self):
-        self.values[1]['value'] = ("abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz"
-                                   "abcdefghijklmnopqrstuvwxyz")  # 260 characters
+        self.values[1]['value'] = "a" * 260
         feedback = {
             'phone': self.phone,
             'values': json.dumps(self.values),
         }
         self.make_request(feedback)
         obj = models.GenericFeedback.objects.get(sender=self.phone)
-        self.assertEqual(len(obj.message), 260, obj.message)
+        self.assertEqual("a" * 260, obj.message)
 
 
 class TestClinicReportView(TestCase):
