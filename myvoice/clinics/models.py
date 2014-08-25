@@ -176,7 +176,7 @@ class VisitRegistrationErrorLog(models.Model):
     sender = models.CharField(max_length=20)
     error_type = models.CharField(max_length=50)
     message_date = models.DateTimeField(auto_now=True)
-    message = models.CharField(max_length=160)
+    message = models.TextField()
 
     def __unicode__(self):
         return self.sender
