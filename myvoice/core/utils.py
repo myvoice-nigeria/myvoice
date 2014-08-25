@@ -6,7 +6,11 @@ from dateutil.tz import gettz
 
 def get_week_start(date):
     """Returns midnight of the Monday prior to the given date."""
-    days_since_monday = date.weekday()
+
+    if date:
+        days_since_monday = date.weekday()
+    else:
+        return None
     monday = date - timezone.timedelta(days=days_since_monday)
     monday = monday.replace(microsecond=0, second=0, minute=0, hour=0)
     return monday
