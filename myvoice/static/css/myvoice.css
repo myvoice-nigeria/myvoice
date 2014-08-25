@@ -84,7 +84,17 @@ h2 {
    border-radius: 0;
    height: 30px;
    -webkit-appearance: none;
+   -moz-appearance:window;
    background: url(/static/img/grey_upsidedown_arrow.png) no-repeat right #fff;
+}
+
+@-moz-document url-prefix() {
+.styled-select{
+     background-image: url('/static/img/grey_upsidedown_arrow.png');
+     background-repeat: no-repeat;
+     background-position: right center;
+     padding-right: 25px;
+  }
 }
 
 /* Non-responsive overrides
