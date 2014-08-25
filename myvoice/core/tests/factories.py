@@ -99,6 +99,12 @@ class Survey(factory.django.DjangoModelFactory):
     role = survey.Survey.PATIENT_FEEDBACK
 
 
+class DisplayLabel(factory.django.DjangoModelFactory):
+    FACTORY_FOR = survey.DisplayLabel
+
+    name = factory.fuzzy.FuzzyText()
+
+
 class SurveyQuestion(factory.django.DjangoModelFactory):
     FACTORY_FOR = survey.SurveyQuestion
 
