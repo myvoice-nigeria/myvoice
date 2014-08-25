@@ -4,7 +4,11 @@ from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 
+
 class Migration(DataMigration):
+    depends_on = (
+        ('survey', '0017_auto__add_field_surveyquestion_for_satisfaction'),
+    )
 
     def forwards(self, orm):
         "Write your forwards methods here."
