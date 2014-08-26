@@ -49,6 +49,14 @@ class Survey(models.Model):
         return self.name
 
 
+class DisplayLabel(models.Model):
+    """Labels for reporting. Used for all required questions."""
+    name = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return self.name
+
+
 class SurveyQuestion(models.Model):
     """A node in a TextIt flow."""
 
@@ -73,10 +81,35 @@ class SurveyQuestion(models.Model):
         "for now.")
     label = models.CharField(
         max_length=255, help_text='Must match TextIt question label.')
+    display_label = models.ForeignKey(DisplayLabel, null=True, blank=True)
     categories = models.TextField(
         blank=True,
         help_text="For multiple-choice questions. List each category on a "
         "separate line. This field is disregarded for other question types.")
+
+    # For questions with categories, the convention is:
+    # 1. First item means primary answer, e.g. 'Open Facility' - answers are
+    # 'Yes' or 'No', with 'Yes' meaning the patient is satisfied.
+    # or
+    # 2. Last item means negative answer, e.g. 'Wait Time' - the last item
+    # > 4 hours means a patient is dis-satisfied.
+    # last_negative field indicates that the field is of the 2nd kind.
+    last_negative = models.BooleanField(
+        default=False,
+        help_text="For questions with categories, it indicates that the "
+        "last item is a negative (used for 'wait time')")
+
+    for_satisfaction = models.BooleanField(
+        default=False,
+        help_text="For questions used to guage patient satisfaction.")
+    # The required fields are used for reporting.
+    # In order to find out if a survey is completed, we need to
+    # make sure all the required fields are completed.
+    # the last_required field indicates that all other required
+    # survey questions have been answered.
+    last_required = models.BooleanField(
+        default=False,
+        help_text="The last question on the survey that is required.")
     question = models.CharField(max_length=255, blank=True)
 
     class Meta:
@@ -121,9 +154,13 @@ class SurveyQuestionResponse(models.Model):
     service = models.ForeignKey(
         'clinics.Service', null=True, blank=True,
         help_text="The service this response is about, if any.")
+
     display_on_dashboard = models.BooleanField(
         default=True,
         help_text="Whether or not this response is displayed on the dashboard.")
+    positive_response = models.NullBooleanField(
+        default=None,
+        help_text="Whether or not this response is a positive value in reports.")
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -139,10 +176,51 @@ class SurveyQuestionResponse(models.Model):
         return self.response
 
     def save(self, *args, **kwargs):
-        """Set the associated clinic and service."""
+        """Set the associated clinic and service.
+        Also set various de-normalising variables on Visit
+        and SurveyQuestionResponse."""
         self.clinic_id = self.service_id = None
         if self.visit:
             self.service_id = self.visit.service_id
             if self.visit.patient:
                 self.clinic_id = self.visit.patient.clinic_id
+
+        # Find if response is positive
+        categories = self.question.categories.splitlines()
+        if categories:
+            if self.question.last_negative:
+                if self.response != categories[-1]:
+                    self.positive_response = True
+            else:
+                if self.response == categories[0]:
+                    self.positive_response = True
+
+        # Find patient satisfaction for the visit
+
+        # Visit.satisfied can be changed from True to False
+        # But if False, cannot be changed again.
+        if self.visit:
+            # Find patient satisfaction for the visit
+
+            # Visit.satisfied can be changed from True to False
+            # But if False, cannot be changed again.
+            if self.visit.satisfied is False:
+                pass  # Already calculated, ignore.
+            else:
+                if self.question.for_satisfaction:
+                    if self.positive_response:
+                        self.visit.satisfied = True
+                    else:
+                        self.visit.satisfied = False
+
+            # Save survey participation
+            self.visit.survey_started = True
+
+            # If question is the last required question,
+            # then survey is completed.
+            if self.question.last_required:
+                self.visit.survey_completed = True
+
+            self.visit.save()
+
         super(SurveyQuestionResponse, self).save(*args, **kwargs)

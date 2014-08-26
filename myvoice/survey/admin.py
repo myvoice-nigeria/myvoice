@@ -74,6 +74,18 @@ class SurveyAdmin(admin.ModelAdmin):
             importer.import_survey(obj.flow_id)
 
 
+class DisplayLabelAdmin(admin.ModelAdmin):
+
+    list_display = ['name']
+
+
+class SurveyQuestionAdmin(admin.ModelAdmin):
+
+    list_display = ['question_id', 'question_type', 'label', 'display_label',
+                    'categories', 'last_negative', 'for_satisfaction',
+                    'last_required', 'question']
+
+
 class SurveyQuestionResponseAdmin(admin.ModelAdmin):
 
     fieldsets = [
@@ -86,11 +98,12 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
         }),
     ]
     list_display = ['mobile', 'visit_time', 'clinic', 'service', 'survey',
-                    'question', 'question_type', 'response', 'display_on_dashboard']
+                    'question', 'question_type', 'response', 'display_on_dashboard',
+                    'positive_response']
     list_filter = ['question__survey', 'clinic', 'service',
-                   'question__question_type', 'display_on_dashboard']
+                   'question__question_type', 'display_on_dashboard', 'positive_response']
     list_select_related = True
-    ordering = ['visit', 'question']
+    ordering = ['-visit', 'question']
     search_fields = ['visit__mobile', 'response', 'question__label']
     actions = ['export_to_csv']
 
@@ -141,4 +154,5 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.Survey, SurveyAdmin)
+admin.site.register(models.SurveyQuestion, SurveyQuestionAdmin)
 admin.site.register(models.SurveyQuestionResponse, SurveyQuestionResponseAdmin)
