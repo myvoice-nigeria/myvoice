@@ -18,7 +18,8 @@ def get_week_start(date):
 
 def get_week_end(date):
     """Returns the last microsecond of the Sunday after the given date."""
-    return get_week_start(date) + timezone.timedelta(days=7, microseconds=-1)
+    if date:
+        return get_week_start(date) + timezone.timedelta(days=7, microseconds=-1)
 
 
 def make_percentage(numerator, denominator, places=0):
