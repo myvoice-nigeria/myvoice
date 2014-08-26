@@ -122,6 +122,8 @@ h2 {
 .container {
   width: 595px;
   max-width: none !important;
+  position: relative;
+  top: -5px;
 }
 
 .main-header {
@@ -278,6 +280,7 @@ h2 {
 
  canvas#weekChart {
   margin-top:20px;
+  page-break-after: avoid;
  }
 
  .chart-container {
@@ -398,6 +401,11 @@ h2 {
 #comments-table td {
     padding-top:15px;
     padding-bottom:15px;
+}
+
+#footer-logo { 
+  position: relative;
+  top: -10px;
 }
 
 .special-th {

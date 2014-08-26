@@ -173,9 +173,25 @@
           </div>
           <div class="green-box-label">Most common<br />wait time</div>
         </div>
-        <canvas id="weekChart{{ forloop.counter }}" height="250" width="275"></canvas>
+        <canvas id="weekChart{{ forloop.counter }}" height="210" width="275"></canvas>
       </div>
+
+      {% if forloop.counter == 4 %}
+        
+        <div class="print-break print-only chart-break"><br/><br/><br/></div>
+
+        <div class="col-xs-12 no-padding-left print-only chart-break">
+          <br/><br/><br/>
+          <h1>
+            <span style="font-weight: 700;">{{ object.name }}</span><br />
+            Facility Report
+          </h1>
+        </div>
+      
+        
+      {% endif %}
     {% endfor %}
+
   </div><!-- / .container#feedback-analytics -->
   <div class="print-only"><br/><br/></div>
 
@@ -346,6 +362,16 @@
     return results
   }
 
+  // Hide the extra page header if we have less than 4 charts. 
+  function showhideChartHeader() {
+    if($("div.chart-container:visible").length > 4) {
+      $(".chart-break").show()  
+    }
+    else 
+      $(".chart-break").hide()   
+    
+  }
+
   function showAllCharts() {
     $("div.chart-container").each(function(){
       $(this).show();
@@ -365,6 +391,7 @@
         if(new Date($(this).attr("id")).getTime() == three_weeks[i].getTime())
           $(this).show();       // Maybe it was hidden from a previous cycle of this..  
     });
+
   }
 
  $(document).ready( function () {
@@ -389,6 +416,8 @@
       // Show / Hide Comments
       hideOtherComments();
 
+      // Show / Hide Chart Header (for print versions only)
+      showhideChartHeader();
     });
 
 
@@ -409,12 +438,12 @@
         core_data = results[1];
         label_counter=0;
 
-        $.each(core_data, function(num, results2){
-          label = results2[0];
-          perc = results2[1];
-          num = results2[2];
-          label_counter++;
-          $("tr#service"+service_name+" td.label"+label_counter).text(perc + " ("+num+")");
+      $.each(core_data, function(num, results2){
+        label = results2[0];
+        perc = results2[1];
+        num = results2[2];
+        label_counter++;
+        $("tr#service"+service_name+" td.label"+label_counter).text(perc + " ("+num+")");
         });
       });
     });
