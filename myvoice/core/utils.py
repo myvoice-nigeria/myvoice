@@ -71,7 +71,14 @@ def get_date(the_date=""):
 
 def calculate_weeks_ranges(start_date, end_date):
     """Returns a list of tuples of dates between self.start_date and self.end_date"""
+
     today = datetime.datetime.now()
+    if not start_date:
+        # Lauren said this date was an ok date to start - this is due to Zalli having no data.
+        start_date = parse("2014-07-01")
+    if not end_date:
+        end_date = today
+
     week_list = [{"start": start_date, "end": end_date}]
     week_list.append({"start": get_week_start(today), "end": get_week_end(today)})
     start_date = get_week_start(start_date)
