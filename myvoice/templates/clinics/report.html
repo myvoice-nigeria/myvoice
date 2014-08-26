@@ -78,13 +78,19 @@
           <h2>SURVEY PARTICIPATION</h2>
           {% if num_registered %}
             <div class="col-xs-4">
-              <h1>{{ num_registered }}</h1> Sent
+              <h1 id="num_registered">{{ num_registered }}</h1> Sent
             </div>
             <div class="col-xs-4">
-              <h1>{{ num_started }} <span class="report-percent">({{ percent_started|floatformat:"0" }}%)</span></h1> Started
+              <h1>
+                  <span id="num_started">{{ num_started }}</span> 
+                  <span id="perc_started" class="report-percent">({{ percent_started|floatformat:"0" }}%)</span>
+              </h1> Started
             </div>
             <div class="col-xs-4">
-              <h1>{{ num_completed }} <span class="report-percent">({{ percent_completed|floatformat:"0" }}%)</span></h1> Completed 
+              <h1>
+                <span id="num_completed">{{ num_completed }}</span> 
+                <span id="perc_completed" class="report-percent">({{ percent_completed|floatformat:"0" }}%)</span>
+              </h1> Completed 
             </div>
           {% else %}
             <div class="col-xs-12">
@@ -368,7 +374,7 @@
       $(".chart-break").show()  
     }
     else 
-      $(".chart-break").hide()   
+      $(".chart-break").hide() 
     
   }
 
@@ -399,7 +405,7 @@
     $("#service-feedback-weeks").change( function() {
       
       // Update the Feedback on Services Table by Week
-      console.log("Updating Feedback on Services Table by Week");
+      // console.log("Updating by Week");
       filter_feedback_by_week();
 
       // Update the Values within the Charts to the Select Value
@@ -430,14 +436,24 @@
     var end_date = $("#service-feedback-weeks").val().split(" - ")[1];
 
     // Send dates via Ajax to our Filter and parse the results.
-    $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date}, function(data,status){
+    $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date, 'clinic_id':{{object.id}} }, function(data,status){
       
+      // Update the Participation Summary on the top
+      $("#num_registered").text(data.num_registered);
+      $("#num_started").text(data.num_started);
+      $("#perc_started").text("("+data.perc_started+"%)");
+      $("#num_completed").text(data.num_completed);
+      $("#perc_completed").text("("+data.perc_completed+"%)");
+
+
+      // Update Feedback of Services Chart
       $.each(data.fos, function(num, results){
       
         service_name = results[0];
         core_data = results[1];
         label_counter=0;
 
+      // Update Core Data
       $.each(core_data, function(num, results2){
         label = results2[0];
         perc = results2[1];
@@ -487,8 +503,8 @@
     // Hide Entire Comment Sections if all the comments within are hidden, replace with text stating no comments.
     hidden_comments_num = $("table#comments-table tbody tr.comment:hidden").length
     visible_comments_num = $("table#comments-table tbody tr.comment:visible").length
-    console.log("Visible comments: " + visible_comments_num);
-    console.log("Hidden comments: " + hidden_comments_num);
+    //console.log("Visible comments: " + visible_comments_num);
+    //console.log("Hidden comments: " + hidden_comments_num);
 
     // Add the no comments message
     if(visible_comments_num == 0) {

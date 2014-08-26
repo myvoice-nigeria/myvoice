@@ -287,16 +287,14 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         # Get the variables from the ajax request
         the_start_date = self.get_variable(request, "start_date", "Start Date")
         the_end_date = self.get_variable(request, "end_date", "End Date")
+        the_clinic = self.get_variable(request, "clinic_id", "")
 
         # Create an instance of a ClinicReport
         c = ClinicReport()
-
+        c.object = models.Clinic.objects.get(id=the_clinic)
         c.start_date = get_date(the_start_date)
         c.end_date = get_date(the_end_date)
         c.curr_date = c.end_date
-
-        # Calculate the Survey Participation Data via week filter
-        survey_part_data = []
 
         # Calculate the Data for Feedback on Services (later summarized as 'fos')
         c.responses = SurveyQuestionResponse.objects.filter(
@@ -310,11 +308,29 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             new_row = (row[0].name, row[1])
             fos_array.append(new_row)
 
+        # Calculate the Survey Participation Data via week filter
+        num_registered = survey_utils.get_registration_count(c.object, c.start_date, c.end_date)
+        num_started = survey_utils.get_started_count(c.responses)
+        num_completed = survey_utils.get_completion_count(c.responses)
+
+        if num_registered:
+            percent_started = make_percentage(num_started, num_registered)
+            percent_completed = make_percentage(num_completed, num_registered)
+        else:
+            percent_completed = None
+            percent_started = None
+
         # Collect the Comments filtered by the weeks
         # weeks_comments = c.get_detailed_comments(c.start_date, c.end_date)
 
-        return HttpResponse(json.dumps(
-            {"surp": survey_part_data, "fos": fos_array}, cls=DjangoJSONEncoder),
+        return HttpResponse(json.dumps({
+            "num_registered": num_registered,
+            "num_started": num_started,
+            "perc_started": percent_started,
+            "num_completed": num_completed,
+            "perc_completed": percent_completed,
+            "fos": fos_array},
+            cls=DjangoJSONEncoder),
             content_type="text/json")
 
 
