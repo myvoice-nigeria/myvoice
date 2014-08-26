@@ -19,6 +19,8 @@ from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 from . import forms
 from . import models
 
+from datetime import timedelta
+
 logger = logging.getLogger(__name__)
 
 
@@ -177,27 +179,28 @@ class ClinicReport(ReportMixin, DetailView):
     def get_feedback_by_week(self):
         data = []
         responses = self.responses.order_by('datetime')
+
         by_week = groupby(responses, lambda r: get_week_start(r.datetime))
         for week_start, week_responses in by_week:
             week_responses = list(week_responses)
             by_question = survey_utils.group_responses(week_responses, 'question.label')
             responses_by_question = dict(by_question)
             week_data = []
-            survey_num = 0
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
                     total_responses = len(question_responses)
-                    if label is 'Open Facility':
-                        survey_num += total_responses
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
                     week_data.append((percentage, total_responses))
                 else:
                     week_data.append((None, 0))
             wait_times = [r.response for r in responses_by_question.get('Wait Time', [])]
+
+            survey_num = survey_utils.get_started_count(responses.filter(
+                datetime__range=(week_start, get_week_end(week_start))))
             data.append({
                 'week_start': week_start,
                 'week_end': get_week_end(week_start),
@@ -304,7 +307,9 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
         # Calculate the Data for Feedback on Services (later summarized as 'fos')
         c.responses = SurveyQuestionResponse.objects.filter(
-            clinic_id=1, datetime__gte=c.start_date, datetime__lte=c.end_date)
+            clinic__id=c.object.id, datetime__gte=c.start_date,
+            datetime__lte=c.end_date+timedelta(1))
+
         c.questions = SurveyQuestion.objects.all()
         c.questions = dict([(q.label, q) for q in c.questions])
         fos = c.get_feedback_by_service()

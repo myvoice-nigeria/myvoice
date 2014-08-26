@@ -151,7 +151,6 @@
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
       <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ANALYTICS</h2>
     </div>
-    <script>console.log("weeks: " + "{{ weeks }}");</script>
     {% for week in feedback_by_week %}
       <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F-j-Y" }}">
         <div class="col-xs-12">
