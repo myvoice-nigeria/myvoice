@@ -97,7 +97,7 @@ class SurveyQuestionResponseAdmin(admin.ModelAdmin):
             'fields': ['created', 'updated'],
         }),
     ]
-    list_display = ['mobile', 'visit_time', 'clinic', 'service', 'survey',
+    list_display = ['mobile', 'visit_time', 'clinic', 'service', 'survey', 'datetime',
                     'question', 'question_type', 'response', 'display_on_dashboard',
                     'positive_response']
     list_filter = ['question__survey', 'clinic', 'service',
