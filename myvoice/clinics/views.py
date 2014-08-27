@@ -80,8 +80,9 @@ class ReportMixin(object):
 
     def _check_assumptions(self):
         """Fail fast if our hard-coded assumpions are not met."""
+        #import pdb;pdb.set_trace()
         for label in ['Open Facility', 'Respectful Staff Treatment',
-                      'Clean Hospital Materials', 'Charged Fairly',
+                      'Treatment Explanation', 'Charged Fairly',
                       'Wait Time']:
             if label not in self.questions:
                 raise Exception("Expecting question with label " + label)
@@ -90,7 +91,9 @@ class ReportMixin(object):
         """Called by get_object to initialize state information."""
         self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
         self.questions = self.survey.surveyquestion_set.all()
-        self.questions = dict([(q.label, q) for q in self.questions])
+        self.questions = dict([
+            (q.display_label.name, q) for q in self.questions if q.display_label])
+        #import pdb;pdb.set_trace()
         self._check_assumptions()
 
     def get_feedback_by_service(self):
@@ -99,11 +102,13 @@ class ReportMixin(object):
         responses = self.responses.exclude(service=None)
         by_service = survey_utils.group_responses(responses, 'service.id', 'service')
         for service, service_responses in by_service:
-            by_question = survey_utils.group_responses(service_responses, 'question.label')
+            service_responses = [r for r in service_responses if r.question.display_label]
+            by_question = survey_utils.group_responses(
+                service_responses, 'question.display_label.name')
             responses_by_question = dict(by_question)
             service_data = []
             for label in ['Open Facility', 'Respectful Staff Treatment',
-                          'Clean Hospital Materials', 'Charged Fairly']:
+                          'Treatment Explanation', 'Charged Fairly']:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = responses_by_question[label]
@@ -174,13 +179,15 @@ class ClinicReport(ReportMixin, DetailView):
         responses = self.responses.order_by('datetime')
         by_week = groupby(responses, lambda r: get_week_start(r.datetime))
         for week_start, week_responses in by_week:
-            week_responses = list(week_responses)
-            by_question = survey_utils.group_responses(week_responses, 'question.label')
+            week_responses = [r for r in week_responses if r.question.display_label]
+            #week_responses = list(week_responses)
+            by_question = survey_utils.group_responses(
+                week_responses, 'question.display_label.name')
             responses_by_question = dict(by_question)
             week_data = []
             survey_num = 0
             for label in ['Open Facility', 'Respectful Staff Treatment',
-                          'Clean Hospital Materials', 'Charged Fairly']:
+                          'Treatment Explanation', 'Charged Fairly']:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
@@ -326,13 +333,13 @@ class RegionReport(ReportMixin, DetailView):
         target_questions = ['Respectful Staff Treatment', 'Charged Fairly', 'Wait Time']
 
         for visit, visit_responses in responses:
-            if any(r['question__label'] in target_questions for r in visit_responses):
+            if any(r['question__display_label__name'] in target_questions for r in visit_responses):
                 total += 1
             else:
                 continue
 
             for resp in visit_responses:
-                question = resp['question__label']
+                question = resp['question__display_label__name']
                 answer = resp['response']
                 if question in target_questions[:2] and answer != self.questions[
                         question].primary_answer:
@@ -372,8 +379,9 @@ class RegionReport(ReportMixin, DetailView):
         clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
 
         responses = self.responses.exclude(clinic=None).values(
-            'clinic', 'question__label', 'response', 'visit')
+            'clinic', 'question__display_label__name', 'response', 'visit')
         by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
+        #import pdb;pdb.set_trace()
 
         # Add clinics without responses back.
         clinic_ids = [clinic[0] for clinic in by_clinic]
@@ -382,8 +390,11 @@ class RegionReport(ReportMixin, DetailView):
             by_clinic.append((_clinic, []))
 
         for clinic, clinic_responses in by_clinic:
+            #import pdb;pdb.set_trace()
+            clinic_responses = [r for r in clinic_responses if r.get(
+                'question__display_label__name')]
             by_question = survey_utils.group_responses(
-                clinic_responses, 'question__label', keyfunc=itemgetter)
+                clinic_responses, 'question__display_label__name', keyfunc=itemgetter)
             responses_by_question = dict(by_question)
 
             # Get feedback participation
@@ -403,7 +414,7 @@ class RegionReport(ReportMixin, DetailView):
                 (None, 0)
             ]
             for label in ['Open Facility', 'Respectful Staff Treatment',
-                          'Clean Hospital Materials', 'Charged Fairly']:
+                          'Treatment Explanation', 'Charged Fairly']:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = responses_by_question[label]

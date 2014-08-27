@@ -412,20 +412,26 @@ class TestClinicReportView(TestCase):
         self.questions = []
 
         self.open_facility = factories.SurveyQuestion.create(
-            label='Open Facility', survey=self.survey)
+            label='Open Facility',
+            display_label=factories.DisplayLabel.create(name='Open Facility'),
+            survey=self.survey)
         self.questions.append(self.open_facility)
         self.questions.append(factories.SurveyQuestion.create(
             label='Respectful Staff Treatment',
+            display_label=factories.DisplayLabel.create(name='Respectful Staff Treatment'),
             survey=self.survey, categories='Yes\nNo', primary_answer='Yes'))
         self.questions.append(factories.SurveyQuestion.create(
             label='Clean Hospital Materials',
+            display_label=factories.DisplayLabel.create(name='Treatment Explanation'),
             survey=self.survey))
         self.questions.append(factories.SurveyQuestion.create(
             label='Charged Fairly',
+            display_label=factories.DisplayLabel.create(name='Charged Fairly'),
             survey=self.survey,
             categories='Fairly charged\nOvercharged', primary_answer='Fairly charged'))
         self.questions.append(factories.SurveyQuestion.create(
             label='Wait Time',
+            display_label=factories.DisplayLabel.create(name='Wait Time'),
             survey=self.survey, categories='<1 hour\n1-2 hours\n2-4 hours\n>4 hours'))
 
     def make_request(self, data=None):
@@ -542,7 +548,8 @@ class TestClinicReportView(TestCase):
 
     def test_hide_invalid_feedback(self):
         question = factories.SurveyQuestion(
-            label='General', survey=self.survey,
+            label='General',
+            survey=self.survey,
             question_type=survey_models.SurveyQuestion.OPEN_ENDED)
         factories.SurveyQuestionResponse(
             question=question, response='No',
@@ -624,14 +631,28 @@ class TestRegionReportView(TestCase):
         self.region = factories.Region.create(pk=599, name='Wamba', type='lga', boundary=geom)
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
-        open_f = factories.SurveyQuestion.create(label='Open Facility', survey=self.survey)
+        open_f = factories.SurveyQuestion.create(
+            label='Open Facility',
+            display_label=factories.DisplayLabel.create(name='Open Facility'),
+            survey=self.survey)
         self.respect = factories.SurveyQuestion.create(
-            label='Respectful Staff Treatment', survey=self.survey, categories='Yes\nNo')
-        factories.SurveyQuestion.create(label='Clean Hospital Materials', survey=self.survey)
+            label='Respectful Staff Treatment',
+            display_label=factories.DisplayLabel.create(name='Respectful Staff Treatment'),
+            survey=self.survey,
+            categories='Yes\nNo')
         factories.SurveyQuestion.create(
-            label='Charged Fairly', survey=self.survey, categories='Yes\nNo')
-        wait = factories.SurveyQuestion.create(label='Wait Time', survey=self.survey,
-                                               categories='<1 hour\n1-2 hours\n2-3 hours\n4+ hours')
+            label='Clean Hospital Materials',
+            display_label=factories.DisplayLabel.create(name='Treatment Explanation'),
+            survey=self.survey)
+        factories.SurveyQuestion.create(
+            label='Charged Fairly',
+            display_label=factories.DisplayLabel.create(name='Charged Fairly'),
+            survey=self.survey, categories='Yes\nNo')
+        wait = factories.SurveyQuestion.create(
+            label='Wait Time',
+            display_label=factories.DisplayLabel.create(name='Wait Time'),
+            survey=self.survey,
+            categories='<1 hour\n1-2 hours\n2-3 hours\n4+ hours')
 
         self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
 
@@ -773,20 +794,20 @@ class TestRegionReportView(TestCase):
         report.get_object()
         responses = [
             (1, [
-                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
-                {'question__label': 'Wait Time', 'response': '<1 hour'},
+                {'question__display_label__name': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__display_label__name': 'Wait Time', 'response': '<1 hour'},
             ]),
             (2, [
-                {'question__label': 'Respectful Staff Treatment', 'response': 'No'},
-                {'question__label': 'Wait Time', 'response': '1-2 hours'},
+                {'question__display_label__name': 'Respectful Staff Treatment', 'response': 'No'},
+                {'question__display_label__name': 'Wait Time', 'response': '1-2 hours'},
             ]),
             (3, [
-                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
-                {'question__label': 'Wait Time', 'response': '<1 hour'},
+                {'question__display_label__name': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__display_label__name': 'Wait Time', 'response': '<1 hour'},
             ]),
             (4, [
-                {'question__label': 'Charged Fairly', 'response': 'Yes'},
-                {'question__label': 'Wait Time', 'response': '<1 hour'},
+                {'question__display_label__name': 'Charged Fairly', 'response': 'Yes'},
+                {'question__display_label__name': 'Wait Time', 'response': '<1 hour'},
             ]),
         ]
         satisfaction, total = report.get_satisfaction_counts(responses)
@@ -799,20 +820,20 @@ class TestRegionReportView(TestCase):
         report.get_object()
         responses = [
             (1, [
-                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
-                {'question__label': 'Wait Time', 'response': '<1 hour'},
+                {'question__display_label__name': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__display_label__name': 'Wait Time', 'response': '<1 hour'},
             ]),
             (2, [
-                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
-                {'question__label': 'Wait Time', 'response': '1-2 hours'},
+                {'question__display_label__name': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__display_label__name': 'Wait Time', 'response': '1-2 hours'},
             ]),
             (3, [
-                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
-                {'question__label': 'Wait Time', 'response': '<1 hour'},
+                {'question__display_label__name': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__display_label__name': 'Wait Time', 'response': '<1 hour'},
             ]),
             (4, [
-                {'question__label': 'Respectful Staff Treatment', 'response': 'Yes'},
-                {'question__label': 'Wait Time', 'response': '4+ hours'},
+                {'question__display_label__name': 'Respectful Staff Treatment', 'response': 'Yes'},
+                {'question__display_label__name': 'Wait Time', 'response': '4+ hours'},
             ]),
         ]
         satisfaction, total = report.get_satisfaction_counts(responses)
@@ -825,7 +846,7 @@ class TestRegionReportView(TestCase):
         report.get_object()
         responses = [
             (self.v1.pk, [
-                {'question__label': 'Clean Hospital Materials', 'response': 'Yes'},
+                {'question__display_label__name': 'Clean Hospital Materials', 'response': 'Yes'},
             ]),
         ]
         satisfaction, total = report.get_satisfaction_counts(responses)

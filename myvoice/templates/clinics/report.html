@@ -8,7 +8,7 @@
 <script src="{% static 'lib/chartnew/ChartNew.js' %}"></script>
 <script>
   var labels = ['Open\nFacility', 'Respectful\nStaff\nTreatment',
-                'Clean\nHospital\nMaterials', 'Charged\nFairly'],
+                'Treatment\nExplanation', 'Charged\nFairly'],
       fillColor = ['#6D6E71', '#808184', '#929497', '#A6A8AB'],
       barOptions = {
         barShowStroke: false,
@@ -196,7 +196,7 @@
           <th class="special-th">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
           <th>Open Facility</th>
           <th>Respectful<br />Staff Treatment</th>
-          <th>Clean<br />Hospital Materials</th>
+          <th>Treatment<br />Explanation</th>
           <th>Charged Fairly</th>
           <th>Most Common<br />Wait Time (hrs)</th>
         </tr>
