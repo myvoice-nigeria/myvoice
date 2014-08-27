@@ -178,7 +178,6 @@ class ClinicReport(ReportMixin, DetailView):
         by_week = groupby(responses, lambda r: get_week_start(r.datetime))
         for week_start, week_responses in by_week:
             week_responses = [r for r in week_responses if r.question.display_label]
-            #week_responses = list(week_responses)
             by_question = survey_utils.group_responses(
                 week_responses, 'question.display_label.name')
             responses_by_question = dict(by_question)
