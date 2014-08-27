@@ -80,7 +80,6 @@ class ReportMixin(object):
 
     def _check_assumptions(self):
         """Fail fast if our hard-coded assumpions are not met."""
-        #import pdb;pdb.set_trace()
         for label in ['Open Facility', 'Respectful Staff Treatment',
                       'Treatment Explanation', 'Charged Fairly',
                       'Wait Time']:
@@ -93,7 +92,6 @@ class ReportMixin(object):
         self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([
             (q.display_label.name, q) for q in self.questions if q.display_label])
-        #import pdb;pdb.set_trace()
         self._check_assumptions()
 
     def get_feedback_by_service(self):
@@ -381,7 +379,6 @@ class RegionReport(ReportMixin, DetailView):
         responses = self.responses.exclude(clinic=None).values(
             'clinic', 'question__display_label__name', 'response', 'visit')
         by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
-        #import pdb;pdb.set_trace()
 
         # Add clinics without responses back.
         clinic_ids = [clinic[0] for clinic in by_clinic]
@@ -390,7 +387,6 @@ class RegionReport(ReportMixin, DetailView):
             by_clinic.append((_clinic, []))
 
         for clinic, clinic_responses in by_clinic:
-            #import pdb;pdb.set_trace()
             clinic_responses = [r for r in clinic_responses if r.get(
                 'question__display_label__name')]
             by_question = survey_utils.group_responses(
