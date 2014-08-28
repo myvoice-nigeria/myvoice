@@ -420,14 +420,19 @@ class AnalystSummary(TemplateView):
         end_date = get_date(end_date)
 
         sqr_query = SurveyQuestionResponse.objects.all()
+        gfb_query = GenericFeedback.objects.all()
+
         if clinic:
             sqr_query = sqr_query.filter(clinic__name__iexact=clinic)
+            gfb_query = gfb_query.filter(clinic__name__iexact=clinic)
         if service:
             sqr_query = sqr_query.filter(service__name__iexact=service)
         if start_date:
             sqr_query = sqr_query.filter(visit__visit_time__gte=start_date)
+            gfb_query = gfb_query.filter(message_date__gte=start_date)
         if end_date:
             sqr_query = sqr_query.filter(visit__visit_time__lte=end_date)
+            gfb_query = gfb_query.filter(message_date__lte=end_date)
 
         rates_table.append({
             "row_num": "1.1",
@@ -512,7 +517,7 @@ class AnalystSummary(TemplateView):
         rates_table.append({
             "row_num": "7.1",
             "row_title": "7.1 Out-of-Clinic Survey",
-            "rsp_num": GenericFeedback.objects.all().count()
+            "rsp_num": gfb_query.count()
         })
 
         return rates_table
