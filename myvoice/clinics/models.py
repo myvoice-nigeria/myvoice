@@ -142,6 +142,12 @@ class Visit(models.Model):
     mobile = models.CharField(max_length=11, blank=True)
     sender = models.CharField(max_length=11, blank=True)
 
+    # The following fields denormalize to help reporting
+    # so questions are more flexible.
+    satisfied = models.NullBooleanField()
+    survey_started = models.BooleanField(default=False)
+    survey_completed = models.BooleanField(default=False)
+
     def __unicode__(self):
         return unicode(self.patient)
 
@@ -180,7 +186,7 @@ class GenericFeedback(models.Model):
     """Keeps Feedback information sent by patients."""
     sender = models.CharField(max_length=20)
     clinic = models.ForeignKey('Clinic', null=True, blank=True)
-    message = models.CharField(max_length=200, blank=True)
+    message = models.TextField(blank=True)
     message_date = models.DateTimeField(auto_now=True)
     display_on_dashboard = models.BooleanField(
         default=True,

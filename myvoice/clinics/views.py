@@ -32,6 +32,7 @@ class VisitView(View):
 
     def post(self, request):
         success_msg = "Entry received for patient with serial number {}. Thank you."
+        logger.debug("post data is %s" % request.POST)
         form = forms.VisitForm(request.POST)
         if form.is_valid():
 
