@@ -117,7 +117,7 @@ class ReportMixin(object):
                     service_data.append([label.replace(" ", "_"),
                                         '{}%'.format(percentage), total_responses])
                 else:
-                    service_data.append([None, 0])
+                    service_data.append([None, None, 0])
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
 
