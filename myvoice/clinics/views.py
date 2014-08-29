@@ -283,6 +283,9 @@ class AnalystSummary(TemplateView):
         ss_total = 0            # Surveys Started
         sc_total = 0            # Surveys Completed
 
+        print start_date
+        print type(start_date)
+
         # All Clinics to Loop Through, build our own dict of data
         if not clinic:
             clinics_to_add = Clinic.objects.all().order_by("name")
@@ -296,28 +299,47 @@ class AnalystSummary(TemplateView):
         if start_date:
             if type(start_date) is str:
                 start_date = parse(start_date)
+            print "Start Date: ",
+            print start_date
+            
 
         if end_date:
             if type(end_date) is str:
                 end_date = parse(end_date)
+            print "End Date: ",
+            print end_date    
 
         if service:
             if type(service) is str:
                 service = Service.objects.get(name__iexact=service)
+            print "Service: ",
+            print service
+            
 
         # Loop through the Clinics, summating the data required.
         for a_clinic in clinics_to_add:
 
-            st_count = clinic_utils.get_triggered_count(a_clinic, service, start_date, end_date)
+            survey_responses = SurveyQuestionResponse.objects.all()
+
+            if start_date: survey_responses = survey_responses.filter(visit__visit_time__gte=start_date)
+            if end_date: survey_responses = survey_responses.filter(visit__visit_time__lte=end_date)
+            if service: survey_responses = survey_responses.filter(service__name__iexact=service)
+
+            survey_responses = survey_responses.filter(clinic=a_clinic)
+            print survey_responses.count()
+
+            # Surveys Triggered Query Statistics
+            st_count = survey_responses.filter(visit__survey_sent__isnull=False).count()
             st_total += st_count
 
+            survey_responses = survey_responses.filter(question__label__iexact="Open Facility").filter(question__question_type__iexact="multiple-choice")
+
             # Survey Started Query Statistics
-            ss_count = survey_utils.get_started_count("", a_clinic, service, start_date, end_date)
+            ss_count = survey_responses.filter(visit__survey_started=True).count()
             ss_total += ss_count
 
             # Survey Completed Query Statistics
-            sc_count = survey_utils.get_completion_qcount(
-                "", a_clinic, service, start_date, end_date)
+            sc_count = survey_responses.filter(visit__survey_completed=True).count()
             sc_total += sc_count
 
             # Survey Percentages
@@ -325,8 +347,8 @@ class AnalystSummary(TemplateView):
                 ss_st_percent = 100*ss_count/st_count
                 sc_st_percent = 100*sc_count/st_count
             else:
-                ss_st_percent = "--"
-                sc_st_percent = "--"
+                ss_st_percent = 0
+                sc_st_percent = 0
 
             completion_table.append({
                 "clinic_id": a_clinic.id,
@@ -342,8 +364,8 @@ class AnalystSummary(TemplateView):
             ss_st_percent_total = 100*ss_total/st_total
             sc_st_percent_total = 100*sc_total/st_total
         else:
-            ss_st_percent_total = "--"
-            sc_st_percent_total = "--"
+            ss_st_percent_total = 0
+            sc_st_percent_total = 0
 
         completion_table.append({
             "clinic_id": -1,
@@ -384,25 +406,35 @@ class AnalystSummary(TemplateView):
         context = super(AnalystSummary, self).\
             get_context_data(**kwargs)
 
-        context['completion_table'] = self.get_completion_table()
+        survey_responses = SurveyQuestionResponse.objects.all()
+        
+        the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
+        the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+        
+        context['completion_table'] = self.get_completion_table(start_date=the_start_date, end_date=the_end_date)
+
         context['st'] = self.get_surveys_triggered_summary()
         context['st_count'] = context['st'].count()
 
-        context['ss'] = self.get_surveys_started_summary()
-        context['ss_count'] = context['ss'].count()
+        # context['ss'] = self.get_surveys_started_summary()
+        # context['ss_count'] = survey_utils.get_started_count(survey_responses)
+        context['ss'] = Visit.objects.all().filter(survey_started=True)
+        context["ss_count"] = context["ss"].count()
 
-        context['sc'] = self.get_surveys_completed_summary()
+        # context['sc'] = self.get_surveys_completed_summary()
+        # context['sc_count'] = context['sc'].count()
+        context['sc'] = Visit.objects.all().filter(survey_completed=True)
         context['sc_count'] = context['sc'].count()
 
         if context['ss_count']:
             context['ss_st_percent'] = 100*context['ss_count']/context['st_count']
         else:
-            context['ss_st_percent'] = "--"
+            context['ss_st_percent'] = 0
 
         if context['st_count']:
             context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
         else:
-            context['sc_st_percent'] = "--"
+            context['sc_st_percent'] = 0
 
         # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
@@ -535,18 +567,27 @@ class CompletionFilter(View):
         return the_variable_data
 
     def get(self, request):
+        
         the_service = self.get_variable(request, "service", "Service")
         the_start_date = self.get_variable(request, "start_date", "Start Date")
         the_end_date = self.get_variable(request, "end_date", "End Date")
+        
+        if the_service:
+            print "Service: ",
+            print the_service
 
         if not the_start_date or "Start Date" in the_start_date:
             the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
         else:
             the_start_date = parse(the_start_date)
+
         if not the_end_date or "End Date" in the_end_date:
             the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
         else:
             the_end_date = parse(the_end_date)
+            print "End Date: ",
+            print the_end_date
+        
 
         a = AnalystSummary()
         data = a.get_completion_table(
@@ -557,6 +598,7 @@ class CompletionFilter(View):
                 "name": a_clinic["clinic_name"],
                 "st": a_clinic["st_count"],
                 "ss": a_clinic["ss_count"],
+                "ssp": a_clinic['ss_st_percent'],
                 "sc": a_clinic["sc_count"],
                 "scp": a_clinic["sc_st_percent"]
             }

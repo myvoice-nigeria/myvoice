@@ -208,7 +208,7 @@
             $.get("/completion_filter", {'service':service, 'start_date':start_date, 'end_date':end_date}, function(data,status){
               $.each(data.clinic_data, function(key, value){
                 $("tr#"+key+" td.clinic_st").text(value.st);
-                $("tr#"+key+" td.clinic_ss").text(value.ss);
+                $("tr#"+key+" td.clinic_ss").text(value.ss + "("+value.ssp+"%)");
                 $("tr#"+key+" td.clinic_sc").text(value.sc + "("+value.scp+"%)");
               });
             });
