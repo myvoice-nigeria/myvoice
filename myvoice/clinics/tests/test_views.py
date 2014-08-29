@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone
 from django.contrib.gis.geos import GEOSGeometry
+from django.test.client import Client
 
 import json
 
@@ -837,6 +838,32 @@ class TestRegionReportView(TestCase):
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
         feedback = report.get_feedback_by_clinic()
-        self.assertEqual('TEST1', feedback[0][0])
-        self.assertEqual(('50.0%', 2), feedback[0][1][0])
-        self.assertEqual(('<1 hr', 1), feedback[0][1][8])
+        self.assertEqual('TEST1', feedback[0][1])
+        self.assertEqual(('Participation', '0.0%', 2), feedback[0][2][0])
+        self.assertEqual(('Patient_Satisfaction', '0%', 0), feedback[0][2][1])
+        # self.assertEqual(('<1 hr', 1), feedback[0][2][8])
+
+
+class TestAjax(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.clinic = factories.Clinic.create(code=1)
+        self.service = factories.Service.create(code=5)
+        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
+        self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
+        self.questions = []
+        for l in ['Open Facility', 'Respectful Staff Treatment',
+                  'Clean Hospital Materials', 'Charged Fairly',
+                  'Wait Time']:
+            self.questions.append(factories.SurveyQuestion.create(label=l, survey=self.survey))
+
+        self.c = Client()
+
+    def test_ajax_clinic(self):
+
+        r = self.c.get('/lga_filter_feedback_by_clinic/',
+                       {'start_date': "July 20 2014", "end_date": "July 21 2014"},
+                       HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        self.assertEqual(r.status_code, 200)

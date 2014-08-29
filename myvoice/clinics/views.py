@@ -9,13 +9,17 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
+from django.core.serializers.json import DjangoJSONEncoder
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
+from myvoice.core.utils import get_date, calculate_weeks_ranges
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
 from . import forms
 from . import models
+
+from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -110,16 +114,19 @@ class ReportMixin(object):
                     total_responses = len(question_responses)
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
-                    service_data.append(('{}%'.format(percentage), total_responses))
+                    service_data.append([label.replace(" ", "_"),
+                                        '{}%'.format(percentage), total_responses])
                 else:
-                    service_data.append((None, 0))
+                    service_data.append([None, None, 0])
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
+
                 mode = survey_utils.get_mode(
                     wait_times, self.questions.get('Wait Time').get_categories())
                 service_data.append((mode, len(wait_times)))
+
             else:
-                service_data.append((None, 0))
+                service_data.append([None, None, 0])
             data.append((service, service_data))
         return data
 
@@ -172,27 +179,28 @@ class ClinicReport(ReportMixin, DetailView):
     def get_feedback_by_week(self):
         data = []
         responses = self.responses.order_by('datetime')
+
         by_week = groupby(responses, lambda r: get_week_start(r.datetime))
         for week_start, week_responses in by_week:
             week_responses = list(week_responses)
             by_question = survey_utils.group_responses(week_responses, 'question.label')
             responses_by_question = dict(by_question)
             week_data = []
-            survey_num = 0
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
                     total_responses = len(question_responses)
-                    if label is 'Open Facility':
-                        survey_num += total_responses
                     answers = [response.response for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
                     week_data.append((percentage, total_responses))
                 else:
                     week_data.append((None, 0))
             wait_times = [r.response for r in responses_by_question.get('Wait Time', [])]
+
+            survey_num = survey_utils.get_started_count(responses.filter(
+                datetime__range=(week_start, get_week_end(week_start))))
             data.append({
                 'week_start': week_start,
                 'week_end': get_week_end(week_start),
@@ -211,10 +219,17 @@ class ClinicReport(ReportMixin, DetailView):
             return get_week_start(min_date), get_week_end(max_date)
         return None, None
 
-    def get_detailed_comments(self):
+    def get_detailed_comments(self, start_date="", end_date=""):
         """Combine open-ended survey comments with General Feedback."""
         open_ended_responses = self.responses.filter(
             question__question_type=SurveyQuestion.OPEN_ENDED)
+
+        if start_date:
+            # SurveyQuestionResponse.objects.filter(
+            # visit__visit_time__range=(the_start_date, the_end_date))
+            open_ended_responses = open_ended_responses.filter(
+                datetime__range=(get_date(start_date), get_date(end_date)))
+
         comments = [
             {
                 'question': r.question.label,
@@ -259,9 +274,75 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['percent_started'] = percent_started
         kwargs['num_completed'] = num_completed
         kwargs['percent_completed'] = percent_completed
+        kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
 
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
+
+
+class ClinicReportFilterByWeek(ReportMixin, DetailView):
+
+    def get_variable(self, request, variable_name, ignore_value):
+        if request.GET.get(variable_name):
+            the_variable_data = request.GET[variable_name]
+            if str(the_variable_data) is str(ignore_value):
+                the_variable_data = ""
+        else:
+            the_variable_data = ""
+        return the_variable_data
+
+    def get(self, request):
+
+        # Get the variables from the ajax request
+        the_start_date = self.get_variable(request, "start_date", "Start Date")
+        the_end_date = self.get_variable(request, "end_date", "End Date")
+        the_clinic = self.get_variable(request, "clinic_id", "")
+
+        # Create an instance of a ClinicReport
+        c = ClinicReport()
+        c.object = models.Clinic.objects.get(id=the_clinic)
+        c.start_date = get_date(the_start_date)
+        c.end_date = get_date(the_end_date)
+        c.curr_date = c.end_date
+
+        # Calculate the Data for Feedback on Services (later summarized as 'fos')
+        c.responses = SurveyQuestionResponse.objects.filter(
+            clinic__id=c.object.id, datetime__gte=c.start_date,
+            datetime__lte=c.end_date+timedelta(1))
+
+        c.questions = SurveyQuestion.objects.all()
+        c.questions = dict([(q.label, q) for q in c.questions])
+        fos = c.get_feedback_by_service()
+
+        fos_array = []
+        for row in fos:
+            new_row = (row[0].name, row[1])
+            fos_array.append(new_row)
+
+        # Calculate the Survey Participation Data via week filter
+        num_registered = survey_utils.get_registration_count(c.object, c.start_date, c.end_date)
+        num_started = survey_utils.get_started_count(c.responses)
+        num_completed = survey_utils.get_completion_count(c.responses)
+
+        if num_registered:
+            percent_started = make_percentage(num_started, num_registered)
+            percent_completed = make_percentage(num_completed, num_registered)
+        else:
+            percent_completed = None
+            percent_started = None
+
+        # Collect the Comments filtered by the weeks
+        # weeks_comments = c.get_detailed_comments(c.start_date, c.end_date)
+
+        return HttpResponse(json.dumps({
+            "num_registered": num_registered,
+            "num_started": num_started,
+            "perc_started": percent_started,
+            "num_completed": num_completed,
+            "perc_completed": percent_completed,
+            "fos": fos_array},
+            cls=DjangoJSONEncoder),
+            content_type="text/json")
 
 
 class RegionReport(ReportMixin, DetailView):
@@ -273,6 +354,7 @@ class RegionReport(ReportMixin, DetailView):
         self.curr_date = None
         self.start_date = None
         self.end_date = None
+        self.weeks = None
 
     def get(self, request, *args, **kwargs):
         if 'day' in request.GET and 'month' in request.GET and 'year' in request.GET:
@@ -304,6 +386,7 @@ class RegionReport(ReportMixin, DetailView):
         else:
             self.start_date = self.responses.aggregate(min_date=Min('datetime'))['min_date']
             self.end_date = self.responses.aggregate(max_date=Max('datetime'))['max_date']
+        # self.calculate_weeks_ranges()
         self.responses = self.responses.select_related('question', 'service', 'visit')
         return obj
 
@@ -313,6 +396,7 @@ class RegionReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
         kwargs['min_date'] = self.start_date
         kwargs['max_date'] = self.end_date
+        kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
         data = super(RegionReport, self).get_context_data(**kwargs)
         return data
 
@@ -371,13 +455,20 @@ class RegionReport(ReportMixin, DetailView):
         # So we can get the name of the clinic for the template
         clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
 
-        responses = self.responses.exclude(clinic=None).values(
+        responses = self.responses.exclude(clinic=None)
+
+        if self.start_date and self.end_date:
+            responses = responses.filter(visit__visit_time__range=(self.start_date, self.end_date))
+
+        responses = responses.values(
             'clinic', 'question__label', 'response', 'visit')
+
         by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
 
         # Add clinics without responses back.
         clinic_ids = [clinic[0] for clinic in by_clinic]
         rest_clinics = set(clinic_map.keys()).difference(clinic_ids)
+
         for _clinic in rest_clinics:
             by_clinic.append((_clinic, []))
 
@@ -397,10 +488,10 @@ class RegionReport(ReportMixin, DetailView):
 
             # Build the data
             clinic_data = [
-                ('{}%'.format(survey_percent), total_visits),
-                ('{}%'.format(satis_percent), satis_total),
-                (None, 0),
-                (None, 0)
+                ("Participation", '{}%'.format(survey_percent), total_visits),
+                ("Patient_Satisfaction", '{}%'.format(satis_percent), satis_total),
+                ("Quality", None, 0),
+                ("Quantity", None, 0)
             ]
             for label in ['Open Facility', 'Respectful Staff Treatment',
                           'Clean Hospital Materials', 'Charged Fairly']:
@@ -410,19 +501,96 @@ class RegionReport(ReportMixin, DetailView):
                     total_responses = len(question_responses)
                     answers = [response['response'] for response in question_responses]
                     percentage = survey_utils.analyze(answers, question.primary_answer)
-                    clinic_data.append(('{}%'.format(percentage), total_responses))
+                    clinic_data.append((label.replace(" ", "_"),
+                                        '{}%'.format(percentage), total_responses))
                 else:
-                    clinic_data.append((None, 0))
+                    clinic_data.append((None, None, 0))
 
             if 'Wait Time' in responses_by_question:
                 wait_times = [r['response'] for r in responses_by_question['Wait Time']]
+
                 mode = survey_utils.get_mode(
                     wait_times, self.questions.get('Wait Time').get_categories())
                 clinic_data.append((mode, len(wait_times)))
+
             else:
                 clinic_data.append((None, 0))
-            data.append((clinic_map[clinic], clinic_data))
+            data.append((clinic, clinic_map[clinic], clinic_data))
         return data
+
+
+class LGAReportFilterByService(View):
+
+    def get_variable(self, request, variable_name, ignore_value):
+        if request.GET.get(variable_name):
+            the_variable_data = request.GET[variable_name]
+            if str(the_variable_data) is str(ignore_value):
+                the_variable_data = ""
+        else:
+            the_variable_data = ""
+        return the_variable_data
+
+    def get(self, request):
+
+        # Get the variables
+        the_start_date = get_date(self.get_variable(request, "start_date", "Start Date"))
+        the_end_date = get_date(self.get_variable(request, "end_date", "End Date"))
+
+        r = ReportMixin()
+        r.initialize_data("")
+        r.responses = SurveyQuestionResponse.objects.filter(
+            visit__visit_time__range=(the_start_date, the_end_date))
+        results = []
+        content = r.get_feedback_by_service()
+
+        # Convert the Service Objects to only names, plus id's for ajax
+        for obj in content:
+
+            new_obj = []
+            counter = 0
+            for data in obj[1]:
+                try:
+                    new_obj.append([data[0], data[1], data[2]])
+                except:
+                    pass
+                counter += 1
+
+            obj = [obj[0].id, obj[0].name, new_obj]
+            results.append(obj)
+
+        return HttpResponse(json.dumps(results), content_type="text/json")
+
+
+class LGAReportFilterByClinic(View):
+
+    def get_variable(self, request, variable_name, ignore_value):
+        if request.GET.get(variable_name):
+            the_variable_data = request.GET[variable_name]
+            if str(the_variable_data) is str(ignore_value):
+                the_variable_data = ""
+        else:
+            the_variable_data = ""
+        return the_variable_data
+
+    def get(self, request):
+
+        # Get the variables
+        the_start_date = self.get_variable(request, "start_date", "Start Date")
+        the_end_date = self.get_variable(request, "end_date", "End Date")
+
+        r = RegionReport()                  # Create an instance of Report
+
+        r.start_date = get_date(the_start_date)
+        r.end_date = get_date(the_end_date)
+        r.curr_date = r.end_date
+
+        r.calculate_date_range()
+        r.initialize_data("")
+        r.responses = SurveyQuestionResponse.objects.all()
+
+        content = r.get_feedback_by_clinic()
+
+        return HttpResponse(json.dumps(content), content_type="text/json")
 
 
 class FeedbackView(View):

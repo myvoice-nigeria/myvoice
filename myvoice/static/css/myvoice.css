@@ -62,6 +62,50 @@ h2 {
   position: absolute; 
   top: 7px; 
 }
+
+.full-width {
+  width: 565px !important;
+  padding: 0px;
+}
+
+.float-right {
+  float:right;
+}
+
+.styled-select select {
+   background: url(/static/img/grey_upsidedown_arrow.png) no-repeat right #fff;
+   border: none;
+   border-bottom: 1px solid #fff;
+   border-radius: 0;
+   font-size: 15px;
+   line-height: 1.2;
+   height: 30px;
+   padding: 2px;
+   padding-right: 25px;
+   padding: 2px 30px 2px 2px;
+   
+   text-indent: 1px;
+   text-overflow: '';
+   width: 268px;
+   -webkit-appearance: none;
+   -moz-appearance: none;
+   
+}
+
+/* MSIE Select - remove dropdown arrow */
+select::-ms-expand {
+    display: none;
+}
+
+@-moz-document url-prefix() {
+.styled-select{
+     background-image: url('/static/img/grey_upsidedown_arrow.png');
+     background-repeat: no-repeat;
+     background-position: right center;
+     padding-right: 25px;
+  }
+}
+
 /* Non-responsive overrides
  *
  * Utilitze the following CSS to disable the responsive-ness of the container,
@@ -210,11 +254,11 @@ h2 {
 
 .dropdown-menu {
   background-color: #8ac43f;
-      padding-top:20px;
-    box-shadow: none;
-    border: none;
-    text-transform: none;
-    border-radius: 0;
+  padding-top:20px;
+  box-shadow: none;
+  border: none;
+  text-transform: none;
+  border-radius: 0;
 }
 
 .dropdown-menu > li > a {
@@ -267,16 +311,16 @@ h2 {
  }
 
   .green-question-dot {
-  border-radius: 50%;
-  width:12px;
-  background-color: #8ac43f;
-  color:#fff;
-  height: 12px;
-  text-align: center;
-  font-size:8px;
-  font-weight: 700;
-  padding-top: 1px;
-  margin-bottom:2px;
+    border-radius: 50%;
+    width:12px;
+    background-color: #8ac43f;
+    color:#fff;
+    height: 12px;
+    text-align: center;
+    font-size:8px;
+    font-weight: 700;
+    padding-top: 1px;
+    margin-bottom:2px;
  }
 
 .popover {
@@ -346,9 +390,13 @@ h2 {
 	padding-bottom:15px;
 }
 
-.comment_text {
+.width100 {
   width: 100%;
 }
+
+.comment_text { width: 100%; }
+.special-table-row { width: 100%; }
+.no-comments { width: 100%; }
 
 .special-th {
 	background-color: #E5E6E7;

@@ -84,9 +84,14 @@ def get_completion_count(responses):
     return len([r for r in results if all([l in r for l in REQUIRED_QUESTIONS])])
 
 
-def get_registration_count(clinic):
+def get_registration_count(clinic, start_date=None, end_date=None):
     """Returns the count of patients who should have received this survey."""
     from myvoice.clinics.models import Visit
+    if start_date and end_date:
+        return Visit.objects.filter(
+            visit_time__range=(start_date, end_date),
+            survey_sent__isnull=False,
+            patient__clinic=clinic).count()
     return Visit.objects.filter(survey_sent__isnull=False, patient__clinic=clinic).count()
 
 
