@@ -10,8 +10,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
+from django.template.loader import get_template
+from django.template import Context
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange, get_date
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
 from myvoice.survey import utils as survey_utils
 
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
@@ -276,34 +278,86 @@ class AnalystSummary(TemplateView):
         response['allow'] = ','.join([self.allowed_methods])
         return response
 
-    def get_completion_table(self, clinic="", start_date="", end_date="", service=""):
+    @classmethod
+    def get_visit_counts(cls, clinics, **kwargs):
+        """Get the count of visits to each of clinics for service
+        and between start_date and end_date.
+
+        Return dict of clinic: count_of_visits."""
+        visit_counts = {}
+        start_date = kwargs.get('start_date', None)
+        end_date = kwargs.get('end_date', None)
+        service = kwargs.get('service', None)
+
+        # Build filter params
+        params = {'survey_sent__isnull': False}
+        if service:
+            params.update({'service__name': service})
+        if start_date:
+            params.update({'visit_time__gte': start_date})
+        if end_date:
+            params.update({'visit_time__lte': end_date})
+
+        visits = models.Visit.objects.filter(**params)
+
+        for clinic in clinics:
+            visit_counts.update({clinic: visits.filter(patient__clinic=clinic).count()})
+        return visit_counts
+
+    @classmethod
+    def get_survey_counts(cls, qset, clinics, **kwargs):
+        """Get the count of surveys for each clinic for service,
+        and between start_date and end_date.
+
+        Return dict of clinic: count_of_started survey."""
+        counts = {}
+
+        start_date = kwargs.get('start_date', None)
+        end_date = kwargs.get('end_date', None)
+        service = kwargs.get('service', None)
+
+        # Build filter params and apply to qset
+        params = {}
+        if service:
+            params.update({'service': service})
+        if start_date:
+            params.update({'visit__visit_time__gte': start_date})
+        if end_date:
+            params.update({'visit__visit_time__lte': end_date})
+
+        qset = qset.filter(**params)
+
+        for clinic in clinics:
+            counts.update({clinic: qset.filter(clinic=clinic).count()})
+        return counts
+
+    def get_completion_table(self, start_date=None, end_date=None, service=None):
         completion_table = []
         st_total = 0            # Surveys Triggered
         ss_total = 0            # Surveys Started
         sc_total = 0            # Surveys Completed
 
         # All Clinics to Loop Through, build our own dict of data
-        if not clinic:
-            clinics_to_add = Clinic.objects.all().order_by("name")
-        else:
-            if type(clinic) == str:
-                clinics_to_add = Clinic.objects.get(name=clinic)
-            else:
-                clinics_to_add = clinic
+        all_clinics = Clinic.objects.all().order_by("name")
 
-        # Filter for Start Date, End Date and Service
-        if start_date:
-            if type(start_date) is str:
-                start_date = parse(start_date)
+        # Build params for to filter by start_date, end_date and service
+        visit_params = {'survey_sent__isnull': False}
+        survey_params = {}
+        if start_date and isinstance(start_date, basestring):
+            visit_params.update({'visit_time__gte': parse(start_date)})
+            survey_params.update({'visit__visit_time__gte': parse(start_date)})
+        if end_date and isinstance(end_date, basestring):
+            visit_params.update({'visit_time__lte': parse(end_date)})
+            survey_params.update({'visit__visit_time_lte': parse(end_date)})
+        if service and isinstance(service, basestring):
+            visit_params.update({'service__name': service})
+            survey_params.update({'service__name': service})
 
-        if end_date:
-            if type(end_date) is str:
-                end_date = parse(end_date)
-
-        if service:
-            if type(service) is str:
-                service = Service.objects.get(name__iexact=service)
-
+        visit_counts = self.get_visit_counts(all_clinics, **visit_params)
+        started_qset = SurveyQuestionResponse.objects.filter(
+            question__label__iexact='Open Facility',
+            question__question_type__iexact='multiple-choice')
+        started_counts = self.get_survey_counts(started_qset, all_clinics, **survey_params)
         # Loop through the Clinics, summating the data required.
         for a_clinic in clinics_to_add:
 
@@ -381,12 +435,16 @@ class AnalystSummary(TemplateView):
             return_dates.append(single_date)
         return return_dates
 
+    def get_survey_question_responses(self):
+        return SurveyQuestionResponse.objects.all()
+
     def get_surveys_triggered_summary(self):
         """Total number of Surveys Triggered."""
         return Visit.objects.filter(survey_sent__isnull=False)
 
     def get_surveys_started_summary(self):
-        return SurveyQuestionResponse.objects.filter(question__question_type__iexact="open-ended")
+        return SurveyQuestionResponse.objects.filter(
+            question__question_type__iexact="open-ended")
 
     def get_surveys_completed_summary(self):
         """Total number of Surveys Completed."""
@@ -397,11 +455,15 @@ class AnalystSummary(TemplateView):
         context = super(AnalystSummary, self).\
             get_context_data(**kwargs)
 
+
         the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
         the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
 
         context['completion_table'] = self.get_completion_table(
             start_date=the_start_date, end_date=the_end_date)
+
+        context['responses'] = self.get_survey_question_responses()
+#        context['completion_table'] = self.get_completion_table()
 
         context['st'] = self.get_surveys_triggered_summary()
         context['st_count'] = context['st'].count()
@@ -428,133 +490,24 @@ class AnalystSummary(TemplateView):
 
         # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
-        first_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        last_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+        first_date = Visit.objects.aggregate(Min('visit_time'))['visit_time__min'].date()
+        last_date = Visit.objects.aggregate(Max('visit_time'))['visit_time__max'].date()
         context['date_range'] = self.get_date_range(first_date, last_date)
         context['clinics'] = Clinic.objects.all().order_by("name")
         context['gfb_count'] = GenericFeedback.objects.all().count()
         return context
 
-    def get_feedback_rates_table(self, service="", clinic="", start_date="", end_date=""):
-        rates_table = []
 
-        start_date = get_date(start_date)
-        end_date = get_date(end_date)
-
-        sqr_query = SurveyQuestionResponse.objects.all()
-        gfb_query = GenericFeedback.objects.all()
-
-        if clinic:
-            sqr_query = sqr_query.filter(clinic__name__iexact=clinic)
-            gfb_query = gfb_query.filter(clinic__name__iexact=clinic)
-        if service:
-            sqr_query = sqr_query.filter(service__name__iexact=service)
-        if start_date:
-            sqr_query = sqr_query.filter(visit__visit_time__gte=start_date)
-            gfb_query = gfb_query.filter(message_date__gte=start_date)
-        if end_date:
-            sqr_query = sqr_query.filter(visit__visit_time__lte=end_date)
-            gfb_query = gfb_query.filter(message_date__lte=end_date)
-
-        rates_table.append({
-            "row_num": "1.1",
-            "row_title": "1.1 Hospital Availability",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Open Facility").filter(
-                question__question_type__iexact='multiple-choice').count()
-            })
-
-        rates_table.append({
-            "row_num": "1.2",
-            "row_title": "1.2 Hospital Availability Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Facility Availability").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "2.1",
-            "row_title": "2.1 Respectful Staff Treatment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Respectful Staff Treatment").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "2.2",
-            "row_title": "2.2 Respectful Staff Treatment Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Staff Treatment").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "3.1",
-            "row_title": "3.1 Clean Hospital Materials",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Clean Hospital Materials").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "3.2",
-            "row_title": "3.2 Clean Hospital Materials Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Hospital Materials").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "4.1",
-            "row_title": "4.1 Charged Fairly",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Charged Fairly").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "4.2",
-            "row_title": "4.2 Charged Fairly Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Charge for Services").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "5.1",
-            "row_title": "5.1 Wait Time",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Wait time").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "6.1",
-            "row_title": "6.1  General Feedback",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="General Feedback").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "7.1",
-            "row_title": "7.1 Out-of-Clinic Survey",
-            "rsp_num": gfb_query.count()
-        })
-
-        return rates_table
-
-
-class CompletionFilter(View):
+class FilterMixin(object):
 
     def get_variable(self, request, variable_name, ignore_value):
-        if request.GET.get(variable_name):
-            the_variable_data = request.GET[variable_name]
-            if the_variable_data.encode('utf8') == ignore_value.encode('utf8'):
-                the_variable_data = ""
-        else:
-            the_variable_data = ""
-        return the_variable_data
+        data = request.GET.get(variable_name, ignore_value)
+        if not data or data == ignore_value:
+            return None
+        return data
+
+
+class CompletionFilter(FilterMixin, View):
 
     def get(self, request):
 
@@ -589,16 +542,8 @@ class CompletionFilter(View):
         return HttpResponse(json.dumps(content), content_type="text/json")
 
 
-class FeedbackFilter(View):
 
-    def get_variable(self, request, variable_name, ignore_value):
-        if request.GET.get(variable_name):
-            the_variable_data = request.GET[variable_name]
-            if the_variable_data.encode('utf8') == ignore_value.encode('utf8'):
-                the_variable_data = ""
-        else:
-            the_variable_data = ""
-        return the_variable_data
+class FeedbackFilter(FilterMixin, View):
 
     def get(self, request):
         the_service = self.get_variable(request, "service", "Service")
@@ -606,30 +551,16 @@ class FeedbackFilter(View):
         the_start_date = self.get_variable(request, "start_date", "Start Date")
         the_end_date = self.get_variable(request, "end_date", "End Date")
 
-        if not the_start_date or "Start Date" in the_start_date:
-            the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        else:
-            the_start_date = parse(the_start_date)
+        qset = SurveyQuestionResponse.objects.all()
+        responses = survey_utils.filter_sqr_query(
+            qset, clinic=the_clinic, service=the_service,
+            start_date=the_start_date, end_date=the_end_date)
 
-        if not the_end_date or "End Date" in the_end_date:
-            the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
-        else:
-            the_end_date = parse(the_end_date)
-
-        a = AnalystSummary()
-        data = a.get_feedback_rates_table(
-            start_date=the_start_date, end_date=the_end_date,
-            service=the_service, clinic=the_clinic)
-        content = {"feedback_data": {}}
-        for a_rate_row in data:
-            content["feedback_data"]["row"+a_rate_row["row_num"].replace(".", "")] = {
-                "row_title": a_rate_row["row_title"],
-                "rsp_num": a_rate_row["rsp_num"],
-                "rsp_prt": "--:--",
-                "rsp_srt": "--:--"
-            }
-
-        return HttpResponse(json.dumps(content), content_type="text/json")
+        # Render template with responses as context
+        tmpl = get_template('analysts/_rates.html')
+        ctx = Context({'responses': responses})
+        html = tmpl.render(ctx)
+        return HttpResponse(html, content_type='text/html')
 
 
 class RegionReport(ReportMixin, DetailView):

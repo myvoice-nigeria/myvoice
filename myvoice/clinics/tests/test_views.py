@@ -621,17 +621,61 @@ class TestClinicReportView(TestCase):
 class TestAnalystDashboardView(TestCase):
 
     def setUp(self):
-        now = datetime.datetime.now(pytz.utc)
+        now = timezone.now()
         self.factory = RequestFactory()
+        self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
         self.clinic = factories.Clinic.create(code=1)
         self.service = factories.Service.create(code=5)
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.visit = factories.Visit.create(
             patient=self.patient, service=self.service, survey_sent=now, visit_time=timezone.now())
         self.question = factories.SurveyQuestion.create(
-            label="Wait Time", question_type="open-ended")
+            survey=self.survey, label="Wait Time", question_type="open-ended")
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
+
+        self.clinic1 = factories.Clinic.create(code=2)
+        self.clinic2 = factories.Clinic.create(code=3)
+        self.clinics = clinics.Clinic.objects.filter(code__in=[2, 3])
+
+        self.patient1 = factories.Patient.create(serial='2111', clinic=self.clinic1)
+        self.patient2 = factories.Patient.create(serial='2222', clinic=self.clinic2)
+        visit_time = timezone.make_aware(timezone.datetime(2014, 7, 1), timezone.utc)
+
+        factories.Visit.create(
+            patient=self.patient1,
+            survey_sent=now,
+            service=self.service,
+            visit_time=visit_time)
+
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=now, service=self.service)
+        factories.Visit.create(
+            patient=self.patient2, survey_sent=now, service=self.service)
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=None, service=self.service)
+
+        q1 = factories.SurveyQuestion.create(
+            survey=self.survey, label='Open Facility', question_type='multiple-choice')
+
+        factories.SurveyQuestionResponse(
+            question=q1,
+            clinic=self.clinic1,
+            visit=factories.Visit.create(
+                patient=self.patient1, service=self.service)
+        )
+        factories.SurveyQuestionResponse(
+            question=q1,
+            clinic=self.clinic1,
+            visit=factories.Visit.create(
+                patient=self.patient1, service=self.service)
+        )
+        factories.SurveyQuestionResponse(
+            question=q1,
+            clinic=self.clinic2,
+            visit=factories.Visit.create(
+                patient=self.patient2, service=self.service)
+        )
 
     def make_request(self, data=None):
         """Make test request."""
@@ -713,42 +757,68 @@ class TestAnalystDashboardView(TestCase):
         # Test we have the right query
         self.assertEqual(sc_query.count(), 2)
 
-    def test_ct_get_variable(self):
-        ct = clinics.CompletionFilter()
-        request = self.factory.get(
-            '/completion_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
-        self.assertEqual(ct.get_variable(request, "clinic", "Clinic"), "Kwarra PHC")
+    def test_get_visit_count_by_clinic(self):
+        """Test that get_visit_by_clinic returns count of all visits to clinics."""
+        counts = clinics.AnalystSummary().get_visit_counts(self.clinics)
+        self.assertEqual(2, len(counts))
 
-        request = self.factory.get(
-            '/completion_filter/?service=&clinic=Clinic&start_date=&end_date=')
-        self.assertEqual(ct.get_variable(request, "clinic", "Clinic"), "")
+        self.assertEqual(2, counts[self.clinic1])
+        self.assertEqual(1, counts[self.clinic2])
 
-        request = self.factory.get('/completion_filter/?service=&clinic=&start_date=&end_date=')
-        self.assertEqual(ct.get_variable(request, "clinic", "Clinic"), "")
+    def test_get_visit_count_by_clinic_service(self):
+        """Test that get_visit_by_clinic returns count of all visits to clinics
+        filtered by service."""
+        now = timezone.now()
 
-    def test_get_completion_filter(self):
-        ct = clinics.CompletionFilter()
-        request = self.factory.get(
-            '/completion_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
-        self.assertEqual(ct.get(request).status_code, 200)
+        service1 = factories.Service.create(code=4, name='test')
 
-    def test_ff_get_variable(self):
-        ff = clinics.FeedbackFilter()
-        request = self.factory.get(
-            '/feedback_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
-        self.assertEqual(ff.get_variable(request, "clinic", "Clinic"), "Kwarra PHC")
+        factories.Visit.create(patient=self.patient1, survey_sent=now, service=service1)
+        factories.Visit.create(patient=self.patient2, survey_sent=now, service=service1)
 
-        request = self.factory.get('/feedback_filter/?service=&clinic=Clinic&start_date=&end_date=')
-        self.assertEqual(ff.get_variable(request, "clinic", "Clinic"), "")
+        counts = clinics.AnalystSummary.get_visit_counts(
+            self.clinics, **{'service': service1})
+        self.assertEqual(2, len(counts))
 
-        request = self.factory.get('/feedback_filter/?service=&clinic=&start_date=&end_date=')
-        self.assertEqual(ff.get_variable(request, "clinic", "Clinic"), "")
+        self.assertEqual(1, counts[self.clinic1])
+        self.assertEqual(1, counts[self.clinic2])
 
-    def test_get_feedback_filter(self):
-        ff = clinics.FeedbackFilter()
-        request = self.factory.get(
-            '/feedback_filter/?service=&clinic=Kwarra+PHC&start_date=&end_date=')
-        self.assertEqual(ff.get(request).status_code, 200)
+    def test_get_visit_count_by_clinic_dates(self):
+        """Test that get_visit_by_clinic returns count of all visits to clinics
+        filtered by dates."""
+        now = timezone.now()
+
+        _clinics = clinics.Clinic.objects.filter(code__in=[2, 3])
+
+        dt1 = timezone.make_aware(timezone.datetime(2014, 7, 20), timezone.utc)
+        dt2 = timezone.make_aware(timezone.datetime(2014, 7, 25), timezone.utc)
+
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=now, visit_time=dt1, service=self.service)
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=now, visit_time=dt2, service=self.service)
+        factories.Visit.create(
+            patient=self.patient2, survey_sent=now, visit_time=dt2, service=self.service)
+        factories.Visit.create(
+            patient=self.patient1, survey_sent=now, visit_time=dt2, service=self.service)
+
+        start = timezone.make_aware(timezone.datetime(2014, 7, 21), timezone.utc)
+        end = timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc)
+        counts = clinics.AnalystSummary.get_visit_counts(
+            _clinics, start_date=start, end_date=end)
+        self.assertEqual(2, len(counts))
+
+        self.assertEqual(2, counts[self.clinic1])
+        self.assertEqual(1, counts[self.clinic2])
+
+    def _test_get_survey_started_counts(self):
+        """Test that get_started_survey_counts returns
+        count of all surveys started by clinic."""
+        qset = survey_models.SurveyQuestionResponse.objects.filter()
+        counts = clinics.AnalystSummary.get_survey_counts(qset, self.clinics)
+        self.assertEqual(2, len(counts))
+
+        self.assertEqual(2, counts[self.clinic1])
+        self.assertEqual(1, counts[self.clinic2])
 
 
 class TestFeedbackFilterView(TestCase):
@@ -765,94 +835,11 @@ class TestFeedbackFilterView(TestCase):
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
 
-    def make_request(self, data):
-        """Make test request with POST data."""
-
-        request = self.factory.post('/feedback_filter/', data=data)
-        return clinics.FeedbackView.as_view()(request)
-
-    def test_feedback_status(self):
-        """Test that feedback view returns status_code 200."""
-        feedback_data = {
-            "clinic": self.clinic,
-        }
-        response = self.make_request(feedback_data)
+    def test_request(self):
+        url = '/clinics/feedback_filter/?clinic=&service=ANC&start_date&end_date='
+        request = self.factory.get(url)
+        response = clinics.FeedbackFilter.as_view()(request)
         self.assertEqual(200, response.status_code)
-
-    def simple_frt_row_test(self, a, row_num):
-        a = clinics.AnalystSummary()
-        frt = a.get_feedback_rates_table()
-        for row in frt:
-            if row_num in row["row_num"]:
-                self.assertEqual(row["rsp_num"], 1)
-            else:
-                self.assertEqual(row["rsp_num"], 0)
-
-    def test_feedback_rates(self):
-        a = clinics.AnalystSummary()
-        frt = a.get_feedback_rates_table()
-        for row in frt:
-            self.assertEqual(row["rsp_num"], 0)
-
-        # Test 1.1
-        self.question.label = "Open Facility"
-        self.question.question_type = "multiple-choice"
-        self.question.save()
-        self.simple_frt_row_test(a, "1.1")
-
-        # Test 1.2
-        self.question.label = "Facility Availability"
-        self.question.question_type = "open-ended"
-        self.question.save()
-        self.simple_frt_row_test(a, "1.2")
-
-        # Test 2.1
-        self.question.label = "Respectful Staff Treatment"
-        self.question.question_type = "multiple-choice"
-        self.question.save()
-        self.simple_frt_row_test(a, "2.1")
-
-        # Test 2.2
-        self.question.label = "Staff Treatment"
-        self.question.question_type = "open-ended"
-        self.question.save()
-        self.simple_frt_row_test(a, "2.2")
-
-        # Test 3.1
-        self.question.label = "Clean Hospital Materials"
-        self.question.question_type = "multiple-choice"
-        self.question.save()
-        self.simple_frt_row_test(a, "3.1")
-
-        # Test 3.2
-        self.question.label = "Hospital Materials"
-        self.question.question_type = 'open-ended'
-        self.question.save()
-        self.simple_frt_row_test(a, "3.2")
-
-        # Test 4.1
-        self.question.label = "Charged Fairly"
-        self.question.question_type = "multiple-choice"
-        self.question.save()
-        self.simple_frt_row_test(a, "4.1")
-
-        # Test 4.2
-        self.question.label = "Charge for Services"
-        self.question.question_type = 'open-ended'
-        self.question.save()
-        self.simple_frt_row_test(a, "4.2")
-
-        # Test 5.1
-        self.question.label = "Wait time"
-        self.question.question_type = "multiple-choice"
-        self.question.save()
-        self.simple_frt_row_test(a, "5.1")
-
-        # Test 6.1
-        self.question.label = "General Feedback"
-        self.question.question_type = 'open-ended'
-        self.question.save()
-        self.simple_frt_row_test(a, "6.1")
 
 
 class TestRegionReportView(TestCase):
