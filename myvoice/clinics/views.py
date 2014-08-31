@@ -91,14 +91,18 @@ class ReportMixin(object):
                 raise Exception("Expecting question with label " + label)
 
     def get_survey_questions(self, responses):
-        pass
+        qtns = [resp.question for resp in responses.distinct('question')
+                if resp.question.question_type == SurveyQuestion.MULTIPLE_CHOICE]
+        sorted(qtns, key=lambda x: x.report_order)
+        return qtns
 
-    def initialize_data(self, obj):
+    def initialize_data(self, responses):
         """Called by get_object to initialize state information."""
         self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
-        self.questions = self.survey.surveyquestion_set.all()
+        self.questions = self.get_survey_questions(responses)
+        # self.questions = self.survey.surveyquestion_set.all()
         self.questions = dict([(q.label, q) for q in self.questions])
-        self._check_assumptions()
+        # self._check_assumptions()
 
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
@@ -173,9 +177,9 @@ class ClinicReport(ReportMixin, DetailView):
 
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
-        self.initialize_data(obj)
         self.responses = obj.surveyquestionresponse_set.filter(display_on_dashboard=True)
         self.responses = self.responses.select_related('question', 'service', 'visit')
+        self.initialize_data(self.responses)
         self.generic_feedback = obj.genericfeedback_set.filter(display_on_dashboard=True)
         return obj
 
@@ -263,6 +267,7 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
         num_registered = survey_utils.get_registration_count(self.object)
         num_started = survey_utils.get_started_count(self.responses)
+        import pdb;pdb.set_trace()
         num_completed = survey_utils.get_completion_count(self.responses)
 
         if num_registered:
@@ -381,7 +386,6 @@ class RegionReport(ReportMixin, DetailView):
     def get_object(self, queryset=None):
         obj = super(RegionReport, self).get_object(queryset)
         self.calculate_date_range()
-        self.initialize_data(obj)
         self.responses = SurveyQuestionResponse.objects.filter(clinic__lga__iexact=obj.name)
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(
@@ -391,6 +395,7 @@ class RegionReport(ReportMixin, DetailView):
             self.end_date = self.responses.aggregate(max_date=Max('datetime'))['max_date']
         # self.calculate_weeks_ranges()
         self.responses = self.responses.select_related('question', 'service', 'visit')
+        self.initialize_data(self.responses)
         return obj
 
     def get_context_data(self, **kwargs):

@@ -409,9 +409,18 @@ class TestReportMixin(TestCase):
 
         clinic = factories.Clinic.create(code=5)
 
-        self.q1 = factories.SurveyQuestion.create(label='One', survey=survey)
-        self.q2 = factories.SurveyQuestion.create(label='two', survey=survey)
-        self.q3 = factories.SurveyQuestion.create(label='three', survey=survey)
+        self.q1 = factories.SurveyQuestion.create(
+            label='One',
+            survey=survey,
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE)
+        self.q2 = factories.SurveyQuestion.create(
+            label='two',
+            survey=survey,
+            question_type=survey_models.SurveyQuestion.OPEN_ENDED)
+        self.q3 = factories.SurveyQuestion.create(
+            label='Three',
+            survey=survey,
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE)
 
         p1 = factories.Patient.create(clinic=clinic, serial=111)
         p2 = factories.Patient.create(clinic=clinic, serial=222)
@@ -433,7 +442,7 @@ class TestReportMixin(TestCase):
         self.r3 = factories.SurveyQuestionResponse.create(
             question=self.q3, visit=v3, clinic=clinic)
         self.r4 = factories.SurveyQuestionResponse.create(
-            question=self.q3, visit=v4, clinic=clinic)
+            question=self.q2, visit=v4, clinic=clinic)
 
     def test_get_survey_questions(self):
         """Test that get_survey_questions returns correct questions.
@@ -444,11 +453,20 @@ class TestReportMixin(TestCase):
         """
         mixin = clinics.ReportMixin()
         ids = [self.r1.id, self.r2.id, self.r4.id]
-        responses = survey_models.SurveyQuestion.objects.filter(id__in=ids)
+        responses = survey_models.SurveyQuestionResponse.objects.filter(id__in=ids)
         questions = mixin.get_survey_questions(responses)
 
-        self.assertEqual(2, questions.count())
+        self.assertEqual(1, len(questions))
 
+    def test_get_survey_questions_multiple(self):
+        """Test that responses have to be multiple-choice questions
+        to count."""
+        mixin = clinics.ReportMixin()
+        ids = [self.r1.id, self.r3.id]
+        responses = survey_models.SurveyQuestionResponse.objects.filter(id__in=ids)
+        questions = mixin.get_survey_questions(responses)
+
+        self.assertEqual(2, len(questions))
 
     def test_get_required_questions(self):
         """Test that get_required_questions returns only required questions.
@@ -499,8 +517,10 @@ class TestClinicReportView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render()))
 
-    def test_check_assumptions(self):
-        """Test that if hard-coded assumptions are not met, exception is raised."""
+    def _test_check_assumptions(self):
+        """Test that if hard-coded assumptions are not met, exception is raised.
+        """
+        # Removed hard-coded assumptions
         survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
         self.assertRaises(Exception, self.make_request)
 
@@ -652,9 +672,9 @@ class TestClinicReportView(TestCase):
         self.assertEqual(dt3, end)
 
     def test_get_patient_satisfaction(self):
-        visit1 = factories.Visit.create()
-        visit2 = factories.Visit.create()
-        visit3 = factories.Visit.create()
+        visit1 = factories.Visit.create(patient__clinic=self.clinic)
+        visit2 = factories.Visit.create(patient__clinic=self.clinic)
+        visit3 = factories.Visit.create(patient__clinic=self.clinic)
         treat = factories.SurveyQuestionResponse.create(
             response='Yes', question=self.questions[1], visit=visit1)
         charge = factories.SurveyQuestionResponse.create(
