@@ -413,7 +413,10 @@ class TestClinicReportView(TestCase):
         self.questions = []
 
         self.open_facility = factories.SurveyQuestion.create(
-            label='Open Facility', survey=self.survey)
+            label='Open Facility',
+            survey=self.survey,
+            categories='Open\nClosed',
+            question_type="multiple-choice")
         self.questions.append(self.open_facility)
         self.questions.append(factories.SurveyQuestion.create(
             label='Respectful Staff Treatment',
@@ -512,19 +515,19 @@ class TestClinicReportView(TestCase):
 
         factories.SurveyQuestionResponse.create(
             question=self.open_facility,
-            response='Yes',
+            response='Open',
             datetime=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
             visit=visits[0],
             clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
             question=self.open_facility,
-            response='No',
+            response='Closed',
             datetime=timezone.make_aware(timezone.datetime(2014, 7, 27), timezone.utc),
             visit=visits[1],
             clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
             question=self.open_facility,
-            response='No',
+            response='Open',
             datetime=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
             visit=visits[2],
             clinic=self.clinic)
@@ -533,6 +536,7 @@ class TestClinicReportView(TestCase):
 
         report.get_object()
         feedback = report.get_feedback_by_week()
+        #import pdb;pdb.set_trace()
 
         # Basic checks
         self.assertEqual(2, len(feedback))
