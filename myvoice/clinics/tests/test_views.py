@@ -413,7 +413,9 @@ class TestClinicReportView(TestCase):
         self.questions = []
 
         self.open_facility = factories.SurveyQuestion.create(
-            label='Open Facility', survey=self.survey)
+            label='Open Facility',
+            survey=self.survey,
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE)
         self.questions.append(self.open_facility)
         self.questions.append(factories.SurveyQuestion.create(
             label='Respectful Staff Treatment',
