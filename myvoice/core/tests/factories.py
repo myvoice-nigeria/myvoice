@@ -111,6 +111,7 @@ class SurveyQuestion(factory.django.DjangoModelFactory):
     survey = factory.SubFactory('myvoice.core.tests.factories.Survey')
     question_id = factory.fuzzy.FuzzyText()
     label = factory.fuzzy.FuzzyText()
+    report_order = factory.Sequence(lambda n: n)
 
     @factory.lazy_attribute
     def question_type(self):

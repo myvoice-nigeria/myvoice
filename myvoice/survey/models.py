@@ -111,6 +111,7 @@ class SurveyQuestion(models.Model):
         default=False,
         help_text="The last question on the survey that is required.")
     question = models.CharField(max_length=255, blank=True)
+    report_order = models.PositiveIntegerField()
 
     class Meta:
         verbose_name = 'TextIt Survey Question'
