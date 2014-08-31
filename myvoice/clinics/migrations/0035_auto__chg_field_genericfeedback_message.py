@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
     def backwards(self, orm):
 
         # Changing field 'GenericFeedback.message'
-        db.alter_column(u'clinics_genericfeedback', 'message', self.gf('django.db.models.fields.CharField')(max_length=200))
+        pass
 
     models = {
         u'auth.group': {
