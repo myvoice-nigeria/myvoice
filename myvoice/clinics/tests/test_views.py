@@ -402,6 +402,59 @@ class TestFeedbackView(TestCase):
         self.assertEqual("a" * 260, obj.message)
 
 
+class TestReportMixin(TestCase):
+
+    def setUp(self):
+        survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
+
+        clinic = factories.Clinic.create(code=5)
+
+        self.q1 = factories.SurveyQuestion.create(label='One', survey=survey)
+        self.q2 = factories.SurveyQuestion.create(label='two', survey=survey)
+        self.q3 = factories.SurveyQuestion.create(label='three', survey=survey)
+
+        p1 = factories.Patient.create(clinic=clinic, serial=111)
+        p2 = factories.Patient.create(clinic=clinic, serial=222)
+        p3 = factories.Patient.create(clinic=clinic, serial=333)
+
+        s1 = factories.Service.create(code=1)
+        s2 = factories.Service.create(code=2)
+        s3 = factories.Service.create(code=3)
+
+        v1 = factories.Visit.create(service=s1, patient=p1)
+        v2 = factories.Visit.create(service=s2, patient=p2)
+        v3 = factories.Visit.create(service=s3, patient=p3)
+        v4 = factories.Visit.create(service=s1, patient=p1)
+
+        self.r1 = factories.SurveyQuestionResponse.create(
+            question=self.q1, visit=v1, clinic=clinic)
+        self.r2 = factories.SurveyQuestionResponse.create(
+            question=self.q2, visit=v2, clinic=clinic)
+        self.r3 = factories.SurveyQuestionResponse.create(
+            question=self.q3, visit=v3, clinic=clinic)
+        self.r4 = factories.SurveyQuestionResponse.create(
+            question=self.q3, visit=v4, clinic=clinic)
+
+    def test_get_survey_questions(self):
+        """Test that get_survey_questions returns correct questions.
+
+        Responses are passed into the method.
+        Returns the questions whose responses are passed in
+        ordered by question label.
+        """
+        mixin = clinics.ReportMixin()
+        ids = [self.r1.id, self.r2.id, self.r4.id]
+        responses = survey_models.SurveyQuestion.objects.filter(id__in=ids)
+        questions = mixin.get_survey_questions(responses)
+
+        self.assertEqual(2, questions.count())
+
+
+    def test_get_required_questions(self):
+        """Test that get_required_questions returns only required questions.
+        """
+
+
 class TestClinicReportView(TestCase):
 
     def setUp(self):
@@ -416,7 +469,7 @@ class TestClinicReportView(TestCase):
             label='Open Facility',
             survey=self.survey,
             categories='Open\nClosed',
-            question_type="multiple-choice")
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE)
         self.questions.append(self.open_facility)
         self.questions.append(factories.SurveyQuestion.create(
             label='Respectful Staff Treatment',

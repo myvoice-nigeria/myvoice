@@ -90,6 +90,9 @@ class ReportMixin(object):
             if label not in self.questions:
                 raise Exception("Expecting question with label " + label)
 
+    def get_survey_questions(self, responses):
+        pass
+
     def initialize_data(self, obj):
         """Called by get_object to initialize state information."""
         self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
