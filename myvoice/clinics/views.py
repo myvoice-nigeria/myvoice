@@ -403,6 +403,9 @@ class AnalystSummary(TemplateView):
         context['completion_table'] = self.get_completion_table(
             start_date=the_start_date, end_date=the_end_date)
 
+        context['feedback_table'] = self.get_feedback_rates_table(
+            start_date=the_start_date, end_date=the_end_date)
+
         context['st'] = self.get_surveys_triggered_summary()
         context['st_count'] = context['st'].count()
 
@@ -436,6 +439,42 @@ class AnalystSummary(TemplateView):
         return context
 
     def get_feedback_rates_table(self, service="", clinic="", start_date="", end_date=""):
+        rates_table = []
+        counter=1
+
+        start_date = get_date(start_date)
+        end_date = get_date(end_date)
+
+        sqr_query = SurveyQuestionResponse.objects.all()
+        gfb_query = GenericFeedback.objects.all()
+
+        if clinic:
+            sqr_query = sqr_query.filter(clinic__name__iexact=clinic)
+            gfb_query = gfb_query.filter(clinic__name__iexact=clinic)
+        if service:
+            sqr_query = sqr_query.filter(service__name__iexact=service)
+        if start_date:
+            sqr_query = sqr_query.filter(visit__visit_time__gte=start_date)
+            gfb_query = gfb_query.filter(message_date__gte=start_date)
+        if end_date:
+            sqr_query = sqr_query.filter(visit__visit_time__lte=end_date)
+            gfb_query = gfb_query.filter(message_date__lte=end_date)
+
+        for question in SurveyQuestion.objects.all().order_by("display_label__name"):
+
+            sr = sqr_query.filter(question=question)
+
+            rates_table.append({
+                "row_num": question.id,
+                "row_title": str(counter) + " " + question.display_label.name,
+                "rsp_num": sr.count()
+                })
+            counter += 1
+
+        return rates_table
+
+
+    def get_feedback_rates_table0(self, service="", clinic="", start_date="", end_date=""):
         rates_table = []
 
         start_date = get_date(start_date)
@@ -622,7 +661,8 @@ class FeedbackFilter(View):
             service=the_service, clinic=the_clinic)
         content = {"feedback_data": {}}
         for a_rate_row in data:
-            content["feedback_data"]["row"+a_rate_row["row_num"].replace(".", "")] = {
+            # content["feedback_data"]["row"+a_rate_row["row_num"].replace(".", "")] = {
+            content["feedback_data"]["row"+str(a_rate_row["row_num"])] = {
                 "row_title": a_rate_row["row_title"],
                 "rsp_num": a_rate_row["rsp_num"],
                 "rsp_prt": "--:--",

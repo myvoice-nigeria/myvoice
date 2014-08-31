@@ -56,6 +56,9 @@ class DisplayLabel(models.Model):
     def __unicode__(self):
         return self.name
 
+    class Meta:
+        verbose_name = 'Display_Label'
+
 
 class SurveyQuestion(models.Model):
     """A node in a TextIt flow."""
