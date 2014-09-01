@@ -628,8 +628,9 @@ class TestAnalystDashboardView(TestCase):
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.visit = factories.Visit.create(
             patient=self.patient, service=self.service, survey_sent=now, visit_time=timezone.now())
+        self.displaylabel = factories.DisplayLabel.create(name="Wait Time")
         self.question = factories.SurveyQuestion.create(
-            label="Wait Time", question_type="open-ended")
+            label="Wait Time", question_type="open-ended", display_label=self.displaylabel)
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
 
@@ -760,8 +761,9 @@ class TestFeedbackFilterView(TestCase):
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
         self.visit = factories.Visit.create(
             patient=self.patient, service=self.service, survey_sent=now)
+        self.displaylabel = factories.DisplayLabel.create(name="Wait Time")
         self.question = factories.SurveyQuestion.create(
-            label="Wait Time", question_type="open-ended")
+            label="Wait Time", question_type="open-ended", display_label=self.displaylabel)
         self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
             question=self.question, clinic=self.clinic, visit=self.visit)
 
@@ -784,15 +786,15 @@ class TestFeedbackFilterView(TestCase):
         frt = a.get_feedback_rates_table()
         for row in frt:
             if row_num in row["row_num"]:
-                self.assertEqual(row["rsp_num"], 1)
-            else:
                 self.assertEqual(row["rsp_num"], 0)
+            else:
+                self.assertEqual(row["rsp_num"], 1)
 
     def test_feedback_rates(self):
         a = clinics.AnalystSummary()
         frt = a.get_feedback_rates_table()
         for row in frt:
-            self.assertEqual(row["rsp_num"], 0)
+            self.assertEqual(row["rsp_num"], 1)
 
         # Test 1.1
         self.question.label = "Open Facility"

@@ -440,7 +440,7 @@ class AnalystSummary(TemplateView):
 
     def get_feedback_rates_table(self, service="", clinic="", start_date="", end_date=""):
         rates_table = []
-        counter=1
+        counter = 1
 
         start_date = get_date(start_date)
         end_date = get_date(end_date)
@@ -470,116 +470,6 @@ class AnalystSummary(TemplateView):
                 "rsp_num": sr.count()
                 })
             counter += 1
-
-        return rates_table
-
-
-    def get_feedback_rates_table0(self, service="", clinic="", start_date="", end_date=""):
-        rates_table = []
-
-        start_date = get_date(start_date)
-        end_date = get_date(end_date)
-
-        sqr_query = SurveyQuestionResponse.objects.all()
-        gfb_query = GenericFeedback.objects.all()
-
-        if clinic:
-            sqr_query = sqr_query.filter(clinic__name__iexact=clinic)
-            gfb_query = gfb_query.filter(clinic__name__iexact=clinic)
-        if service:
-            sqr_query = sqr_query.filter(service__name__iexact=service)
-        if start_date:
-            sqr_query = sqr_query.filter(visit__visit_time__gte=start_date)
-            gfb_query = gfb_query.filter(message_date__gte=start_date)
-        if end_date:
-            sqr_query = sqr_query.filter(visit__visit_time__lte=end_date)
-            gfb_query = gfb_query.filter(message_date__lte=end_date)
-
-        rates_table.append({
-            "row_num": "1.1",
-            "row_title": "1.1 Hospital Availability",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Open Facility").filter(
-                question__question_type__iexact='multiple-choice').count()
-            })
-
-        rates_table.append({
-            "row_num": "1.2",
-            "row_title": "1.2 Hospital Availability Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Facility Availability").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "2.1",
-            "row_title": "2.1 Respectful Staff Treatment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Respectful Staff Treatment").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "2.2",
-            "row_title": "2.2 Respectful Staff Treatment Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Staff Treatment").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "3.1",
-            "row_title": "3.1 Clean Hospital Materials",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Clean Hospital Materials").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "3.2",
-            "row_title": "3.2 Clean Hospital Materials Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Hospital Materials").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "4.1",
-            "row_title": "4.1 Charged Fairly",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Charged Fairly").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "4.2",
-            "row_title": "4.2 Charged Fairly Comment",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Charge for Services").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "5.1",
-            "row_title": "5.1 Wait Time",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="Wait time").filter(
-                question__question_type__iexact='multiple-choice').count()
-        })
-
-        rates_table.append({
-            "row_num": "6.1",
-            "row_title": "6.1  General Feedback",
-            "rsp_num": sqr_query.filter(
-                question__label__iexact="General Feedback").filter(
-                question__question_type__iexact='open-ended').count()
-        })
-
-        rates_table.append({
-            "row_num": "7.1",
-            "row_title": "7.1 Out-of-Clinic Survey",
-            "rsp_num": gfb_query.count()
-        })
 
         return rates_table
 

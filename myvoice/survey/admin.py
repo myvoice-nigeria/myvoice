@@ -157,4 +157,3 @@ admin.site.register(models.DisplayLabel, DisplayLabelAdmin)
 admin.site.register(models.Survey, SurveyAdmin)
 admin.site.register(models.SurveyQuestion, SurveyQuestionAdmin)
 admin.site.register(models.SurveyQuestionResponse, SurveyQuestionResponseAdmin)
-
