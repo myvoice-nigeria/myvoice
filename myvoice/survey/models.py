@@ -113,6 +113,12 @@ class SurveyQuestion(models.Model):
     question = models.CharField(max_length=255, blank=True)
     report_order = models.PositiveIntegerField()
 
+    # Start and End dates are a way to retire SurveyQuestions.
+    # Before start_date and after end_date, the question will not be shown in reports.
+    # With start_date and end_date null, the question is available for use always.
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+
     class Meta:
         verbose_name = 'TextIt Survey Question'
         unique_together = [('survey', 'label')]
