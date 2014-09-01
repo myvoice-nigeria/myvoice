@@ -615,7 +615,6 @@ class TestClinicReportView(TestCase):
 
         report.get_object()
         feedback = report.get_feedback_by_week()
-        #import pdb;pdb.set_trace()
 
         # Basic checks
         self.assertEqual(2, len(feedback))

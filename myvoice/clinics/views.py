@@ -124,7 +124,7 @@ class ReportMixin(object):
                                         '{}%'.format(percentage), total_responses])
                 else:
                     service_data.append([None, None, 0])
-            #FIXME: There should not be this hard-coded reference
+            # FIXME: There should not be this hard-coded reference
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
 
@@ -157,7 +157,7 @@ class ClinicReport(ReportMixin, DetailView):
                 count += 1
 
             for resp in visit_responses:
-                if not resp.question.label in required:
+                if resp.question.label not in required:
                     continue
                 if not resp.positive_response:
                     unsatisfied_count += 1
@@ -187,7 +187,7 @@ class ClinicReport(ReportMixin, DetailView):
             labels = SurveyQuestion.objects.filter(
                 report_order__gt=0, label__in=responses_by_question
                 ).order_by('report_order').values_list('label', flat=True)
-            #FIXME: remove hard-coding of wait time
+            # FIXME: remove hard-coding of wait time
             wait_time_question = SurveyQuestion.objects.get(label='Wait Time')
             for label in labels:
                 if label in responses_by_question:
