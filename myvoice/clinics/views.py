@@ -24,6 +24,10 @@ from datetime import timedelta
 logger = logging.getLogger(__name__)
 
 
+def hour_to_hr(txt):
+    return txt.replace('hour', 'hr')
+
+
 class VisitView(View):
 
     @csrf_exempt
@@ -422,7 +426,7 @@ class RegionReport(ReportMixin, DetailView):
         if not total:
             return 0, 0
 
-        return 100 - make_percentage(unsatisfied, total), total
+        return 100 - make_percentage(unsatisfied, total), total-unsatisfied
 
     def get_feedback_participation(self, clinic):
         """Return % of surveys responded to to total visits.
@@ -439,24 +443,73 @@ class RegionReport(ReportMixin, DetailView):
             survey_percent = make_percentage(survey_started, total_visits)
         else:
             survey_percent = None
-        return survey_percent, total_visits
+        return survey_percent, survey_started
+
+    def get_clinic_indices(self, clinic):
+        """Get % and count of positive responses for each
+        required question."""
+        responses = SurveyQuestionResponse.objects.filter(
+            clinic=clinic,
+            question__in=self.questions)
+        target_questions = self.questions.exclude(label='Wait Time')
+
+        for question in target_questions:
+            total_resp = responses.filter(question=question).count()
+            if total_resp:
+                positive = responses.filter(
+                    question=question, positive_response=True).count()
+                percent = make_percentage(positive, total_resp)
+                yield (question.label, '{}%'.format(percent), positive)
+            else:
+                yield (question.label, None, 0)
+
+    def get_wait_mode(self, clinic):
+        """Get most frequent wait time and the count for that wait time."""
+        responses = SurveyQuestionResponse.objects.filter(
+            clinic=clinic,
+            question__label='Wait Time').values_list('response', flat=True)
+        categories = SurveyQuestion.objects.get(label='Wait Time').get_categories()
+        mode = survey_utils.get_mode(responses, categories)
+        len_mode = len([i for i in responses if i == mode])
+        return mode, len_mode
 
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
         data = []
-        clinic_data = []
 
         # So we can get the name of the clinic for the template
         clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
 
-        responses = self.responses.exclude(clinic=None)
+        responses = self.responses.exclude(clinic=None, question__in=self.questions)
         if self.start_date and self.end_date:
             responses = responses.filter(
                 visit__visit_time__range=(self.start_date, self.end_date))
 
         for clinic in models.Clinic.objects.all():
-            indices = self.get_clinic_indices(clinic, responses)
-            clinic_data.append((clinic, clinic_map[clinic], indices))
+            clinic_data = []
+            # Get feedback participation
+            part_percent, part_total = self.get_feedback_participation(clinic)
+            clinic_data.append(
+                ('Participation', '{}%'.format(part_percent), part_total))
+
+            # Get patient satisfaction
+            satis_percent, satis_total = self.get_satisfaction_counts(clinic)
+            clinic_data.append(
+                ('Patient Satisfaction', '{}%'.format(satis_percent), satis_total))
+            clinic_data.append(("Quality", None, 0))
+            clinic_data.append(("Quantity", None, 0))
+
+            #indices = self.get_clinic_indices(clinic)
+            for index in self.get_clinic_indices(clinic):
+                clinic_data.append(index)
+
+            # Wait Time
+            mode, mode_len = self.get_wait_mode(clinic)
+            clinic_data.append(('Wait Time', mode, mode_len))
+            #clinic_data.append((clinic.id, clinic.name, indices))
+            data.append((clinic, clinic.name, clinic_data))
+
+        return data
 
         responses = responses.values(
             'clinic', 'question__label', 'response', 'visit', 'positive_response')
@@ -479,6 +532,7 @@ class RegionReport(ReportMixin, DetailView):
             survey_percent, total_visits = self.get_feedback_participation(clinic)
 
             # Get patient satisfaction
+            satis_percent, satis_total = self.get_satisfaction_counts(clinic)
             responses_by_visit = survey_utils.group_responses(
                 clinic_responses, 'visit', keyfunc=itemgetter)
             satis_percent, satis_total = self.get_satisfaction_counts(responses_by_visit)

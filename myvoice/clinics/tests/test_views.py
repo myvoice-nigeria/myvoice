@@ -741,26 +741,39 @@ class TestRegionReportView(TestCase):
         self.region = factories.Region.create(pk=599, name='Wamba', type='lga', boundary=geom)
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
-        open_f = factories.SurveyQuestion.create(label='Open Facility', survey=self.survey)
+        open_f = factories.SurveyQuestion.create(
+            label='Open Facility',
+            survey=self.survey,
+            categories="Open\nClosed",
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            report_order=10)
         self.respect = factories.SurveyQuestion.create(
             label='Respectful Staff Treatment',
             survey=self.survey, categories='Yes\nNo',
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
-            for_satisfaction=True)
-        factories.SurveyQuestion.create(label='Clean Hospital Materials', survey=self.survey)
+            for_satisfaction=True,
+            report_order=20)
+        self.clean = factories.SurveyQuestion.create(
+            label='Clean Hospital Materials',
+            survey=self.survey,
+            categories="Clean\nNot Clean",
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            report_order=30)
         self.fair = factories.SurveyQuestion.create(
             label='Charged Fairly',
             survey=self.survey,
             categories='Yes\nNo',
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
-            for_satisfaction=True)
+            for_satisfaction=True,
+            report_order=40)
         self.wait = factories.SurveyQuestion.create(
             label='Wait Time',
             survey=self.survey,
             categories='<1 hour\n1-2 hours\n2-3 hours\n4+ hours',
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             last_negative=True,
-            for_satisfaction=True)
+            for_satisfaction=True,
+            report_order=50)
 
         self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
 
@@ -783,7 +796,7 @@ class TestRegionReportView(TestCase):
             question=open_f,
             datetime=timezone.now(),
             visit=self.v1,
-            clinic=self.clinic, response='Yes')
+            clinic=self.clinic, response='Open')
 
         factories.SurveyQuestionResponse.create(
             question=self.respect,
@@ -936,7 +949,7 @@ class TestRegionReportView(TestCase):
 
         satisfaction, total = report.get_satisfaction_counts(self.clinic)
         self.assertEqual(60, satisfaction)
-        self.assertEqual(5, total)
+        self.assertEqual(3, total)
 
     def test_get_satisfaction_counts_waittime(self):
         """Test number of visits that patient was not unsatisfied because of Wait Time."""
@@ -971,59 +984,10 @@ class TestRegionReportView(TestCase):
         r8 = factories.SurveyQuestionResponse.create(
             question=self.wait, response='4+ hours', visit=v4)
         report.get_object()
-        responses = [
-            (1, [
-                {
-                    'question__label': r1.question.label,
-                    'response': r1.response,
-                    'positive_response': r1.positive_response
-                },
-                {
-                    'question__label': r2.question.label,
-                    'response': r2.response,
-                    'positive_response': r2.positive_response
-                },
-            ]),
-            (2, [
-                {
-                    'question__label': r3.question.label,
-                    'response': r3.response,
-                    'positive_response': r3.positive_response
-                },
-                {
-                    'question__label': r4.question.label,
-                    'response': r4.response,
-                    'positive_response': r4.positive_response
-                }
-            ]),
-            (3, [
-                {
-                    'question__label': r5.question.label,
-                    'response': r5.response,
-                    'positive_response': r5.positive_response
-                },
-                {
-                    'question__label': r6.question.label,
-                    'response': r6.response,
-                    'positive_response': r6.positive_response
-                },
-            ]),
-            (4, [
-                {
-                    'question__label': r7.question.label,
-                    'response': r7.response,
-                    'positive_response': r7.positive_response
-                },
-                {
-                    'question__label': r8.question.label,
-                    'response': r8.response,
-                    'positive_response': r8.positive_response
-                },
-            ]),
-        ]
+
         satisfaction, total = report.get_satisfaction_counts(self.clinic)
         self.assertEqual(60, satisfaction)
-        self.assertEqual(5, total)
+        self.assertEqual(3, total)
 
     def test_get_satisfaction_counts_no_responses(self):
         """Test get satisfaction counts with no responses."""
@@ -1036,6 +1000,55 @@ class TestRegionReportView(TestCase):
         self.assertEqual(0, satisfaction)
         self.assertEqual(0, total)
 
+    def test_get_clinic_indices(self):
+        """Test that we can get percentage and total count of
+        responses per question."""
+        factories.SurveyQuestionResponse.create(
+            question=self.clean,
+            datetime=timezone.now(),
+            visit=self.v1,
+            clinic=self.clinic, response='Clean')
+        factories.SurveyQuestionResponse.create(
+            question=self.clean,
+            datetime=timezone.now(),
+            visit=self.v2,
+            clinic=self.clinic, response='Not Clean')
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+        indices = [i for i in report.get_clinic_indices(self.clinic)]
+        self.assertEqual(4, len(indices))
+
+        self.assertEqual(('Open Facility', '100.0%', 1), indices[0])
+        self.assertEqual(('Respectful Staff Treatment', '0.0%', 0), indices[1])
+        self.assertEqual(('Clean Hospital Materials', '50.0%', 1), indices[2])
+        self.assertEqual(('Charged Fairly', None, 0), indices[3])
+
+    def test_get_wait_time_mode(self):
+        """Get the most frequent wait time."""
+        v3 = factories.Visit.create(
+            service=self.service,
+            visit_time=timezone.now(),
+            survey_sent=timezone.now(),
+            patient=factories.Patient.create(clinic=self.clinic, serial=117)
+        )
+        factories.SurveyQuestionResponse.create(
+            question=self.wait,
+            datetime=timezone.now(),
+            visit=self.v1,
+            clinic=self.clinic, response='<1 hour')
+        factories.SurveyQuestionResponse.create(
+            question=self.wait,
+            datetime=timezone.now(),
+            visit=v3,
+            clinic=self.clinic, response='1-2 hours')
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+        mode, mode_len = report.get_wait_mode(self.clinic)
+
+        self.assertEqual('<1 hour', mode)
+        self.assertEqual(2, mode_len)
+
     def test_get_feedback_by_clinic(self):
         """Test get feedback by clinic."""
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
@@ -1043,7 +1056,7 @@ class TestRegionReportView(TestCase):
         feedback = report.get_feedback_by_clinic()
         self.assertEqual('TEST1', feedback[0][1])
         self.assertEqual(('Participation', '100.0%', 2), feedback[0][2][0])
-        self.assertEqual(('Patient_Satisfaction', '0%', 0), feedback[0][2][1])
+        self.assertEqual(('Patient Satisfaction', '0.0%', 0), feedback[0][2][1])
         # self.assertEqual(('<1 hr', 1), feedback[0][2][8])
 
 
