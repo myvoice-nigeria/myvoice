@@ -113,8 +113,7 @@ class ReportMixin(object):
             by_question = survey_utils.group_responses(service_responses, 'question.label')
             responses_by_question = dict(by_question)
             service_data = []
-            for label in ['Open Facility', 'Respectful Staff Treatment',
-                          'Clean Hospital Materials', 'Charged Fairly']:
+            for label in self.questions:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = responses_by_question[label]
@@ -125,6 +124,7 @@ class ReportMixin(object):
                                         '{}%'.format(percentage), total_responses])
                 else:
                     service_data.append([None, None, 0])
+            #FIXME: There should not be this hard-coded reference
             if 'Wait Time' in responses_by_question:
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
 
@@ -146,31 +146,22 @@ class ClinicReport(ReportMixin, DetailView):
         """Patient satisfaction is gauged on their answers to 3 questions."""
         if not responses:
             return None  # Avoid divide-by-zero error.
-        treatment = self.questions['Respectful Staff Treatment']
-        overcharge = self.questions['Charged Fairly']
-        wait_time = self.questions['Wait Time']
         unsatisfied_count = 0
         grouped = survey_utils.group_responses(responses, 'visit.id', 'visit')
-        required = ['Respectful Staff Treatment', 'Clean Hospital Materials',
-                    'Charged Fairly', 'Wait Time']
+        required = [i.label for i in self.questions.values() if i.for_satisfaction]
         count = 0  # Number of runs that contain at least one required question.
         for visit, visit_responses in grouped:
             # Map question label to the response given for that question.
             answers = dict([(r.question.label, r.response) for r in visit_responses])
             if any([r in answers for r in required]):
                 count += 1
-            if treatment.label in answers:
-                if answers.get(treatment.label) != treatment.primary_answer:
-                    unsatisfied_count += 1
+
+            for resp in visit_responses:
+                if not resp.question.label in required:
                     continue
-            if overcharge.label in answers:
-                if answers.get(overcharge.label) != overcharge.primary_answer:
+                if not resp.positive_response:
                     unsatisfied_count += 1
-                    continue
-            if wait_time.label in answers:
-                if answers.get(wait_time.label) == wait_time.get_categories()[-1]:
-                    unsatisfied_count += 1
-                    continue
+                    break
         if not count:
             return None
         return 100 - make_percentage(unsatisfied_count, count)
@@ -193,8 +184,17 @@ class ClinicReport(ReportMixin, DetailView):
             by_question = survey_utils.group_responses(week_responses, 'question.label')
             responses_by_question = dict(by_question)
             week_data = []
-            for label in ['Open Facility', 'Respectful Staff Treatment',
-                          'Clean Hospital Materials', 'Charged Fairly']:
+            #for label in ['Open Facility', 'Respectful Staff Treatment',
+            #              'Clean Hospital Materials', 'Charged Fairly']:
+            #import pdb;pdb.set_trace()
+            labels = SurveyQuestion.objects.filter(
+                report_order__gt=0, label__in=responses_by_question
+                ).order_by('report_order').values_list('label', flat=True)
+            #FIXME: remove hard-coding of wait time
+            wait_time_question = SurveyQuestion.objects.get(label='Wait Time')
+            #questions = [qtn for qtn in responses_by_question
+            #             if qtn in self.questions and qtn != 'Wait Time']
+            for label in labels:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
@@ -214,7 +214,7 @@ class ClinicReport(ReportMixin, DetailView):
                 'data': week_data,
                 'patient_satisfaction': self._get_patient_satisfaction(week_responses),
                 'wait_time_mode': survey_utils.get_mode(
-                    wait_times, self.questions.get('Wait Time').get_categories()),
+                    wait_times, wait_time_question.get_categories()),
                 'survey_num': survey_num
             })
         return data
@@ -267,7 +267,6 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
         num_registered = survey_utils.get_registration_count(self.object)
         num_started = survey_utils.get_started_count(self.responses)
-        import pdb;pdb.set_trace()
         num_completed = survey_utils.get_completion_count(self.responses)
 
         if num_registered:
@@ -415,7 +414,7 @@ class RegionReport(ReportMixin, DetailView):
         unsatisfied = 0
         total = 0
 
-        target_questions = ['Respectful Staff Treatment', 'Charged Fairly', 'Wait Time']
+        target_questions = [i.label for i in self.questions.values() if i.for_satisfaction]
 
         for visit, visit_responses in responses:
             if any(r['question__label'] in target_questions for r in visit_responses):
@@ -426,13 +425,15 @@ class RegionReport(ReportMixin, DetailView):
             for resp in visit_responses:
                 question = resp['question__label']
                 answer = resp['response']
-                if question in target_questions[:2] and answer != self.questions[
-                        question].primary_answer:
-                    unsatisfied += 1
-                    continue
-                if question == target_questions[2] and answer == self.questions[
-                        question].get_categories()[-1]:
-                    unsatisfied += 1
+                if question in target_questions:
+                    if self.questions[question].last_negative and answer == self.questions[
+                            question].get_categories()[-1]:
+                        unsatisfied += 1
+                        break
+                    if not self.questions[question].last_negative\
+                            and answer != self.questions[question].primary_answer:
+                        unsatisfied += 1
+                        break
 
         if not total:
             return 0, 0
@@ -443,15 +444,15 @@ class RegionReport(ReportMixin, DetailView):
         """Return % of surveys responded to to total visits.
 
         responses already grouped by question."""
-        survey_count = len(responses.get('Open Facility', []))
         visits = models.Visit.objects.filter(
             patient__clinic=clinic, survey_sent__isnull=False)
         if self.curr_date:
             visits = visits.filter(visit_time__range=(self.start_date, self.end_date))
+        survey_started = visits.filter(survey_started=True).count()
         total_visits = visits.count()
 
         if total_visits:
-            survey_percent = make_percentage(survey_count, total_visits)
+            survey_percent = make_percentage(survey_started, total_visits)
         else:
             survey_percent = None
         return survey_percent, total_visits
@@ -501,8 +502,9 @@ class RegionReport(ReportMixin, DetailView):
                 ("Quality", None, 0),
                 ("Quantity", None, 0)
             ]
-            for label in ['Open Facility', 'Respectful Staff Treatment',
-                          'Clean Hospital Materials', 'Charged Fairly']:
+            #for label in ['Open Facility', 'Respectful Staff Treatment',
+            #              'Clean Hospital Materials', 'Charged Fairly']:
+            for label in self.questions:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = responses_by_question[label]
