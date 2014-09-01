@@ -477,9 +477,6 @@ class RegionReport(ReportMixin, DetailView):
         """Return analyzed feedback by clinic then question."""
         data = []
 
-        # So we can get the name of the clinic for the template
-        clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
-
         responses = self.responses.exclude(clinic=None, question__in=self.questions)
         if self.start_date and self.end_date:
             responses = responses.filter(
@@ -496,76 +493,20 @@ class RegionReport(ReportMixin, DetailView):
             satis_percent, satis_total = self.get_satisfaction_counts(clinic)
             clinic_data.append(
                 ('Patient Satisfaction', '{}%'.format(satis_percent), satis_total))
+
+            # Some dummy data
             clinic_data.append(("Quality", None, 0))
             clinic_data.append(("Quantity", None, 0))
 
-            #indices = self.get_clinic_indices(clinic)
             for index in self.get_clinic_indices(clinic):
                 clinic_data.append(index)
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(clinic)
             clinic_data.append(('Wait Time', mode, mode_len))
-            #clinic_data.append((clinic.id, clinic.name, indices))
+
             data.append((clinic, clinic.name, clinic_data))
 
-        return data
-
-        responses = responses.values(
-            'clinic', 'question__label', 'response', 'visit', 'positive_response')
-
-        by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
-
-        # Add clinics without responses back.
-        clinic_ids = [clinic[0] for clinic in by_clinic]
-        rest_clinics = set(clinic_map.keys()).difference(clinic_ids)
-
-        for _clinic in rest_clinics:
-            by_clinic.append((_clinic, []))
-
-        for clinic, clinic_responses in by_clinic:
-            by_question = survey_utils.group_responses(
-                clinic_responses, 'question__label', keyfunc=itemgetter)
-            responses_by_question = dict(by_question)
-
-            # Get feedback participation
-            survey_percent, total_visits = self.get_feedback_participation(clinic)
-
-            # Get patient satisfaction
-            satis_percent, satis_total = self.get_satisfaction_counts(clinic)
-            responses_by_visit = survey_utils.group_responses(
-                clinic_responses, 'visit', keyfunc=itemgetter)
-            satis_percent, satis_total = self.get_satisfaction_counts(responses_by_visit)
-
-            # Build the data
-            clinic_data = [
-                ("Participation", '{}%'.format(survey_percent), total_visits),
-                ("Patient_Satisfaction", '{}%'.format(satis_percent), satis_total),
-                ("Quality", None, 0),
-                ("Quantity", None, 0)
-            ]
-            for label in self.questions:
-                if label in responses_by_question:
-                    question = self.questions[label]
-                    question_responses = responses_by_question[label]
-                    total_responses = len(question_responses)
-                    answers = [response['response'] for response in question_responses]
-                    percentage = survey_utils.analyze(answers, question.primary_answer)
-                    clinic_data.append((label.replace(" ", "_"),
-                                        '{}%'.format(percentage), total_responses))
-                else:
-                    clinic_data.append((None, None, 0))
-
-            if 'Wait Time' in responses_by_question:
-                wait_times = [r['response'] for r in responses_by_question['Wait Time']]
-
-                mode = survey_utils.get_mode(
-                    wait_times, self.questions.get(label='Wait Time').get_categories())
-                clinic_data.append((mode, len(wait_times)))
-
-            else:
-                clinic_data.append((None, 0))
-            data.append((clinic, clinic_map[clinic], clinic_data))
         return data
 
 
