@@ -90,18 +90,22 @@ class ReportMixin(object):
             if label not in self.questions:
                 raise Exception("Expecting question with label " + label)
 
-    def get_survey_questions(self, responses):
-        qtns = [resp.question for resp in responses.distinct('question')
-                if resp.question.question_type == SurveyQuestion.MULTIPLE_CHOICE]
-        sorted(qtns, key=lambda x: x.report_order)
+    def get_survey_questions(self, start_date=None, end_date=None):
+        if not start_date:
+            start_date = get_week_start(timezone.now())
+        if not end_date:
+            end_date = get_week_end(timezone.now())
+        qtns = SurveyQuestion.objects.exclude(start_date__gt=end_date).exclude(
+            end_date__lt=start_date).filter(
+            question_type=SurveyQuestion.MULTIPLE_CHOICE).order_by('report_order')
         return qtns
 
-    def initialize_data(self, responses):
+    def initialize_data(self):
         """Called by get_object to initialize state information."""
         self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
-        self.questions = self.get_survey_questions(responses)
+        self.questions = self.get_survey_questions()
         # self.questions = self.survey.surveyquestion_set.all()
-        self.questions = dict([(q.label, q) for q in self.questions])
+        # self.questions = dict([(q.label, q) for q in self.questions])
         # self._check_assumptions()
 
     def get_feedback_by_service(self):
@@ -129,7 +133,7 @@ class ReportMixin(object):
                 wait_times = [r.response for r in responses_by_question['Wait Time']]
 
                 mode = survey_utils.get_mode(
-                    wait_times, self.questions.get('Wait Time').get_categories())
+                    wait_times, self.questions.get(label='Wait Time').get_categories())
                 service_data.append((mode, len(wait_times)))
 
             else:
@@ -147,8 +151,11 @@ class ClinicReport(ReportMixin, DetailView):
         if not responses:
             return None  # Avoid divide-by-zero error.
         unsatisfied_count = 0
+
         grouped = survey_utils.group_responses(responses, 'visit.id', 'visit')
-        required = [i.label for i in self.questions.values() if i.for_satisfaction]
+        required = self.questions.filter(
+            for_satisfaction=True).values_list('label', flat=True)
+
         count = 0  # Number of runs that contain at least one required question.
         for visit, visit_responses in grouped:
             # Map question label to the response given for that question.
@@ -170,7 +177,7 @@ class ClinicReport(ReportMixin, DetailView):
         obj = super(ClinicReport, self).get_object(queryset)
         self.responses = obj.surveyquestionresponse_set.filter(display_on_dashboard=True)
         self.responses = self.responses.select_related('question', 'service', 'visit')
-        self.initialize_data(self.responses)
+        self.initialize_data()
         self.generic_feedback = obj.genericfeedback_set.filter(display_on_dashboard=True)
         return obj
 
@@ -184,12 +191,9 @@ class ClinicReport(ReportMixin, DetailView):
             by_question = survey_utils.group_responses(week_responses, 'question.label')
             responses_by_question = dict(by_question)
             week_data = []
-            labels = SurveyQuestion.objects.filter(
-                report_order__gt=0, label__in=responses_by_question
-                ).order_by('report_order').values_list('label', flat=True)
             # FIXME: remove hard-coding of wait time
             wait_time_question = SurveyQuestion.objects.get(label='Wait Time')
-            for label in labels:
+            for label in self.questions:
                 if label in responses_by_question:
                     question = self.questions[label]
                     question_responses = list(responses_by_question[label])
@@ -389,7 +393,7 @@ class RegionReport(ReportMixin, DetailView):
             self.end_date = self.responses.aggregate(max_date=Max('datetime'))['max_date']
         # self.calculate_weeks_ranges()
         self.responses = self.responses.select_related('question', 'service', 'visit')
-        self.initialize_data(self.responses)
+        self.initialize_data()
         return obj
 
     def get_context_data(self, **kwargs):
@@ -409,7 +413,8 @@ class RegionReport(ReportMixin, DetailView):
         unsatisfied = 0
         total = 0
 
-        target_questions = [i.label for i in self.questions.values() if i.for_satisfaction]
+        target_questions = self.questions.filter(
+            for_satisfaction=True).values_list('label', flat=True)
 
         for visit, visit_responses in responses:
             if any(r['question__label'] in target_questions for r in visit_responses):
@@ -418,17 +423,9 @@ class RegionReport(ReportMixin, DetailView):
                 continue
 
             for resp in visit_responses:
-                question = resp['question__label']
-                answer = resp['response']
-                if question in target_questions:
-                    if self.questions[question].last_negative and answer == self.questions[
-                            question].get_categories()[-1]:
-                        unsatisfied += 1
-                        break
-                    if not self.questions[question].last_negative\
-                            and answer != self.questions[question].primary_answer:
-                        unsatisfied += 1
-                        break
+                if resp['question__label'] in target_questions and not resp['positive_response']:
+                    unsatisfied += 1
+                    break
 
         if not total:
             return 0, 0
@@ -465,7 +462,7 @@ class RegionReport(ReportMixin, DetailView):
             responses = responses.filter(visit__visit_time__range=(self.start_date, self.end_date))
 
         responses = responses.values(
-            'clinic', 'question__label', 'response', 'visit')
+            'clinic', 'question__label', 'response', 'visit', 'positive_response')
 
         by_clinic = survey_utils.group_responses(responses, 'clinic', keyfunc=itemgetter)
 

@@ -412,15 +412,31 @@ class TestReportMixin(TestCase):
         self.q1 = factories.SurveyQuestion.create(
             label='One',
             survey=survey,
-            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE)
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            start_date=timezone.make_aware(timezone.datetime(2014, 8, 30), timezone.utc),
+            report_order=10)
         self.q2 = factories.SurveyQuestion.create(
             label='two',
             survey=survey,
-            question_type=survey_models.SurveyQuestion.OPEN_ENDED)
+            question_type=survey_models.SurveyQuestion.OPEN_ENDED,
+            report_order=20)
         self.q3 = factories.SurveyQuestion.create(
             label='Three',
             survey=survey,
-            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE)
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            report_order=30)
+        self.q4 = factories.SurveyQuestion.create(
+            label='Four',
+            survey=survey,
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            end_date=timezone.make_aware(timezone.datetime(2014, 8, 10), timezone.utc),
+            report_order=40)
+        self.q5 = factories.SurveyQuestion.create(
+            label='Five',
+            survey=survey,
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            start_date=timezone.now(),
+            report_order=50)
 
         p1 = factories.Patient.create(clinic=clinic, serial=111)
         p2 = factories.Patient.create(clinic=clinic, serial=222)
@@ -447,26 +463,44 @@ class TestReportMixin(TestCase):
     def test_get_survey_questions(self):
         """Test that get_survey_questions returns correct questions.
 
-        Responses are passed into the method.
-        Returns the questions whose responses are passed in
-        ordered by question label.
+        Start and end dates are passed into the method.
+        Returns SurveyQuestions that are:
+        1. Valid for at least part of the range
+        2. are multiple-choice questions.
+
+        P.S.
+        SurveyQuestions are ordered by report_order.
+        If no dates are passed, current week is used as default.
         """
         mixin = clinics.ReportMixin()
-        ids = [self.r1.id, self.r2.id, self.r4.id]
-        responses = survey_models.SurveyQuestionResponse.objects.filter(id__in=ids)
-        questions = mixin.get_survey_questions(responses)
+        start_date = timezone.make_aware(timezone.datetime(2014, 8, 14), timezone.utc)
+        end_date = timezone.make_aware(timezone.datetime(2014, 8, 21), timezone.utc)
+        questions = mixin.get_survey_questions(start_date, end_date)
 
         self.assertEqual(1, len(questions))
+        self.assertEqual(self.q3, questions[0])
 
-    def test_get_survey_questions_multiple(self):
-        """Test that responses have to be multiple-choice questions
-        to count."""
+    def test_get_survey_questions_default_week(self):
+        """Test that if no start_date is passed, the current week is used."""
         mixin = clinics.ReportMixin()
-        ids = [self.r1.id, self.r3.id]
-        responses = survey_models.SurveyQuestionResponse.objects.filter(id__in=ids)
-        questions = mixin.get_survey_questions(responses)
+        questions = mixin.get_survey_questions()
 
-        self.assertEqual(2, len(questions))
+        self.assertEqual(3, len(questions))
+        self.assertTrue(self.q1 in questions)
+        self.assertTrue(self.q3 in questions)
+        self.assertTrue(self.q5 in questions)
+
+    def test_get_survey_questions_order(self):
+        """Test that responses are ordered by report_order."""
+        mixin = clinics.ReportMixin()
+        start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        end_date = timezone.make_aware(timezone.datetime(2014, 8, 31), timezone.utc)
+        questions = mixin.get_survey_questions(start_date, end_date)
+
+        self.assertEqual(3, len(questions))
+        self.assertEqual(self.q1, questions[0])
+        self.assertEqual(self.q3, questions[1])
+        self.assertEqual(self.q4, questions[2])
 
     def test_get_required_questions(self):
         """Test that get_required_questions returns only required questions.
@@ -899,20 +933,52 @@ class TestRegionReportView(TestCase):
 
         responses = [
             (1, [
-                {'question__label': r1.question.label, 'response': r1.response},
-                {'question__label': r2.question.label, 'response': r2.response},
+                {
+                    'question__label': r1.question.label,
+                    'response': r1.response,
+                    'positive_response': r1.positive_response
+                },
+                {
+                    'question__label': r2.question.label,
+                    'response': r2.response,
+                    'positive_response': r2.positive_response
+                },
             ]),
             (2, [
-                {'question__label': r3.question.label, 'response': r3.response},
-                {'question__label': r4.question.label, 'response': r4.response},
+                {
+                    'question__label': r3.question.label,
+                    'response': r3.response,
+                    'positive_response': r3.positive_response
+                },
+                {
+                    'question__label': r4.question.label,
+                    'response': r4.response,
+                    'positive_response': r4.positive_response
+                }
             ]),
             (3, [
-                {'question__label': r5.question.label, 'response': r5.response},
-                {'question__label': r6.question.label, 'response': r6.response},
+                {
+                    'question__label': r5.question.label,
+                    'response': r5.response,
+                    'positive_response': r5.positive_response
+                },
+                {
+                    'question__label': r6.question.label,
+                    'response': r6.response,
+                    'positive_response': r6.positive_response
+                },
             ]),
             (4, [
-                {'question__label': r7.question.label, 'response': r7.response},
-                {'question__label': r8.question.label, 'response': r8.response},
+                {
+                    'question__label': r7.question.label,
+                    'response': r7.response,
+                    'positive_response': r7.positive_response
+                },
+                {
+                    'question__label': r8.question.label,
+                    'response': r8.response,
+                    'positive_response': r8.positive_response
+                },
             ]),
         ]
         satisfaction, total = report.get_satisfaction_counts(responses)
@@ -954,20 +1020,52 @@ class TestRegionReportView(TestCase):
         report.get_object()
         responses = [
             (1, [
-                {'question__label': r1.question.label, 'response': r1.response},
-                {'question__label': r2.question.label, 'response': r2.response},
+                {
+                    'question__label': r1.question.label,
+                    'response': r1.response,
+                    'positive_response': r1.positive_response
+                },
+                {
+                    'question__label': r2.question.label,
+                    'response': r2.response,
+                    'positive_response': r2.positive_response
+                },
             ]),
             (2, [
-                {'question__label': r3.question.label, 'response': r3.response},
-                {'question__label': r4.question.label, 'response': r4.response},
+                {
+                    'question__label': r3.question.label,
+                    'response': r3.response,
+                    'positive_response': r3.positive_response
+                },
+                {
+                    'question__label': r4.question.label,
+                    'response': r4.response,
+                    'positive_response': r4.positive_response
+                }
             ]),
             (3, [
-                {'question__label': r5.question.label, 'response': r5.response},
-                {'question__label': r6.question.label, 'response': r6.response},
+                {
+                    'question__label': r5.question.label,
+                    'response': r5.response,
+                    'positive_response': r5.positive_response
+                },
+                {
+                    'question__label': r6.question.label,
+                    'response': r6.response,
+                    'positive_response': r6.positive_response
+                },
             ]),
             (4, [
-                {'question__label': r7.question.label, 'response': r7.response},
-                {'question__label': r8.question.label, 'response': r8.response},
+                {
+                    'question__label': r7.question.label,
+                    'response': r7.response,
+                    'positive_response': r7.positive_response
+                },
+                {
+                    'question__label': r8.question.label,
+                    'response': r8.response,
+                    'positive_response': r8.positive_response
+                },
             ]),
         ]
         satisfaction, total = report.get_satisfaction_counts(responses)
