@@ -184,16 +184,11 @@ class ClinicReport(ReportMixin, DetailView):
             by_question = survey_utils.group_responses(week_responses, 'question.label')
             responses_by_question = dict(by_question)
             week_data = []
-            #for label in ['Open Facility', 'Respectful Staff Treatment',
-            #              'Clean Hospital Materials', 'Charged Fairly']:
-            #import pdb;pdb.set_trace()
             labels = SurveyQuestion.objects.filter(
                 report_order__gt=0, label__in=responses_by_question
                 ).order_by('report_order').values_list('label', flat=True)
             #FIXME: remove hard-coding of wait time
             wait_time_question = SurveyQuestion.objects.get(label='Wait Time')
-            #questions = [qtn for qtn in responses_by_question
-            #             if qtn in self.questions and qtn != 'Wait Time']
             for label in labels:
                 if label in responses_by_question:
                     question = self.questions[label]
@@ -502,8 +497,6 @@ class RegionReport(ReportMixin, DetailView):
                 ("Quality", None, 0),
                 ("Quantity", None, 0)
             ]
-            #for label in ['Open Facility', 'Respectful Staff Treatment',
-            #              'Clean Hospital Materials', 'Charged Fairly']:
             for label in self.questions:
                 if label in responses_by_question:
                     question = self.questions[label]
