@@ -406,33 +406,25 @@ class RegionReport(ReportMixin, DetailView):
         data = super(RegionReport, self).get_context_data(**kwargs)
         return data
 
-    def get_satisfaction_counts(self, responses):
-        """Return satisfaction percentage and total of survey participants
+    def get_satisfaction_counts(self, clinic):
+        """Return satisfaction percentage and total of survey participants."""
+        responses = SurveyQuestionResponse.objects.filter(
+            clinic=clinic,
+            question__in=self.questions,
+            question__for_satisfaction=True)
+        if self.curr_date:
+            responses = responses.filter(
+                visit__visit_time__range=(self.start_date, self.end_date))
 
-        responses is already grouped by visit"""
-        unsatisfied = 0
-        total = 0
-
-        target_questions = self.questions.filter(
-            for_satisfaction=True).values_list('label', flat=True)
-
-        for visit, visit_responses in responses:
-            if any(r['question__label'] in target_questions for r in visit_responses):
-                total += 1
-            else:
-                continue
-
-            for resp in visit_responses:
-                if resp['question__label'] in target_questions and not resp['positive_response']:
-                    unsatisfied += 1
-                    break
+        total = responses.distinct('visit').count()
+        unsatisfied = responses.exclude(positive_response=True).distinct('visit').count()
 
         if not total:
             return 0, 0
 
         return 100 - make_percentage(unsatisfied, total), total
 
-    def get_feedback_participation(self, responses, clinic):
+    def get_feedback_participation(self, clinic):
         """Return % of surveys responded to to total visits.
 
         responses already grouped by question."""
@@ -452,14 +444,19 @@ class RegionReport(ReportMixin, DetailView):
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
         data = []
+        clinic_data = []
 
         # So we can get the name of the clinic for the template
         clinic_map = dict(models.Clinic.objects.values_list('id', 'name'))
 
         responses = self.responses.exclude(clinic=None)
-
         if self.start_date and self.end_date:
-            responses = responses.filter(visit__visit_time__range=(self.start_date, self.end_date))
+            responses = responses.filter(
+                visit__visit_time__range=(self.start_date, self.end_date))
+
+        for clinic in models.Clinic.objects.all():
+            indices = self.get_clinic_indices(clinic, responses)
+            clinic_data.append((clinic, clinic_map[clinic], indices))
 
         responses = responses.values(
             'clinic', 'question__label', 'response', 'visit', 'positive_response')
@@ -479,8 +476,7 @@ class RegionReport(ReportMixin, DetailView):
             responses_by_question = dict(by_question)
 
             # Get feedback participation
-            survey_percent, total_visits = self.get_feedback_participation(
-                responses_by_question, clinic)
+            survey_percent, total_visits = self.get_feedback_participation(clinic)
 
             # Get patient satisfaction
             responses_by_visit = survey_utils.group_responses(

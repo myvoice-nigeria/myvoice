@@ -764,16 +764,16 @@ class TestRegionReportView(TestCase):
 
         self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
 
-        service = factories.Service.create(code=2)
+        self.service = factories.Service.create(code=2)
 
         self.v1 = factories.Visit.create(
-            service=service,
+            service=self.service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=221)
         )
         self.v2 = factories.Visit.create(
-            service=service,
+            service=self.service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=111)
@@ -887,14 +887,17 @@ class TestRegionReportView(TestCase):
         self.assertEqual(4, report.responses.count())
 
     def test_feedback_participation(self):
+        factories.Visit.create(
+            service=self.service,
+            visit_time=timezone.now(),
+            survey_sent=timezone.now(),
+            patient=factories.Patient.create(clinic=self.clinic, serial=311)
+        )
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        responses = {
-            'Respectful Staff Treatment': [{'response': 'Yes'}, {'response': 'No'}],
-            'Open Facility': [{'response': 'Yes'}, {'response': 'No'}]}
-        percent, total = report.get_feedback_participation(responses, self.clinic)
-        self.assertEqual(100, percent)
-        self.assertEqual(2, total)
+        percent, total = report.get_feedback_participation(self.clinic)
+        self.assertEqual(67, percent)
+        self.assertEqual(3, total)
 
     def test_get_satisfaction_counts(self):
         """Test number of visits that patient was not unsatisfied."""
@@ -909,81 +912,31 @@ class TestRegionReportView(TestCase):
         v3 = factories.Visit.create(patient=p1, service=service)
         v4 = factories.Visit.create(patient=p2, service=service)
 
-        r1 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.respect, response='Yes', visit=v1)
-        r2 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.wait, response='<1 hour', visit=v1)
 
-        r3 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.respect, response='No', visit=v2)
-        r4 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.wait, response='1-2 hours', visit=v2)
 
-        r5 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.respect, response='Yes', visit=v3)
-        r6 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.wait, response='<1 hour', visit=v3)
 
-        r7 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.fair, response='Yes', visit=v4)
-        r8 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.wait, response='<1 hour', visit=v4)
 
         report.get_object()
 
-        responses = [
-            (1, [
-                {
-                    'question__label': r1.question.label,
-                    'response': r1.response,
-                    'positive_response': r1.positive_response
-                },
-                {
-                    'question__label': r2.question.label,
-                    'response': r2.response,
-                    'positive_response': r2.positive_response
-                },
-            ]),
-            (2, [
-                {
-                    'question__label': r3.question.label,
-                    'response': r3.response,
-                    'positive_response': r3.positive_response
-                },
-                {
-                    'question__label': r4.question.label,
-                    'response': r4.response,
-                    'positive_response': r4.positive_response
-                }
-            ]),
-            (3, [
-                {
-                    'question__label': r5.question.label,
-                    'response': r5.response,
-                    'positive_response': r5.positive_response
-                },
-                {
-                    'question__label': r6.question.label,
-                    'response': r6.response,
-                    'positive_response': r6.positive_response
-                },
-            ]),
-            (4, [
-                {
-                    'question__label': r7.question.label,
-                    'response': r7.response,
-                    'positive_response': r7.positive_response
-                },
-                {
-                    'question__label': r8.question.label,
-                    'response': r8.response,
-                    'positive_response': r8.positive_response
-                },
-            ]),
-        ]
-        satisfaction, total = report.get_satisfaction_counts(responses)
-        self.assertEqual(75, satisfaction)
-        self.assertEqual(4, total)
+        satisfaction, total = report.get_satisfaction_counts(self.clinic)
+        self.assertEqual(60, satisfaction)
+        self.assertEqual(5, total)
 
     def test_get_satisfaction_counts_waittime(self):
         """Test number of visits that patient was not unsatisfied because of Wait Time."""
@@ -1068,20 +1021,18 @@ class TestRegionReportView(TestCase):
                 },
             ]),
         ]
-        satisfaction, total = report.get_satisfaction_counts(responses)
-        self.assertEqual(75, satisfaction)
-        self.assertEqual(4, total)
+        satisfaction, total = report.get_satisfaction_counts(self.clinic)
+        self.assertEqual(60, satisfaction)
+        self.assertEqual(5, total)
 
     def test_get_satisfaction_counts_no_responses(self):
         """Test get satisfaction counts with no responses."""
+        clinic = factories.Clinic.create(code=3, lga='Wamba1', name='TEST2')
+
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        responses = [
-            (self.v1.pk, [
-                {'question__label': 'Clean Hospital Materials', 'response': 'Yes'},
-            ]),
-        ]
-        satisfaction, total = report.get_satisfaction_counts(responses)
+
+        satisfaction, total = report.get_satisfaction_counts(clinic)
         self.assertEqual(0, satisfaction)
         self.assertEqual(0, total)
 
