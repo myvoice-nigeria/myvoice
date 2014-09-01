@@ -465,8 +465,8 @@ class AnalystSummary(TemplateView):
             sr = sqr_query.filter(question=question)
 
             rates_table.append({
-                "row_num": question.id,
-                "row_title": str(counter) + " " + question.display_label.name,
+                "row_num": "{0:0=2d}".format(counter),
+                "row_title": str("{0:0=2d}".format(counter)) + " " + question.display_label.name,
                 "rsp_num": sr.count()
                 })
             counter += 1
