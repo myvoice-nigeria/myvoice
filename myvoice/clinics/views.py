@@ -510,7 +510,7 @@ class RegionReport(ReportMixin, DetailView):
                 wait_times = [r['response'] for r in responses_by_question['Wait Time']]
 
                 mode = survey_utils.get_mode(
-                    wait_times, self.questions.get('Wait Time').get_categories())
+                    wait_times, self.questions.get(label='Wait Time').get_categories())
                 clinic_data.append((mode, len(wait_times)))
 
             else:
