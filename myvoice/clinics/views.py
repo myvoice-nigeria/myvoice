@@ -1,6 +1,6 @@
 from itertools import groupby
 import json
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 import logging
 
 from django.http import HttpResponse

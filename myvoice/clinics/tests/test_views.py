@@ -27,6 +27,9 @@ class TestVisitView(TestCase):
         self.success_msg = '{"text": "Entry received for patient with serial number %s. '\
                            'Thank you."}'
 
+    def test_hour_to_hr(self):
+        self.assertEqual('<1 hr', clinics.hour_to_hr('<1 hour'))
+
     def make_request(self, data):
         """Make Test request with POST data."""
         request = self.factory.post('/clinics/visit/', data=data)
@@ -910,7 +913,7 @@ class TestRegionReportView(TestCase):
         report.get_object()
         percent, total = report.get_feedback_participation(self.clinic)
         self.assertEqual(67, percent)
-        self.assertEqual(3, total)
+        self.assertEqual(2, total)
 
     def test_get_satisfaction_counts(self):
         """Test number of visits that patient was not unsatisfied."""
