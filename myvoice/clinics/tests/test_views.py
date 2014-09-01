@@ -967,24 +967,24 @@ class TestRegionReportView(TestCase):
         v3 = factories.Visit.create(patient=p1, service=service)
         v4 = factories.Visit.create(patient=p2, service=service)
 
-        r1 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.respect, response='Yes', visit=v1)
-        r2 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.wait, response='<1 hour', visit=v1)
 
-        r3 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.respect, response='Yes', visit=v2)
-        r4 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.wait, response='1-2 hours', visit=v2)
 
-        r5 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.respect, response='Yes', visit=v3)
-        r6 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.wait, response='<1 hour', visit=v3)
 
-        r7 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.fair, response='Yes', visit=v4)
-        r8 = factories.SurveyQuestionResponse.create(
+        factories.SurveyQuestionResponse.create(
             question=self.wait, response='4+ hours', visit=v4)
         report.get_object()
 
