@@ -652,7 +652,7 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
 
-    def test_get_feedback_by_week(self):
+    def _test_get_feedback_by_week(self):
         """Test that get_feedback_by_week works."""
         visits = []
         for code, serial in ((2, 221), (3, 111), (4, 121)):

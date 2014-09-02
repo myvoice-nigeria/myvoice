@@ -5,6 +5,7 @@ import logging
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.db.models.aggregates import Min, Max
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
@@ -89,6 +90,8 @@ class ReportMixin(object):
         """
         Break a date range into a group of date ranges representing weeks.
         """
+        if not start_date or not end_date:
+            return []
         week_ranges = []
         while start_date <= end_date:
             week_start = get_week_start(start_date)
@@ -213,43 +216,49 @@ class ClinicReport(ReportMixin, DetailView):
         obj = super(ClinicReport, self).get_object(queryset)
         self.responses = obj.surveyquestionresponse_set.filter(display_on_dashboard=True)
         self.responses = self.responses.select_related('question', 'service', 'visit')
+        self.visits = models.Visit.objects.filter(patient__clinic=obj)
         self.initialize_data()
         self.generic_feedback = obj.genericfeedback_set.filter(display_on_dashboard=True)
         return obj
 
     def get_feedback_by_week(self):
         data = []
-        responses = self.responses.order_by('datetime')
 
-        by_week = groupby(responses, lambda r: get_week_start(r.datetime))
-        for week_start, week_responses in by_week:
-            week_responses = list(week_responses)
-            by_question = survey_utils.group_responses(week_responses, 'question.label')
-            responses_by_question = dict(by_question)
+        visits = self.visits.filter(survey_started=True)
+        min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
+        max_date = self.responses.aggregate(Max('datetime'))['datetime__max']
+
+        week_ranges = self.get_week_ranges(min_date, max_date)
+
+        for start_date, end_date in week_ranges:
+            week_responses = self.responses.filter(datetime__range=(start_date, end_date))
             week_data = []
-            # FIXME: remove hard-coding of wait time
-            wait_time_question = SurveyQuestion.objects.get(label='Wait Time')
-            for label in self.questions:
-                if label in responses_by_question:
-                    question = self.questions[label]
-                    question_responses = list(responses_by_question[label])
-                    total_responses = len(question_responses)
-                    answers = [response.response for response in question_responses]
-                    percentage = survey_utils.analyze(answers, question.primary_answer)
-                    week_data.append((percentage, total_responses))
-                else:
-                    week_data.append((None, 0))
-            wait_times = [r.response for r in responses_by_question.get('Wait Time', [])]
 
-            survey_num = survey_utils.get_started_count(responses.filter(
-                datetime__range=(week_start, get_week_end(week_start))))
+            # Get number of surveys started in this week
+            survey_num = visits.filter(
+                visit_time__range=(start_date, end_date)).count()
+
+            # Get patient satisfaction, throw away total we need just percent
+            satis_percent, _ = self.get_satisfaction_counts(week_responses)
+
+            # Get indices for each question
+            questions = self.get_survey_questions(start_date, end_date).exclude(
+                label='Wait Time')
+            for label, perc, tot in self.get_indices(questions, week_responses):
+                # Get rid of percent sign (need to fix)
+                if perc:
+                    perc = perc.replace('%', '')
+                week_data.append((perc, tot))
+
+            # Wait Time
+            mode, mode_len = self.get_wait_mode(week_responses)
+
             data.append({
-                'week_start': week_start,
-                'week_end': get_week_end(week_start),
+                'week_start': start_date,
+                'week_end': end_date,
                 'data': week_data,
-                'patient_satisfaction': self._get_patient_satisfaction(week_responses),
-                'wait_time_mode': survey_utils.get_mode(
-                    wait_times, wait_time_question.get_categories()),
+                'patient_satisfaction': satis_percent,
+                'wait_time_mode': mode,
                 'survey_num': survey_num
             })
         return data
@@ -267,8 +276,6 @@ class ClinicReport(ReportMixin, DetailView):
             question__question_type=SurveyQuestion.OPEN_ENDED)
 
         if start_date:
-            # SurveyQuestionResponse.objects.filter(
-            # visit__visit_time__range=(the_start_date, the_end_date))
             open_ended_responses = open_ended_responses.filter(
                 datetime__range=(get_date(start_date), get_date(end_date)))
 
