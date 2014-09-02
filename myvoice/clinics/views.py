@@ -85,6 +85,19 @@ class ClinicReportSelectClinic(FormView):
 
 class ReportMixin(object):
 
+    def get_week_ranges(self, start_date, end_date):
+        """
+        Break a date range into a group of date ranges representing weeks.
+        """
+        week_ranges = []
+        while start_date <= end_date:
+            week_start = get_week_start(start_date)
+            week_end = get_week_end(start_date)
+            week_ranges.append([week_start, week_end])
+
+            start_date = week_end + timezone.timedelta(microseconds=1)
+        return week_ranges
+
     def get_survey_questions(self, start_date=None, end_date=None):
         if not start_date:
             start_date = get_week_start(timezone.now())
