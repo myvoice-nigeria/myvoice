@@ -911,7 +911,9 @@ class TestRegionReportView(TestCase):
         )
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        percent, total = report.get_feedback_participation(self.clinic)
+        visits = models.Visit.objects.filter(
+            patient__clinic=self.clinic, survey_sent__isnull=False)
+        percent, total = report.get_feedback_participation(visits)
         self.assertEqual(67, percent)
         self.assertEqual(2, total)
 
@@ -950,7 +952,8 @@ class TestRegionReportView(TestCase):
 
         report.get_object()
 
-        satisfaction, total = report.get_satisfaction_counts(self.clinic)
+        responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
+        satisfaction, total = report.get_satisfaction_counts(responses)
         self.assertEqual(60, satisfaction)
         self.assertEqual(3, total)
 
@@ -988,7 +991,8 @@ class TestRegionReportView(TestCase):
             question=self.wait, response='4+ hours', visit=v4)
         report.get_object()
 
-        satisfaction, total = report.get_satisfaction_counts(self.clinic)
+        responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
+        satisfaction, total = report.get_satisfaction_counts(responses)
         self.assertEqual(60, satisfaction)
         self.assertEqual(3, total)
 
@@ -999,7 +1003,8 @@ class TestRegionReportView(TestCase):
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
 
-        satisfaction, total = report.get_satisfaction_counts(clinic)
+        responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=clinic)
+        satisfaction, total = report.get_satisfaction_counts(responses)
         self.assertEqual(0, satisfaction)
         self.assertEqual(0, total)
 

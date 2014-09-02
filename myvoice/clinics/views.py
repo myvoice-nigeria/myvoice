@@ -121,6 +121,28 @@ class ReportMixin(object):
             else:
                 yield (question.label, None, 0)
 
+    def get_satisfaction_counts(self, responses):
+        """Return satisfaction percentage and total of survey participants."""
+        responses = responses.filter(question__for_satisfaction=True)
+        total = responses.distinct('visit').count()
+        unsatisfied = responses.exclude(positive_response=True).distinct('visit').count()
+
+        if not total:
+            return 0, 0
+
+        return 100 - make_percentage(unsatisfied, total), total-unsatisfied
+
+    def get_feedback_participation(self, visits):
+        """Return % of surveys responded to total visits."""
+        survey_started = visits.filter(survey_started=True).count()
+        total_visits = visits.count()
+
+        if total_visits:
+            survey_percent = make_percentage(survey_started, total_visits)
+        else:
+            survey_percent = None
+        return survey_percent, survey_started
+
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
@@ -414,58 +436,29 @@ class RegionReport(ReportMixin, DetailView):
         question_labels = [i.label for i in self.questions]
         return default_labels + question_labels
 
-    def get_satisfaction_counts(self, clinic):
-        """Return satisfaction percentage and total of survey participants."""
-        responses = SurveyQuestionResponse.objects.filter(
-            clinic=clinic,
-            question__in=self.questions,
-            question__for_satisfaction=True)
-        if self.curr_date:
-            responses = responses.filter(
-                visit__visit_time__range=(self.start_date, self.end_date))
-
-        total = responses.distinct('visit').count()
-        unsatisfied = responses.exclude(positive_response=True).distinct('visit').count()
-
-        if not total:
-            return 0, 0
-
-        return 100 - make_percentage(unsatisfied, total), total-unsatisfied
-
-    def get_feedback_participation(self, clinic):
-        """Return % of surveys responded to to total visits."""
-        visits = models.Visit.objects.filter(
-            patient__clinic=clinic, survey_sent__isnull=False)
-        if self.curr_date:
-            visits = visits.filter(visit_time__range=(self.start_date, self.end_date))
-        survey_started = visits.filter(survey_started=True).count()
-        total_visits = visits.count()
-
-        if total_visits:
-            survey_percent = make_percentage(survey_started, total_visits)
-        else:
-            survey_percent = None
-        return survey_percent, survey_started
-
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
         data = []
 
         responses = self.responses.filter(question__in=self.questions)
+        visits = models.Visit.objects.filter(survey_sent__isnull=False)
+
         if self.start_date and self.end_date:
             responses = responses.filter(
                 visit__visit_time__range=(self.start_date, self.end_date))
+            visits = visits.filter(visit_time__range=(self.start_date, self.end_date))
 
         for clinic in models.Clinic.objects.all():
             clinic_data = []
             clinic_responses = responses.filter(clinic=clinic)
+            clinic_visits = visits.filter(patient__clinic=clinic)
             # Get feedback participation
-            part_percent, part_total = self.get_feedback_participation(clinic)
+            part_percent, part_total = self.get_feedback_participation(clinic_visits)
             clinic_data.append(
                 ('Participation', '{}%'.format(part_percent), part_total))
 
             # Get patient satisfaction
-            satis_percent, satis_total = self.get_satisfaction_counts(clinic)
+            satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
             clinic_data.append(
                 ('Patient Satisfaction', '{}%'.format(satis_percent), satis_total))
 
