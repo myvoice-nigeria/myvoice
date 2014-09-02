@@ -448,16 +448,16 @@ class RegionReport(ReportMixin, DetailView):
             survey_percent = None
         return survey_percent, survey_started
 
-    def get_clinic_indices(self, clinic):
-        """Get % and count of positive responses for each
-        required question."""
-        responses = SurveyQuestionResponse.objects.filter(
-            clinic=clinic,
-            question__in=self.questions)
-        target_questions = self.questions.exclude(label='Wait Time')
+    #def get_clinic_indices(self, clinic):
+    #    """Get % and count of positive responses for each
+    #    required question."""
+    #    responses = SurveyQuestionResponse.objects.filter(
+    #        clinic=clinic,
+    #        question__in=self.questions)
+    #    target_questions = self.questions.exclude(label='Wait Time')
 
-        for result in self.get_indices(target_questions, responses):
-            yield result
+    #    for result in self.get_indices(target_questions, responses):
+    #        yield result
 
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
