@@ -558,11 +558,12 @@ class TestClinicReportView(TestCase):
             categories='Open\nClosed',
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE)
         self.questions.append(self.open_facility)
-        self.questions.append(factories.SurveyQuestion.create(
+        self.respect = factories.SurveyQuestion.create(
             label='Respectful Staff Treatment',
             survey=self.survey, categories='Yes\nNo', primary_answer='Yes',
             for_satisfaction=True,
-            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE))
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE)
+        self.questions.append(self.respect)
         self.questions.append(factories.SurveyQuestion.create(
             label='Clean Hospital Materials',
             survey=self.survey))
@@ -652,35 +653,52 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
 
-    def _test_get_feedback_by_week(self):
+    def test_get_feedback_by_week(self):
         """Test that get_feedback_by_week works."""
-        visits = []
-        for code, serial in ((2, 221), (3, 111), (4, 121)):
-            visits.append(factories.Visit.create(
-                service=factories.Service.create(code=code),
-                patient=factories.Patient.create(clinic=self.clinic, serial=serial))
-            )
+        clinic = factories.Clinic.create(code=7)
+
+        v1 = factories.Visit.create(
+            service=factories.Service.create(code=2),
+            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 25), timezone.utc),
+            survey_sent=timezone.make_aware(timezone.datetime(2014, 7, 25), timezone.utc),
+            patient=factories.Patient.create(clinic=clinic, serial=221))
+        v2 = factories.Visit.create(
+            service=factories.Service.create(code=3),
+            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
+            survey_sent=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
+            patient=factories.Patient.create(clinic=clinic, serial=111))
+        v3 = factories.Visit.create(
+            service=factories.Service.create(code=4),
+            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
+            survey_sent=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
+            patient=factories.Patient.create(clinic=clinic, serial=121))
 
         factories.SurveyQuestionResponse.create(
             question=self.open_facility,
             response='Open',
             datetime=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
-            visit=visits[0],
-            clinic=self.clinic)
+            visit=v1,
+            clinic=clinic)
         factories.SurveyQuestionResponse.create(
             question=self.open_facility,
             response='Closed',
             datetime=timezone.make_aware(timezone.datetime(2014, 7, 27), timezone.utc),
-            visit=visits[1],
-            clinic=self.clinic)
+            visit=v2,
+            clinic=clinic)
         factories.SurveyQuestionResponse.create(
             question=self.open_facility,
             response='Open',
             datetime=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
-            visit=visits[2],
-            clinic=self.clinic)
+            visit=v3,
+            clinic=clinic)
+        factories.SurveyQuestionResponse.create(
+            question=self.respect,
+            response='Yes',
+            datetime=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
+            visit=v3,
+            clinic=clinic)
 
-        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report = clinics.ClinicReport(kwargs={'slug': clinic.slug})
 
         report.get_object()
         feedback = report.get_feedback_by_week()
@@ -690,7 +708,9 @@ class TestClinicReportView(TestCase):
 
         # Check survey_num
         self.assertEqual(2, feedback[0]['survey_num'])
+        self.assertEqual(0, feedback[0]['patient_satisfaction'])
         self.assertEqual(1, feedback[1]['survey_num'])
+        self.assertEqual(100, feedback[1]['patient_satisfaction'])
 
     def test_hide_invalid_feedback(self):
         question = factories.SurveyQuestion(
@@ -744,28 +764,6 @@ class TestClinicReportView(TestCase):
         _dt3 = timezone.datetime(2014, 7, 28) - timezone.timedelta(microseconds=1)
         dt3 = timezone.make_aware(_dt3, timezone.utc)
         self.assertEqual(dt3, end)
-
-    def test_get_patient_satisfaction(self):
-        visit1 = factories.Visit.create(patient__clinic=self.clinic)
-        visit2 = factories.Visit.create(patient__clinic=self.clinic)
-        visit3 = factories.Visit.create(patient__clinic=self.clinic)
-        treat = factories.SurveyQuestionResponse.create(
-            response='Yes', question=self.questions[1], visit=visit1)
-        charge = factories.SurveyQuestionResponse.create(
-            response='Fairly charged', question=self.questions[3], visit=visit1)
-        wait1 = factories.SurveyQuestionResponse.create(
-            response='<1 hour', question=self.questions[4], visit=visit1)
-        wait2 = factories.SurveyQuestionResponse.create(
-            response='>4 hours', question=self.questions[4], visit=visit2)
-        wait3 = factories.SurveyQuestionResponse.create(
-            response='<1 hour', question=self.questions[4], visit=visit3)
-
-        responses = [treat, charge, wait1, wait2, wait3]
-
-        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
-        report.get_object()
-        satisfaction = report._get_patient_satisfaction(responses)
-        self.assertEqual(67, satisfaction)
 
 
 class TestRegionReportView(TestCase):

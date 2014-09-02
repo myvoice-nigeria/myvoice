@@ -1,4 +1,4 @@
-from itertools import groupby
+# from itertools import groupby
 import json
 from operator import attrgetter
 import logging
@@ -185,38 +185,12 @@ class ClinicReport(ReportMixin, DetailView):
     template_name = 'clinics/report.html'
     model = models.Clinic
 
-    def _get_patient_satisfaction(self, responses):
-        """Patient satisfaction is gauged on their answers to 3 questions."""
-        if not responses:
-            return None  # Avoid divide-by-zero error.
-        unsatisfied_count = 0
-
-        grouped = survey_utils.group_responses(responses, 'visit.id', 'visit')
-        required = self.questions.filter(
-            for_satisfaction=True).values_list('label', flat=True)
-
-        count = 0  # Number of runs that contain at least one required question.
-        for visit, visit_responses in grouped:
-            # Map question label to the response given for that question.
-            answers = dict([(r.question.label, r.response) for r in visit_responses])
-            if any([r in answers for r in required]):
-                count += 1
-
-            for resp in visit_responses:
-                if resp.question.label not in required:
-                    continue
-                if not resp.positive_response:
-                    unsatisfied_count += 1
-                    break
-        if not count:
-            return None
-        return 100 - make_percentage(unsatisfied_count, count)
-
     def get_object(self, queryset=None):
         obj = super(ClinicReport, self).get_object(queryset)
         self.responses = obj.surveyquestionresponse_set.filter(display_on_dashboard=True)
         self.responses = self.responses.select_related('question', 'service', 'visit')
-        self.visits = models.Visit.objects.filter(patient__clinic=obj)
+        self.visits = models.Visit.objects.filter(
+            patient__clinic=obj, survey_sent__isnull=False)
         self.initialize_data()
         self.generic_feedback = obj.genericfeedback_set.filter(display_on_dashboard=True)
         return obj
@@ -307,9 +281,9 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
-        num_registered = survey_utils.get_registration_count(self.object)
-        num_started = survey_utils.get_started_count(self.responses)
-        num_completed = survey_utils.get_completion_count(self.responses)
+        num_registered = self.visits.count()
+        num_started = self.visits.filter(survey_started=True).count()
+        num_completed = self.visits.filter(survey_completed=True).count()
 
         if num_registered:
             percent_started = make_percentage(num_started, num_registered)
