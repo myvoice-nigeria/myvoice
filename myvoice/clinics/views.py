@@ -8,7 +8,6 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
-from django.db.models.aggregates import Max, Min
 from django.core.serializers.json import DjangoJSONEncoder
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
@@ -447,17 +446,6 @@ class RegionReport(ReportMixin, DetailView):
         else:
             survey_percent = None
         return survey_percent, survey_started
-
-    #def get_clinic_indices(self, clinic):
-    #    """Get % and count of positive responses for each
-    #    required question."""
-    #    responses = SurveyQuestionResponse.objects.filter(
-    #        clinic=clinic,
-    #        question__in=self.questions)
-    #    target_questions = self.questions.exclude(label='Wait Time')
-
-    #    for result in self.get_indices(target_questions, responses):
-    #        yield result
 
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
