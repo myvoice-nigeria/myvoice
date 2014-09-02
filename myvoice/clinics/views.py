@@ -390,10 +390,6 @@ class RegionReport(ReportMixin, DetailView):
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(
                 visit__visit_time__range=(self.start_date, self.end_date))
-        else:
-            self.start_date = self.responses.aggregate(min_date=Min('datetime'))['min_date']
-            self.end_date = self.responses.aggregate(max_date=Max('datetime'))['max_date']
-        # self.calculate_weeks_ranges()
         self.responses = self.responses.select_related('question', 'service', 'visit')
         self.initialize_data()
         return obj
@@ -489,7 +485,9 @@ class RegionReport(ReportMixin, DetailView):
             clinic_data.append(("Quality", None, 0))
             clinic_data.append(("Quantity", None, 0))
 
-            for index in self.get_clinic_indices(clinic):
+            # Indices for each question
+            target_questions = self.questions.exclude(label='Wait Time')
+            for index in self.get_indices(target_questions, clinic_responses):
                 clinic_data.append(index)
 
             # Wait Time

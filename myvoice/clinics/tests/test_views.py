@@ -744,7 +744,7 @@ class TestRegionReportView(TestCase):
         self.region = factories.Region.create(pk=599, name='Wamba', type='lga', boundary=geom)
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
-        open_f = factories.SurveyQuestion.create(
+        self.open = factories.SurveyQuestion.create(
             label='Open Facility',
             survey=self.survey,
             categories="Open\nClosed",
@@ -796,7 +796,7 @@ class TestRegionReportView(TestCase):
         )
 
         factories.SurveyQuestionResponse.create(
-            question=open_f,
+            question=self.open,
             datetime=timezone.now(),
             visit=self.v1,
             clinic=self.clinic, response='Open')
@@ -1019,7 +1019,10 @@ class TestRegionReportView(TestCase):
 
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        indices = [i for i in report.get_clinic_indices(self.clinic)]
+        responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
+        target_questions = survey_models.SurveyQuestion.objects.filter(
+            pk__in=[self.respect.id, self.clean.id, self.fair.id, self.open.id])
+        indices = [i for i in report.get_indices(target_questions, responses)]
         self.assertEqual(4, len(indices))
 
         self.assertEqual(('Open Facility', '100.0%', 1), indices[0])
