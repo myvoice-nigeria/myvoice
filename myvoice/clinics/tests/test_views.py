@@ -1047,7 +1047,8 @@ class TestRegionReportView(TestCase):
             clinic=self.clinic, response='1-2 hours')
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.get_object()
-        mode, mode_len = report.get_wait_mode(self.clinic)
+        responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
+        mode, mode_len = report.get_wait_mode(responses)
 
         self.assertEqual('<1 hour', mode)
         self.assertEqual(2, mode_len)

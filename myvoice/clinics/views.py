@@ -86,14 +86,6 @@ class ClinicReportSelectClinic(FormView):
 
 class ReportMixin(object):
 
-    def _check_assumptions(self):
-        """Fail fast if our hard-coded assumpions are not met."""
-        for label in ['Open Facility', 'Respectful Staff Treatment',
-                      'Clean Hospital Materials', 'Charged Fairly',
-                      'Wait Time']:
-            if label not in self.questions:
-                raise Exception("Expecting question with label " + label)
-
     def get_survey_questions(self, start_date=None, end_date=None):
         if not start_date:
             start_date = get_week_start(timezone.now())
@@ -108,40 +100,46 @@ class ReportMixin(object):
         """Called by get_object to initialize state information."""
         self.survey = Survey.objects.get(role=Survey.PATIENT_FEEDBACK)
         self.questions = self.get_survey_questions()
-        # self.questions = self.survey.surveyquestion_set.all()
-        # self.questions = dict([(q.label, q) for q in self.questions])
-        # self._check_assumptions()
+
+    def get_wait_mode(self, responses):
+        """Get most frequent wait time and the count for that wait time."""
+        responses = responses.filter(
+            question__label='Wait Time').values_list('response', flat=True)
+        categories = SurveyQuestion.objects.get(label='Wait Time').get_categories()
+        mode = survey_utils.get_mode(responses, categories)
+        len_mode = len([i for i in responses if i == mode])
+        return mode, len_mode
+
+    def get_indices(self, target_questions, responses):
+        """Get % and count of positive responses per question."""
+        for question in target_questions:
+            total_resp = responses.filter(question=question).count()
+            if total_resp:
+                positive = responses.filter(
+                    question=question, positive_response=True).count()
+                percent = make_percentage(positive, total_resp)
+                yield (question.label, '{}%'.format(percent), positive)
+            else:
+                yield (question.label, None, 0)
 
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
+
         responses = self.responses.exclude(service=None)
-        by_service = survey_utils.group_responses(responses, 'service.id', 'service')
-        for service, service_responses in by_service:
-            by_question = survey_utils.group_responses(service_responses, 'question.label')
-            responses_by_question = dict(by_question)
+        target_questions = self.questions.exclude(label='Wait Time')
+
+        services = models.Service.objects.all()
+        for service in services:
             service_data = []
-            for label in self.questions:
-                if label in responses_by_question:
-                    question = self.questions[label]
-                    question_responses = responses_by_question[label]
-                    total_responses = len(question_responses)
-                    answers = [response.response for response in question_responses]
-                    percentage = survey_utils.analyze(answers, question.primary_answer)
-                    service_data.append([label.replace(" ", "_"),
-                                        '{}%'.format(percentage), total_responses])
-                else:
-                    service_data.append([None, None, 0])
-            # FIXME: There should not be this hard-coded reference
-            if 'Wait Time' in responses_by_question:
-                wait_times = [r.response for r in responses_by_question['Wait Time']]
+            service_responses = responses.filter(service=service)
+            for result in self.get_indices(target_questions, service_responses):
+                service_data.append(result)
 
-                mode = survey_utils.get_mode(
-                    wait_times, self.questions.get(label='Wait Time').get_categories())
-                service_data.append((mode, len(wait_times)))
+            # Wait Time
+            mode, mode_len = self.get_wait_mode(service_responses)
+            service_data.append(('Wait Time', mode, mode_len))
 
-            else:
-                service_data.append([None, None, 0])
             data.append((service, service_data))
         return data
 
@@ -404,11 +402,22 @@ class RegionReport(ReportMixin, DetailView):
         kwargs['responses'] = self.responses
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
+        kwargs['service_labels'] = [i.label for i in self.questions]
+        kwargs['clinic_labels'] = self.get_clinic_labels()
         kwargs['min_date'] = self.start_date
         kwargs['max_date'] = self.end_date
         kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
         data = super(RegionReport, self).get_context_data(**kwargs)
         return data
+
+    def get_clinic_labels(self):
+        default_labels = [
+            'Feedback Participation',
+            'Patient Satisfaction',
+            'Quality (Score, Q1)',
+            'Quantity (Score, Q1)']
+        question_labels = [i.label for i in self.questions]
+        return default_labels + question_labels
 
     def get_satisfaction_counts(self, clinic):
         """Return satisfaction percentage and total of survey participants."""
@@ -429,9 +438,7 @@ class RegionReport(ReportMixin, DetailView):
         return 100 - make_percentage(unsatisfied, total), total-unsatisfied
 
     def get_feedback_participation(self, clinic):
-        """Return % of surveys responded to to total visits.
-
-        responses already grouped by question."""
+        """Return % of surveys responded to to total visits."""
         visits = models.Visit.objects.filter(
             patient__clinic=clinic, survey_sent__isnull=False)
         if self.curr_date:
@@ -453,37 +460,21 @@ class RegionReport(ReportMixin, DetailView):
             question__in=self.questions)
         target_questions = self.questions.exclude(label='Wait Time')
 
-        for question in target_questions:
-            total_resp = responses.filter(question=question).count()
-            if total_resp:
-                positive = responses.filter(
-                    question=question, positive_response=True).count()
-                percent = make_percentage(positive, total_resp)
-                yield (question.label, '{}%'.format(percent), positive)
-            else:
-                yield (question.label, None, 0)
-
-    def get_wait_mode(self, clinic):
-        """Get most frequent wait time and the count for that wait time."""
-        responses = SurveyQuestionResponse.objects.filter(
-            clinic=clinic,
-            question__label='Wait Time').values_list('response', flat=True)
-        categories = SurveyQuestion.objects.get(label='Wait Time').get_categories()
-        mode = survey_utils.get_mode(responses, categories)
-        len_mode = len([i for i in responses if i == mode])
-        return mode, len_mode
+        for result in self.get_indices(target_questions, responses):
+            yield result
 
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
         data = []
 
-        responses = self.responses.exclude(clinic=None, question__in=self.questions)
+        responses = self.responses.filter(question__in=self.questions)
         if self.start_date and self.end_date:
             responses = responses.filter(
                 visit__visit_time__range=(self.start_date, self.end_date))
 
         for clinic in models.Clinic.objects.all():
             clinic_data = []
+            clinic_responses = responses.filter(clinic=clinic)
             # Get feedback participation
             part_percent, part_total = self.get_feedback_participation(clinic)
             clinic_data.append(
@@ -502,7 +493,7 @@ class RegionReport(ReportMixin, DetailView):
                 clinic_data.append(index)
 
             # Wait Time
-            mode, mode_len = self.get_wait_mode(clinic)
+            mode, mode_len = self.get_wait_mode(clinic_responses)
             clinic_data.append(('Wait Time', mode, mode_len))
 
             data.append((clinic, clinic.name, clinic_data))
