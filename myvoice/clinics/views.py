@@ -233,7 +233,8 @@ class ClinicReport(ReportMixin, DetailView):
                 'data': week_data,
                 'patient_satisfaction': satis_percent,
                 'wait_time_mode': mode,
-                'survey_num': survey_num
+                'survey_num': survey_num,
+                'question_labels': [qtn.label.replace(' ', '\\n') for qtn in questions]
             })
         return data
 
