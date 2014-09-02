@@ -231,11 +231,9 @@
           <th class="special-th service-feedback-weeks">
             {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}
           </th>
-          <th>Open Facility</th>
-          <th>Respectful<br />Staff Treatment</th>
-          <th>Clean<br />Hospital Materials</th>
-          <th>Charged Fairly</th>
-          <th>Most Common<br />Wait Time (hrs)</th>
+          {% for label in question_labels %}
+            <th>{{ label }}</th>
+          {% endfor %}
         </tr>
       </thead>
       <tbody>

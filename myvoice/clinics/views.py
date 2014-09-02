@@ -281,6 +281,7 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
+        kwargs['question_labels'] = self.questions.values_list('label', flat=True)
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
         num_registered = self.visits.count()
         num_started = self.visits.filter(survey_started=True).count()
