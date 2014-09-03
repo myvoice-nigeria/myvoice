@@ -424,7 +424,7 @@ class RegionReport(ReportMixin, DetailView):
         kwargs['responses'] = self.responses
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
-        kwargs['service_labels'] = [i.label for i in self.questions]
+        kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
         kwargs['min_date'] = self.start_date
         kwargs['max_date'] = self.end_date
@@ -438,7 +438,7 @@ class RegionReport(ReportMixin, DetailView):
             'Patient Satisfaction',
             'Quality (Score, Q1)',
             'Quantity (Score, Q1)']
-        question_labels = [i.label for i in self.questions]
+        question_labels = [i.question_label for i in self.questions]
         return default_labels + question_labels
 
     def get_feedback_by_clinic(self):
