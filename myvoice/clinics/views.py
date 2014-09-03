@@ -106,6 +106,13 @@ class ReportMixin(object):
             start_date = get_week_start(timezone.now())
         if not end_date:
             end_date = get_week_end(timezone.now())
+
+        # Make sure start and end are dates not datetimes
+        # Note that end_date is going to be truncated
+        # (2014, 1, 12, 23, 59, 59, 999999) -> (2014, 1, 12)
+        # Because the input is (indirectly) got from get_week_ranges.
+        start_date = start_date.date()
+        end_date = end_date.date()
         qtns = SurveyQuestion.objects.exclude(start_date__gt=end_date).exclude(
             end_date__lt=start_date).filter(
             question_type=SurveyQuestion.MULTIPLE_CHOICE).order_by('report_order')

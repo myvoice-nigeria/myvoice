@@ -408,35 +408,35 @@ class TestFeedbackView(TestCase):
 class TestReportMixin(TestCase):
 
     def setUp(self):
-        survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
+        self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
         clinic = factories.Clinic.create(code=5)
 
         self.q1 = factories.SurveyQuestion.create(
             label='One',
-            survey=survey,
+            survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             start_date=timezone.make_aware(timezone.datetime(2014, 8, 30), timezone.utc),
             report_order=10)
         self.q2 = factories.SurveyQuestion.create(
             label='two',
-            survey=survey,
+            survey=self.survey,
             question_type=survey_models.SurveyQuestion.OPEN_ENDED,
             report_order=20)
         self.q3 = factories.SurveyQuestion.create(
             label='Three',
-            survey=survey,
+            survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             report_order=30)
         self.q4 = factories.SurveyQuestion.create(
             label='Four',
-            survey=survey,
+            survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             end_date=timezone.make_aware(timezone.datetime(2014, 8, 10), timezone.utc),
             report_order=40)
         self.q5 = factories.SurveyQuestion.create(
             label='Five',
-            survey=survey,
+            survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             start_date=timezone.now(),
             report_order=50)
@@ -507,13 +507,28 @@ class TestReportMixin(TestCase):
         SurveyQuestions are ordered by report_order.
         If no dates are passed, current week is used as default.
         """
+        from datetime import date
+        one = factories.SurveyQuestion.create(
+            label='another one',
+            survey=self.survey,
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            report_order=70,
+            start_date=date(2014, 8, 15))
+        two = factories.SurveyQuestion.create(
+            label='another two',
+            survey=self.survey,
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            report_order=80,
+            start_date=date(2014, 8, 21))
         mixin = clinics.ReportMixin()
         start_date = timezone.make_aware(timezone.datetime(2014, 8, 14), timezone.utc)
         end_date = timezone.make_aware(timezone.datetime(2014, 8, 21), timezone.utc)
         questions = mixin.get_survey_questions(start_date, end_date)
 
-        self.assertEqual(1, len(questions))
+        self.assertEqual(3, len(questions))
         self.assertEqual(self.q3, questions[0])
+        self.assertEqual(one, questions[1])
+        self.assertEqual(two, questions[2])
 
     def test_get_survey_questions_default_week(self):
         """Test that if no start_date is passed, the current week is used."""
