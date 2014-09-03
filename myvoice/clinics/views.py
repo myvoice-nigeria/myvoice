@@ -140,9 +140,9 @@ class ReportMixin(object):
                 positive = responses.filter(
                     question=question, positive_response=True).count()
                 percent = make_percentage(positive, total_resp)
-                yield (question.label, '{}%'.format(percent), positive)
+                yield (question.question_label, '{}%'.format(percent), positive)
             else:
-                yield (question.label, None, 0)
+                yield (question.question_label, None, 0)
 
     def get_satisfaction_counts(self, responses):
         """Return satisfaction percentage and total of survey participants."""
@@ -233,6 +233,7 @@ class ClinicReport(ReportMixin, DetailView):
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(week_responses)
+            labels = [qtn.question_label.replace(' ', '\\n') for qtn in questions]
 
             data.append({
                 'week_start': start_date,
@@ -241,7 +242,7 @@ class ClinicReport(ReportMixin, DetailView):
                 'patient_satisfaction': satis_percent,
                 'wait_time_mode': mode,
                 'survey_num': survey_num,
-                'question_labels': [qtn.label.replace(' ', '\\n') for qtn in questions]
+                'question_labels': labels
             })
         return data
 
@@ -288,7 +289,8 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
-        kwargs['question_labels'] = self.questions.values_list('label', flat=True)
+        question_labels = [qtn.question_label for qtn in self.questions]
+        kwargs['question_labels'] = question_labels
         kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
         num_registered = self.visits.count()
         num_started = self.visits.filter(survey_started=True).count()

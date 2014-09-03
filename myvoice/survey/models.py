@@ -138,6 +138,16 @@ class SurveyQuestion(models.Model):
         categories = self.get_categories()
         return categories[0] if categories else None
 
+    @property
+    def question_label(self):
+        """
+        What to show in the reports.
+        """
+        if self.display_label:
+            return self.display_label.name
+        else:
+            return self.label
+
 
 class SurveyQuestionResponse(models.Model):
     """An answer to a survey question."""
