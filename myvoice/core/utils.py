@@ -58,15 +58,9 @@ def daterange(start_date, end_date, n=1):
         yield start_date + datetime.timedelta(d)
 
 
-def get_date(the_date=""):
-    wat = gettz('WAT')
-    if the_date:
-        if type(the_date) is str or type(the_date) is unicode:
-            the_date = parse(the_date)
-        if the_date.tzinfo is None:
-            the_date = the_date.replace(tzinfo=wat)
-
-    return the_date
+def get_date(the_date):
+    if the_date and isinstance(the_date, basestring):
+        return timezone.make_aware(parse(the_date), timezone.utc)
 
 
 def calculate_weeks_ranges(start_date, end_date):
