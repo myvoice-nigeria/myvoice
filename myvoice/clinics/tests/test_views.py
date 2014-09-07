@@ -470,29 +470,29 @@ class TestReportMixin(TestCase):
         d2 = timezone.make_aware(timezone.datetime(2014, 9, 15), timezone.utc)
 
         mixin = clinics.ReportMixin()
-        week_ranges = mixin.get_week_ranges(d1, d2)
+        week_ranges = list(mixin.get_week_ranges(d1, d2))
 
         self.assertEqual(3, len(week_ranges))
         self.assertEqual(
-            [
+            (
                 timezone.make_aware(
                     timezone.datetime(2014, 9, 1, 0, 0, 0), timezone.utc),
                 timezone.make_aware(
-                    timezone.datetime(2014, 9, 7, 23, 59, 59, 999999), timezone.utc)],
+                    timezone.datetime(2014, 9, 7, 23, 59, 59, 999999), timezone.utc)),
             week_ranges[0])
         self.assertEqual(
-            [
+            (
                 timezone.make_aware(
                     timezone.datetime(2014, 9, 8, 0, 0, 0), timezone.utc),
                 timezone.make_aware(
-                    timezone.datetime(2014, 9, 14, 23, 59, 59, 999999), timezone.utc)],
+                    timezone.datetime(2014, 9, 14, 23, 59, 59, 999999), timezone.utc)),
             week_ranges[1])
         self.assertEqual(
-            [
+            (
                 timezone.make_aware(
                     timezone.datetime(2014, 9, 15, 0, 0, 0), timezone.utc),
                 timezone.make_aware(
-                    timezone.datetime(2014, 9, 21, 23, 59, 59, 999999), timezone.utc)],
+                    timezone.datetime(2014, 9, 21, 23, 59, 59, 999999), timezone.utc)),
             week_ranges[2])
 
     def test_get_survey_questions(self):

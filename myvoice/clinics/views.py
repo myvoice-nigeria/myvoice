@@ -1,4 +1,3 @@
-# from itertools import groupby
 import json
 from operator import attrgetter
 import logging
@@ -90,16 +89,12 @@ class ReportMixin(object):
         """
         Break a date range into a group of date ranges representing weeks.
         """
-        if not start_date or not end_date:
-            return []
-        week_ranges = []
         while start_date <= end_date:
             week_start = get_week_start(start_date)
             week_end = get_week_end(start_date)
-            week_ranges.append([week_start, week_end])
+            yield week_start, week_end
 
             start_date = week_end + timezone.timedelta(microseconds=1)
-        return week_ranges
 
     def get_survey_questions(self, start_date=None, end_date=None):
         if not start_date:
