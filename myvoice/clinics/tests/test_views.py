@@ -552,10 +552,6 @@ class TestReportMixin(TestCase):
         self.assertEqual(self.q3, questions[1])
         self.assertEqual(self.q4, questions[2])
 
-    def test_get_required_questions(self):
-        """Test that get_required_questions returns only required questions.
-        """
-
 
 class TestClinicReportView(TestCase):
 
@@ -779,6 +775,116 @@ class TestClinicReportView(TestCase):
         _dt3 = timezone.datetime(2014, 7, 28) - timezone.timedelta(microseconds=1)
         dt3 = timezone.make_aware(_dt3, timezone.utc)
         self.assertEqual(dt3, end)
+
+
+class TestClinicReportFilterByWeekView(TestCase):
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
+        self.clinic = factories.Clinic.create(code=1)
+        #self.service = factories.Service.create(code=5)
+        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
+
+        self.facility = factories.SurveyQuestion.create(
+            label='Open Facility',
+            survey=self.survey,
+            categories='Open\nClosed',
+            primary_answer='Open',
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            report_order=10)
+
+        self.respect = factories.SurveyQuestion.create(
+            label='Respectful Staff Treatment',
+            survey=self.survey,
+            categories='Yes\nNo',
+            primary_answer='Yes',
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            report_order=20)
+
+        # Unfortunately, 'Wait Time' is compulsory so far...
+        self.wait = factories.SurveyQuestion.create(
+            label='Wait Time',
+            survey=self.survey,
+            categories='<1 hour\n1-2 hours\n2-4 hours\n>4 hours',
+            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            report_order=30)
+
+    def make_request(self, data=None):
+        if data is None:
+            data = {}
+        url = '/report_filter_feedback_by_week/'
+        request = self.factory.get(url, data=data)
+        return clinics.ClinicReportFilterByWeek.as_view()(request)
+
+    def test_request_load(self):
+        data = {
+            'start_date': 'August 01, 2014',
+            'end_date': 'August 08, 2014',
+            'clinic_id': self.clinic.id}
+        response = self.make_request(data)
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_feedback_data(self):
+        service1 = factories.Service.create(code=1)
+        service2 = factories.Service.create(code=2)
+
+        v1 = factories.Visit.create(
+            service=service1,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
+            survey_sent=timezone.now(),
+            patient=factories.Patient.create(clinic=self.clinic, serial=221)
+        )
+        v2 = factories.Visit.create(
+            service=service2,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 8, 6), timezone.utc),
+            survey_sent=timezone.now(),
+            patient=factories.Patient.create(clinic=self.clinic, serial=111)
+        )
+
+        factories.SurveyQuestionResponse.create(
+            question=self.respect,
+            datetime=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
+            visit=v1,
+            clinic=self.clinic, response='Yes')
+
+        factories.SurveyQuestionResponse.create(
+            question=self.facility,
+            datetime=timezone.make_aware(timezone.datetime(2014, 8, 8), timezone.utc),
+            visit=v1,
+            clinic=self.clinic, response='Yes')
+
+        factories.SurveyQuestionResponse.create(
+            question=self.respect,
+            datetime=timezone.make_aware(timezone.datetime(2014, 8, 6), timezone.utc),
+            visit=v2,
+            clinic=self.clinic, response='Yes')
+
+        self.wait_response = factories.SurveyQuestionResponse.create(
+            question=self.wait,
+            datetime=timezone.make_aware(timezone.datetime(2014, 8, 3), timezone.utc),
+            visit=v2,
+            clinic=self.clinic, response='<1 hour')
+
+        start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        end_date = timezone.make_aware(timezone.datetime(2014, 8, 7), timezone.utc)
+        report = clinics.ClinicReportFilterByWeek()
+        data = report.get_feedback_data(start_date, end_date, self.clinic)
+        data_dict = dict([(i[0], i[1]) for i in data['fos']])
+
+        self.assertEqual(2, len(data['fos']))
+        self.assertEqual(
+            [
+                (u'Open Facility', '0.0%', 0),
+                (u'Respectful Staff Treatment', None, 0),
+                (u'Wait Time', None, 0)
+                ], data_dict[service1.name])
+        self.assertEqual(
+            [
+                (u'Open Facility', None, 0),
+                (u'Respectful Staff Treatment', '100.0%', 1),
+                (u'Wait Time', '<1 hour', 1)
+                ], data_dict[service2.name])
 
 
 class TestRegionReportView(TestCase):

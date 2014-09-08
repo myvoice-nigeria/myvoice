@@ -94,6 +94,8 @@ class ReportMixin(object):
             week_end = get_week_end(start_date)
             yield week_start, week_end
 
+            if not week_end:
+                break
             start_date = week_end + timezone.timedelta(microseconds=1)
 
     def get_survey_questions(self, start_date=None, end_date=None):
@@ -131,13 +133,11 @@ class ReportMixin(object):
         """Get % and count of positive responses per question."""
         for question in target_questions:
             total_resp = responses.filter(question=question).count()
-            if total_resp:
-                positive = responses.filter(
-                    question=question, positive_response=True).count()
-                percent = make_percentage(positive, total_resp)
-                yield (question.question_label, '{}%'.format(percent), positive)
-            else:
-                yield (question.question_label, None, 0)
+            positive = responses.filter(
+                question=question, positive_response=True).count()
+            percent = '{}%'.format(
+                make_percentage(positive, total_resp)) if total_resp else None
+            yield (question.question_label, percent, positive)
 
     def get_satisfaction_counts(self, responses):
         """Return satisfaction percentage and total of survey participants."""
@@ -311,37 +311,22 @@ class ClinicReport(ReportMixin, DetailView):
 
 class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
-    def get_variable(self, request, variable_name, ignore_value):
-        if request.GET.get(variable_name):
-            the_variable_data = request.GET[variable_name]
-            if str(the_variable_data) is str(ignore_value):
-                the_variable_data = ""
-        else:
-            the_variable_data = ""
-        return the_variable_data
+    def get_feedback_data(self, start_date, end_date, clinic):
+        report = ClinicReport()
+        report.object = clinic
 
-    def get(self, request):
-
-        # Get the variables from the ajax request
-        the_start_date = self.get_variable(request, "start_date", "Start Date")
-        the_end_date = self.get_variable(request, "end_date", "End Date")
-        the_clinic = self.get_variable(request, "clinic_id", "")
-
-        # Create an instance of a ClinicReport
-        c = ClinicReport()
-        c.object = models.Clinic.objects.get(id=the_clinic)
-        c.start_date = get_date(the_start_date)
-        c.end_date = get_date(the_end_date)
-        c.curr_date = c.end_date
+        report.start_date = start_date
+        report.end_date = end_date
+        report.curr_date = report.end_date
 
         # Calculate the Data for Feedback on Services (later summarized as 'fos')
-        c.responses = SurveyQuestionResponse.objects.filter(
-            clinic__id=c.object.id, datetime__gte=c.start_date,
-            datetime__lte=c.end_date+timedelta(1))
+        report.responses = SurveyQuestionResponse.objects.filter(
+            clinic__id=report.object.id, datetime__gte=report.start_date,
+            datetime__lte=report.end_date+timedelta(1))
 
-        c.questions = SurveyQuestion.objects.all()
-        c.questions = dict([(q.label, q) for q in c.questions])
-        fos = c.get_feedback_by_service()
+        #report.questions = SurveyQuestion.objects.all()
+        report.questions = self.get_survey_questions(start_date, end_date)
+        fos = report.get_feedback_by_service()
 
         fos_array = []
         for row in fos:
@@ -349,9 +334,10 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             fos_array.append(new_row)
 
         # Calculate the Survey Participation Data via week filter
-        num_registered = survey_utils.get_registration_count(c.object, c.start_date, c.end_date)
-        num_started = survey_utils.get_started_count(c.responses)
-        num_completed = survey_utils.get_completion_count(c.responses)
+        num_registered = survey_utils.get_registration_count(
+            report.object, report.start_date, report.end_date)
+        num_started = survey_utils.get_started_count(report.responses)
+        num_completed = survey_utils.get_completion_count(report.responses)
 
         if num_registered:
             percent_started = make_percentage(num_started, num_registered)
@@ -359,19 +345,38 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         else:
             percent_completed = None
             percent_started = None
+        return {
+            'num_registered': num_registered,
+            'num_started': num_started,
+            'perc_started': percent_started,
+            'num_completed': num_completed,
+            'perc_completed': percent_completed,
+            'fos': fos_array
+        }
+
+    def get(self, request, *args, **kwargs):
+
+        # Get the variables from the ajax request
+
+        _start_date = request.GET.get('start_date')
+        _end_date = request.GET.get('end_date')
+        clinic_id = request.GET.get('clinic_id')
+
+        if not all((_start_date, _end_date, clinic_id)):
+            return HttpResponse('')
+            #return super(ClinicReportFilterByWeek, self).get(request, *args, **kwargs)
+
+        start_date = get_date(_start_date)
+        end_date = get_date(_end_date)
+
+        # Create an instance of a ClinicReport
+        clinic = models.Clinic.objects.get(id=clinic_id)
 
         # Collect the Comments filtered by the weeks
-        # weeks_comments = c.get_detailed_comments(c.start_date, c.end_date)
+        clinic_data = self.get_feedback_data(start_date, end_date, clinic)
 
-        return HttpResponse(json.dumps({
-            "num_registered": num_registered,
-            "num_started": num_started,
-            "perc_started": percent_started,
-            "num_completed": num_completed,
-            "perc_completed": percent_completed,
-            "fos": fos_array},
-            cls=DjangoJSONEncoder),
-            content_type="text/json")
+        return HttpResponse(
+            json.dumps(clinic_data, cls=DjangoJSONEncoder), content_type='text/json')
 
 
 class RegionReport(ReportMixin, DetailView):
