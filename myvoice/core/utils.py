@@ -1,7 +1,7 @@
 from django.utils import timezone
 import datetime
 from dateutil.parser import parse
-from dateutil.tz import gettz
+# from dateutil.tz import gettz
 
 
 def get_week_start(date):
@@ -51,11 +51,6 @@ def extract_qset_data(qset, fld_names):
                 for fld_name in fld_names]
         out.append(line)
     return out
-
-
-def daterange(start_date, end_date, n=1):
-    for d in range(0, int((end_date - start_date).days), n):
-        yield start_date + datetime.timedelta(d)
 
 
 def get_date(the_date):
