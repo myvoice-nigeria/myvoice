@@ -4,6 +4,7 @@ from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 
+
 class Migration(DataMigration):
 
     def forwards(self, orm):
@@ -11,7 +12,10 @@ class Migration(DataMigration):
         # Note: Don't use "from appname.models import ModelName".
         # Use orm.ModelName to refer to models in this application,
         # and orm['appname.ModelName'] for models in other applications.
-        survey = orm.Survey.objects.all()[0]
+        try:
+            survey = orm.Survey.objects.all()[0]
+        except IndexError:
+            return
         display_label = orm.DisplayLabel.objects.create(name='Clean Hospital Materials')
         clean_question = orm.SurveyQuestion.objects.create(
             survey=survey,
@@ -22,16 +26,16 @@ class Migration(DataMigration):
             categories='Clean\nNot Clean',
             question='Was the hospital equipment clean?',
             report_order=30,
-            end_date=datetime.date(2014, 7, 24))
+            end_date=datetime.date(2014, 8, 24))
         treatment_question = orm.SurveyQuestion.objects.get(label='Clean Hospital Materials')
-        treatment_question.start_date = datetime.date(2014, 7, 25)
+        treatment_question.start_date = datetime.date(2014, 8, 25)
         treatment_question.report_order = 30
         treatment_question.save()
 
-        # Now point all treatment_question responses before 25/7/2014
+        # Now point all treatment_question responses before 25/8/2014
         # to clean_question.
         treatment_question.surveyquestionresponse_set.filter(
-            datetime__lt=datetime.date(2014, 7, 25)).update(question=clean_question)
+            datetime__lt=datetime.date(2014, 8, 25)).update(question=clean_question)
 
         # Update the report orders for the other required questions
         open_facility = orm.SurveyQuestion.objects.get(label='Open Facility')
@@ -53,6 +57,10 @@ class Migration(DataMigration):
     def backwards(self, orm):
         """Change report_order for all survey_questions to 0,
         change start and end dates to None, and remove clean_question"""
+        try:
+            orm.Survey.objects.all()[0]
+        except IndexError:
+            return
         clean_question = orm.SurveyQuestion.objects.get(label='Clean Hospital Materials-Old')
         treatment_question = orm.SurveyQuestion.objects.get(label='Clean Hospital Materials')
         clean_question.surveyquestionresponse_set.update(question=treatment_question)
