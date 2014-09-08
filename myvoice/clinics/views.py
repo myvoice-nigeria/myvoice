@@ -485,44 +485,42 @@ class RegionReport(ReportMixin, DetailView):
 
 class LGAReportFilterByService(View):
 
-    def get_variable(self, request, variable_name, ignore_value):
-        if request.GET.get(variable_name):
-            the_variable_data = request.GET[variable_name]
-            if str(the_variable_data) is str(ignore_value):
-                the_variable_data = ""
-        else:
-            the_variable_data = ""
-        return the_variable_data
+    def get_feedback_data(self, start_date, end_date):
+        report = ReportMixin()
+
+        # FIXME: Need to filtere by the lga name
+        report.responses = SurveyQuestionResponse.objects.filter(
+            visit__visit_time__range=(start_date, end_date))
+        report.initialize_data()
+
+        content = report.get_feedback_by_service()
+        results = []
+
+        # Convert the service objects to only names, plus ids for ajax
+        for service, result in content:
+            stats = []
+            counter = 0
+            for question, percent, count in result:
+                stats.append([question, percent, count])
+                counter += 1
+            obj = [service.id, service.name, stats]
+            results.append(obj)
+        return results
 
     def get(self, request):
 
-        # Get the variables
-        the_start_date = get_date(self.get_variable(request, "start_date", "Start Date"))
-        the_end_date = get_date(self.get_variable(request, "end_date", "End Date"))
+        _start_date = request.GET.get('start_date')
+        _end_date = request.GET.get('end_date')
 
-        r = ReportMixin()
-        r.initialize_data("")
-        r.responses = SurveyQuestionResponse.objects.filter(
-            visit__visit_time__range=(the_start_date, the_end_date))
-        results = []
-        content = r.get_feedback_by_service()
+        if not all((_start_date, _end_date)):
+            return HttpResponse('')
 
-        # Convert the Service Objects to only names, plus id's for ajax
-        for obj in content:
+        start_date = get_date(_start_date)
+        end_date = get_date(_end_date)
 
-            new_obj = []
-            counter = 0
-            for data in obj[1]:
-                try:
-                    new_obj.append([data[0], data[1], data[2]])
-                except:
-                    pass
-                counter += 1
+        feedback_data = self.get_feedback_data(start_date, end_date)
 
-            obj = [obj[0].id, obj[0].name, new_obj]
-            results.append(obj)
-
-        return HttpResponse(json.dumps(results), content_type="text/json")
+        return HttpResponse(json.dumps(feedback_data), content_type="text/json")
 
 
 class LGAReportFilterByClinic(View):
