@@ -324,7 +324,6 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             clinic__id=report.object.id, datetime__gte=report.start_date,
             datetime__lte=report.end_date+timedelta(1))
 
-        #report.questions = SurveyQuestion.objects.all()
         report.questions = self.get_survey_questions(start_date, end_date)
         fos = report.get_feedback_by_service()
 
@@ -364,7 +363,6 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
         if not all((_start_date, _end_date, clinic_id)):
             return HttpResponse('')
-            #return super(ClinicReportFilterByWeek, self).get(request, *args, **kwargs)
 
         start_date = get_date(_start_date)
         end_date = get_date(_end_date)

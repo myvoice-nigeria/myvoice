@@ -783,7 +783,6 @@ class TestClinicReportFilterByWeekView(TestCase):
         self.factory = RequestFactory()
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
         self.clinic = factories.Clinic.create(code=1)
-        #self.service = factories.Service.create(code=5)
         self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
 
         self.facility = factories.SurveyQuestion.create(

@@ -14,8 +14,6 @@ class TestUtils(TestCase):
 
     def setUp(self):
         self.dt = self.aware(timezone.datetime(2014, 7, 7))
-        #self.dt = timezone.make_aware(timezone.datetime(2014, 7, 7), timezone.utc)
-        #self.dt = datetime.datetime(2014, 7, 9)
 
     def test_get_week_start(self):
         """Test that it gets the start of the week."""
