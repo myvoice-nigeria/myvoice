@@ -49,7 +49,7 @@
 
     <p>Number of patients with this service who reported this feedback.</p>
 
-    <table class="table table-bordered table-striped">
+    <table class="table table-bordered table-striped web-only">
       <thead>
         <tr>
           <th class="special-th weeks_filter">Services {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
@@ -214,7 +214,7 @@
 <script>
 
  $(document).ready( function () {
-  
+
     $("#weeks_filter").change( function() {
       //console.log("Updating Feedback on Services Table");
       filter_feedback_on_services_table();
@@ -227,17 +227,19 @@
       });
     });
 });
-    
+
   function filter_feedback_on_services_table() {
-    
+
     // Completion Rate Table - Get Dates from Selected option.
     var start_date = $("#weeks_filter").val().split(" - ")[0];
     var end_date = $("#weeks_filter").val().split(" - ")[1];
 
     // Send dates via Ajax to our Filter and 
     $.get("/lga_filter_feedback_by_service", {'start_date':start_date, 'end_date':end_date}, function(data,status){
+            $('div#feedback-on-services > table.web-only').html(data);
+            return;
       $.each(data, function(num, results){
-      
+
         id = results[0];
         name = results[1];
         core_data = results[2];
@@ -246,7 +248,7 @@
           label = results2[0];
           perc = results2[1];
           num = results2[2];
-          
+
           $("tr#service"+id+" td."+label).text(perc + " ("+num+")");
         });
       });
@@ -254,12 +256,14 @@
   }
 
   function filter_feedback_on_clinics_table() {
-    
+
     // Completion Rate Table - Selects
     var start_date = $("#weeks_filter").val().split(" - ")[0];
     var end_date = $("#weeks_filter").val().split(" - ")[1];
 
     $.get("/lga_filter_feedback_by_clinic", {'start_date':start_date, 'end_date':end_date}, function(data, status){
+        $('div#feedback-facility > table.web-only').html(data);
+         return;
       $.each(data, function(num, results ){
         id = results[0];
         name = results[1];
@@ -269,7 +273,7 @@
           label = results2[0];
           perc = results2[1];
           num = results2[2];
-                  
+
           $("tr#clinic"+id+" td."+label).text(perc + "(" + num + ")");
         });
       });
