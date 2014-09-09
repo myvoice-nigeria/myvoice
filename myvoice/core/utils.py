@@ -3,6 +3,10 @@ import datetime
 from dateutil.parser import parse
 
 
+def hour_to_hr(txt):
+    return txt.replace('hour', 'hr')
+
+
 def get_week_start(date):
     """Returns midnight of the Monday prior to the given date."""
 

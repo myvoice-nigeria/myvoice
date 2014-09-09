@@ -880,7 +880,7 @@ class TestClinicReportFilterByWeek(TestCase):
             [
                 (u'Open Facility', None, 0),
                 (u'Respectful Staff Treatment', '100.0%', 1),
-                (u'Wait Time', '<1 hour', 1)
+                (u'Wait Time', '<1 hr', 1)
                 ], data_dict[service2.name])
 
 
@@ -1300,7 +1300,7 @@ class TestLGAReportFilterByService(TestCase):
             [
                 (u'Open Facility', '100.0%', 1),
                 (u'Respectful Staff Treatment', '100.0%', 1),
-                (u'Wait Time', u'<1 hour', 1)], data[1][1]
+                (u'Wait Time', u'<1 hr', 1)], data[1][1]
         )
 
 
@@ -1423,5 +1423,5 @@ class TestLGAReportFilterByClinic(TestCase):
                 (u'Quantity', None, 0),
                 (u'Open Facility', '100.0%', 1),
                 (u'Respectful Staff Treatment', '100.0%', 1),
-                (u'Wait Time', '<1 hour', 1)], data[1][2]
+                (u'Wait Time', '<1 hr', 1)], data[1][2]
         )

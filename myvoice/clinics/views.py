@@ -13,7 +13,7 @@ from django.template.loader import get_template
 from django.template.context import Context
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
-from myvoice.core.utils import get_date, calculate_weeks_ranges
+from myvoice.core.utils import get_date, calculate_weeks_ranges, hour_to_hr
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
@@ -23,10 +23,6 @@ from . import models
 from datetime import timedelta
 
 logger = logging.getLogger(__name__)
-
-
-def hour_to_hr(txt):
-    return txt.replace('hour', 'hr')
 
 
 class VisitView(View):
@@ -91,13 +87,13 @@ class ReportMixin(object):
         """
         Break a date range into a group of date ranges representing weeks.
         """
+        if not start_date or not end_date:
+            return
         while start_date <= end_date:
             week_start = get_week_start(start_date)
             week_end = get_week_end(start_date)
             yield week_start, week_end
 
-            if not week_end:
-                break
             start_date = week_end + timezone.timedelta(microseconds=1)
 
     def get_survey_questions(self, start_date=None, end_date=None):
@@ -179,6 +175,8 @@ class ReportMixin(object):
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(service_responses)
+            if mode:
+                mode = hour_to_hr(mode)
             service_data.append(('Wait Time', mode, mode_len))
 
             data.append((service, service_data))
@@ -230,6 +228,8 @@ class ClinicReport(ReportMixin, DetailView):
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(week_responses)
+            if mode:
+                mode = hour_to_hr(mode)
             labels = [qtn.question_label.replace(' ', '\\n') for qtn in questions]
 
             data.append({
@@ -462,6 +462,8 @@ class RegionReport(ReportMixin, DetailView):
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(clinic_responses)
+            if mode:
+                mode = hour_to_hr(mode)
             clinic_data.append(('Wait Time', mode, mode_len))
 
             data.append((clinic.id, clinic.name, clinic_data))
