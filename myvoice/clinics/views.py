@@ -110,7 +110,8 @@ class ReportMixin(object):
         end_date = end_date.date()
         qtns = SurveyQuestion.objects.exclude(start_date__gt=end_date).exclude(
             end_date__lt=end_date).filter(
-            question_type=SurveyQuestion.MULTIPLE_CHOICE).order_by('report_order')
+            question_type=SurveyQuestion.MULTIPLE_CHOICE).order_by(
+            'report_order').select_related('display_label')
         return qtns
 
     def initialize_data(self):
