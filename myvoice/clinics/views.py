@@ -9,6 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
+from django.template.loader import get_template
+from django.template.context import Context
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.core.utils import get_date, calculate_weeks_ranges
@@ -111,7 +113,7 @@ class ReportMixin(object):
         start_date = start_date.date()
         end_date = end_date.date()
         qtns = SurveyQuestion.objects.exclude(start_date__gt=end_date).exclude(
-            end_date__lt=start_date).filter(
+            end_date__lt=end_date).filter(
             question_type=SurveyQuestion.MULTIPLE_CHOICE).order_by('report_order')
         return qtns
 
@@ -146,7 +148,7 @@ class ReportMixin(object):
         unsatisfied = responses.exclude(positive_response=True).distinct('visit').count()
 
         if not total:
-            return 0, 0
+            return None, 0
 
         return 100 - make_percentage(unsatisfied, total), total-unsatisfied
 
@@ -388,28 +390,16 @@ class RegionReport(ReportMixin, DetailView):
         self.end_date = None
         self.weeks = None
 
-    def get(self, request, *args, **kwargs):
-        if 'day' in request.GET and 'month' in request.GET and 'year' in request.GET:
-            day = request.GET.get('day')
-            month = request.GET.get('month')
-            year = request.GET.get('year')
-            try:
-                self.curr_date = timezone.now().replace(
-                    year=int(year), month=int(month), day=int(day))
-            except (TypeError, ValueError):
-                pass
-        return super(RegionReport, self).get(request, *args, **kwargs)
-
-    def calculate_date_range(self):
-        try:
-            self.start_date = get_week_start(self.curr_date)
-            self.end_date = get_week_end(self.curr_date)
-        except (ValueError, AttributeError):
-            pass
+    #def calculate_date_range(self):
+    #    try:
+    #        self.start_date = get_week_start(self.curr_date)
+    #        self.end_date = get_week_end(self.curr_date)
+    #    except (ValueError, AttributeError):
+    #        pass
 
     def get_object(self, queryset=None):
         obj = super(RegionReport, self).get_object(queryset)
-        self.calculate_date_range()
+        #self.calculate_date_range()
         self.responses = SurveyQuestionResponse.objects.filter(clinic__lga__iexact=obj.name)
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(
@@ -457,13 +447,17 @@ class RegionReport(ReportMixin, DetailView):
             clinic_visits = visits.filter(patient__clinic=clinic)
             # Get feedback participation
             part_percent, part_total = self.get_feedback_participation(clinic_visits)
+            if part_percent is not None:
+                part_percent = '{}%'.format(part_percent)
             clinic_data.append(
-                ('Participation', '{}%'.format(part_percent), part_total))
+                ('Participation', part_percent, part_total))
 
             # Get patient satisfaction
             satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
+            if satis_percent is not None:
+                satis_percent = '{}%'.format(satis_percent)
             clinic_data.append(
-                ('Patient Satisfaction', '{}%'.format(satis_percent), satis_total))
+                ('Patient Satisfaction', satis_percent, satis_total))
 
             # Some dummy data
             clinic_data.append(("Quality", None, 0))
@@ -478,34 +472,20 @@ class RegionReport(ReportMixin, DetailView):
             mode, mode_len = self.get_wait_mode(clinic_responses)
             clinic_data.append(('Wait Time', mode, mode_len))
 
-            data.append((clinic, clinic.name, clinic_data))
+            data.append((clinic.id, clinic.name, clinic_data))
 
         return data
 
 
 class LGAReportFilterByService(View):
 
-    def get_feedback_data(self, start_date, end_date):
-        report = ReportMixin()
-
-        # FIXME: Need to filtere by the lga name
+    def get_feedback_data(self, report, start_date, end_date):
+        # FIXME: Need to filter by the lga
         report.responses = SurveyQuestionResponse.objects.filter(
             visit__visit_time__range=(start_date, end_date))
         report.initialize_data()
 
-        content = report.get_feedback_by_service()
-        results = []
-
-        # Convert the service objects to only names, plus ids for ajax
-        for service, result in content:
-            stats = []
-            counter = 0
-            for question, percent, count in result:
-                stats.append([question, percent, count])
-                counter += 1
-            obj = [service.id, service.name, stats]
-            results.append(obj)
-        return results
+        return report.get_feedback_by_service()
 
     def get(self, request):
 
@@ -518,41 +498,65 @@ class LGAReportFilterByService(View):
         start_date = get_date(_start_date)
         end_date = get_date(_end_date)
 
-        feedback_data = self.get_feedback_data(start_date, end_date)
+        report = ReportMixin()
 
-        return HttpResponse(json.dumps(feedback_data), content_type="text/json")
+        feedback_data = self.get_feedback_data(report, start_date, end_date)
+        questions = report.get_survey_questions(start_date, end_date)
+        data = {
+            'feedback_by_service': feedback_data,
+            'min_date': start_date,
+            'max_date': end_date,
+            'service_labels': [i.question_label for i in questions]
+        }
+
+        # Render template
+        tmpl = get_template('clinics/by_service.html')
+        cntxt = Context(data)
+        html = tmpl.render(cntxt)
+
+        return HttpResponse(html, content_type="text/html")
 
 
 class LGAReportFilterByClinic(View):
 
-    def get_variable(self, request, variable_name, ignore_value):
-        if request.GET.get(variable_name):
-            the_variable_data = request.GET[variable_name]
-            if str(the_variable_data) is str(ignore_value):
-                the_variable_data = ""
-        else:
-            the_variable_data = ""
-        return the_variable_data
+    def get_feedback_data(self, report, start_date, end_date):
+        report.start_date = start_date
+        report.end_date = end_date
+        report.responses = SurveyQuestionResponse.objects.filter(
+            visit__visit_time__range=(start_date, end_date))
+        report.initialize_data()
+        report.questions = report.get_survey_questions(start_date, end_date)
+
+        return report.get_feedback_by_clinic()
 
     def get(self, request):
 
         # Get the variables
-        the_start_date = self.get_variable(request, "start_date", "Start Date")
-        the_end_date = self.get_variable(request, "end_date", "End Date")
+        _start_date = request.GET.get('start_date')
+        _end_date = request.GET.get('end_date')
 
-        r = RegionReport()                  # Create an instance of Report
+        if not all((_start_date, _end_date)):
+            return HttpResponse('')
 
-        r.start_date = get_date(the_start_date)
-        r.end_date = get_date(the_end_date)
-        r.curr_date = r.end_date
+        start_date = get_date(_start_date)
+        end_date = get_date(_end_date)
 
-        r.calculate_date_range()
-        r.initialize_data("")
-        r.responses = SurveyQuestionResponse.objects.all()
+        report = RegionReport()
 
-        content = r.get_feedback_by_clinic()
+        feedback_data = self.get_feedback_data(report, start_date, end_date)
+        data = {
+            'feedback_by_clinic': feedback_data,
+            'min_date': start_date,
+            'max_date': end_date,
+            'clinic_labels': report.get_clinic_labels()
+        }
 
-        return HttpResponse(json.dumps(content), content_type="text/json")
+        # Render template
+        tmpl = get_template('clinics/by_clinic.html')
+        cntxt = Context(data)
+        html = tmpl.render(cntxt)
+
+        return HttpResponse(html, content_type="text/html")
 
 
 class FeedbackView(View):
