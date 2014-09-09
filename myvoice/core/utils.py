@@ -1,7 +1,6 @@
 from django.utils import timezone
 import datetime
 from dateutil.parser import parse
-# from dateutil.tz import gettz
 
 
 def get_week_start(date):
