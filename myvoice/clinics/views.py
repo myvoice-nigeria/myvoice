@@ -223,7 +223,7 @@ class ClinicReport(ReportMixin, DetailView):
             questions = self.get_survey_questions(start_date, end_date).exclude(
                 label='Wait Time')
             for label, perc, tot in self.get_indices(questions, week_responses):
-                # Get rid of percent sign (need to fix)
+                # FIXME: Get rid of percent sign (need to fix)
                 if perc:
                     perc = perc.replace('%', '')
                 week_data.append((perc, tot))
@@ -390,16 +390,8 @@ class RegionReport(ReportMixin, DetailView):
         self.end_date = None
         self.weeks = None
 
-    #def calculate_date_range(self):
-    #    try:
-    #        self.start_date = get_week_start(self.curr_date)
-    #        self.end_date = get_week_end(self.curr_date)
-    #    except (ValueError, AttributeError):
-    #        pass
-
     def get_object(self, queryset=None):
         obj = super(RegionReport, self).get_object(queryset)
-        #self.calculate_date_range()
         self.responses = SurveyQuestionResponse.objects.filter(clinic__lga__iexact=obj.name)
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(

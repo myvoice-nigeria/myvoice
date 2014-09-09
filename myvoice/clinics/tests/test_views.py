@@ -2,7 +2,6 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone
 from django.contrib.gis.geos import GEOSGeometry
-from django.test.client import Client
 
 import json
 
