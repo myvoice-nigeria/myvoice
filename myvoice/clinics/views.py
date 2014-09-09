@@ -131,9 +131,9 @@ class ReportMixin(object):
     def get_indices(self, target_questions, responses):
         """Get % and count of positive responses per question."""
         for question in target_questions:
-            total_resp = responses.filter(question=question).count()
-            positive = responses.filter(
-                question=question, positive_response=True).count()
+            question_responses = [r for r in responses if r.question_id == question.pk]
+            total_resp = len(question_responses)
+            positive = len([r for r in question_responses if r.positive_response])
             percent = '{}%'.format(
                 make_percentage(positive, total_resp)) if total_resp else None
             yield (question.question_label, percent, positive)
