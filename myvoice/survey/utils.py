@@ -31,7 +31,7 @@ def get_mode(answers, acceptable_answers=None):
         answers = [a for a in answers if a in acceptable_answers]
     if answers:
         mode = max(Counter(answers).iteritems(), key=itemgetter(1))[0]
-        return mode.replace('hour', 'hr')
+        return mode
     return None
 
 

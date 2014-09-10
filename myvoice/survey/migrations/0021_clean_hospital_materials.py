@@ -1,21 +1,73 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
+        "This assumes some of current data in production."
+        # Note: Don't use "from appname.models import ModelName".
+        # Use orm.ModelName to refer to models in this application,
+        # and orm['appname.ModelName'] for models in other applications.
+        try:
+            survey = orm.Survey.objects.all()[0]
+        except IndexError:
+            return
+        display_label = orm.DisplayLabel.objects.create(name='Clean Hospital Materials')
+        clean_question = orm.SurveyQuestion.objects.create(
+            survey=survey,
+            question_id='000',
+            question_type='multiple-choice',
+            label='Clean Hospital Materials-Old',
+            display_label=display_label,
+            categories='Clean\nNot Clean',
+            question='Was the hospital equipment clean?',
+            report_order=30,
+            end_date=datetime.date(2014, 8, 24))
+        treatment_question = orm.SurveyQuestion.objects.get(label='Clean Hospital Materials')
+        treatment_question.start_date = datetime.date(2014, 8, 25)
+        treatment_question.report_order = 30
+        treatment_question.save()
 
-        # Changing field 'GenericFeedback.message'
-        db.alter_column(u'clinics_genericfeedback', 'message', self.gf('django.db.models.fields.TextField')())
+        # Now point all treatment_question responses before 25/8/2014
+        # to clean_question.
+        treatment_question.surveyquestionresponse_set.filter(
+            datetime__lt=datetime.date(2014, 8, 25)).update(question=clean_question)
+
+        # Update the report orders for the other required questions
+        open_facility = orm.SurveyQuestion.objects.get(label='Open Facility')
+        open_facility.report_order = 10
+        open_facility.save()
+
+        respect = orm.SurveyQuestion.objects.get(label='Respectful Staff Treatment')
+        respect.report_order = 20
+        respect.save()
+
+        charge = orm.SurveyQuestion.objects.get(label='Charged Fairly')
+        charge.report_order = 40
+        charge.save()
+
+        wait = orm.SurveyQuestion.objects.get(label='Wait Time')
+        wait.report_order = 50
+        wait.save()
 
     def backwards(self, orm):
+        """Change report_order for all survey_questions to 0,
+        change start and end dates to None, and remove clean_question"""
+        try:
+            orm.Survey.objects.all()[0]
+        except IndexError:
+            return
+        clean_question = orm.SurveyQuestion.objects.get(label='Clean Hospital Materials-Old')
+        treatment_question = orm.SurveyQuestion.objects.get(label='Clean Hospital Materials')
+        clean_question.surveyquestionresponse_set.update(question=treatment_question)
+        clean_question.delete()
 
-        # Changing field 'GenericFeedback.message'
-        pass
+        # Update report orders, start and end dates to None
+        orm.SurveyQuestion.objects.update(report_order=0, start_date=None, end_date=None)
 
     models = {
         u'auth.group': {
@@ -75,15 +127,6 @@ class Migration(SchemaMigration):
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'year_started': ('django.db.models.fields.CharField', [], {'max_length': '4', 'blank': 'True'})
         },
-        u'clinics.genericfeedback': {
-            'Meta': {'object_name': 'GenericFeedback'},
-            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
-            'display_on_dashboard': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'message_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'sender': ('django.db.models.fields.CharField', [], {'max_length': '20'})
-        },
         u'clinics.patient': {
             'Meta': {'unique_together': "[('clinic', 'serial')]", 'object_name': 'Patient'},
             'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
@@ -91,15 +134,6 @@ class Migration(SchemaMigration):
             'mobile': ('django.db.models.fields.CharField', [], {'max_length': '11', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'serial': ('django.db.models.fields.PositiveIntegerField', [], {})
-        },
-        u'clinics.region': {
-            'Meta': {'unique_together': "(('external_id', 'type'),)", 'object_name': 'Region'},
-            'alternate_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'boundary': ('django.contrib.gis.db.models.fields.MultiPolygonField', [], {}),
-            'external_id': ('django.db.models.fields.IntegerField', [], {}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'type': ('django.db.models.fields.CharField', [], {'default': "'lga'", 'max_length': '16'})
         },
         u'clinics.service': {
             'Meta': {'object_name': 'Service'},
@@ -123,20 +157,6 @@ class Migration(SchemaMigration):
             'visit_time': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
             'welcome_sent': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'})
         },
-        u'clinics.visitregistrationerror': {
-            'Meta': {'object_name': 'VisitRegistrationError'},
-            'error_type': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'sender': ('django.db.models.fields.CharField', [], {'max_length': '20'})
-        },
-        u'clinics.visitregistrationerrorlog': {
-            'Meta': {'object_name': 'VisitRegistrationErrorLog'},
-            'error_type': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'message': ('django.db.models.fields.CharField', [], {'max_length': '160'}),
-            'message_date': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'sender': ('django.db.models.fields.CharField', [], {'max_length': '20'})
-        },
         u'contenttypes.contenttype': {
             'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
             'app_label': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
@@ -151,7 +171,52 @@ class Migration(SchemaMigration):
             'language': ('django.db.models.fields.CharField', [], {'max_length': '6', 'blank': 'True'}),
             'modified_on': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'})
+        },
+        u'survey.displaylabel': {
+            'Meta': {'object_name': 'DisplayLabel'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'})
+        },
+        u'survey.survey': {
+            'Meta': {'object_name': 'Survey'},
+            'active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'flow_id': ('django.db.models.fields.IntegerField', [], {'unique': 'True', 'max_length': '32'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'role': ('django.db.models.fields.CharField', [], {'max_length': '32', 'unique': 'True', 'null': 'True', 'blank': 'True'})
+        },
+        u'survey.surveyquestion': {
+            'Meta': {'unique_together': "[('survey', 'label')]", 'object_name': 'SurveyQuestion'},
+            'categories': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
+            'display_label': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['survey.DisplayLabel']", 'null': 'True', 'blank': 'True'}),
+            'end_date': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
+            'for_satisfaction': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'last_negative': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'last_required': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'question': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'question_id': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'question_type': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
+            'report_order': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'start_date': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
+            'survey': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['survey.Survey']"})
+        },
+        u'survey.surveyquestionresponse': {
+            'Meta': {'unique_together': "[('visit', 'question')]", 'object_name': 'SurveyQuestionResponse'},
+            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
+            'created': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'datetime': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
+            'display_on_dashboard': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'positive_response': ('django.db.models.fields.NullBooleanField', [], {'default': 'None', 'null': 'True', 'blank': 'True'}),
+            'question': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['survey.SurveyQuestion']"}),
+            'response': ('django.db.models.fields.TextField', [], {}),
+            'service': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Service']", 'null': 'True', 'blank': 'True'}),
+            'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'visit': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Visit']", 'null': 'True', 'blank': 'True'})
         }
     }
 
-    complete_apps = ['clinics']
+    complete_apps = ['survey']
+    symmetrical = True
