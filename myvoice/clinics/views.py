@@ -83,6 +83,16 @@ class ClinicReportSelectClinic(FormView):
 
 class ReportMixin(object):
 
+    def __init__(self, *args, **kwargs):
+        super(ReportMixin, self).__init__(*args, **kwargs)
+        self.wait_categories = None
+
+    def get_wait_categories(self):
+        if not self.wait_categories:
+            self.wait_categories = SurveyQuestion.objects.get(
+                label='Wait Time').get_categories()
+        return self.wait_categories
+
     def get_week_ranges(self, start_date, end_date):
         """
         Break a date range into a group of date ranges representing weeks.
@@ -123,7 +133,7 @@ class ReportMixin(object):
         """Get most frequent wait time and the count for that wait time."""
         responses = responses.filter(
             question__label='Wait Time').values_list('response', flat=True)
-        categories = SurveyQuestion.objects.get(label='Wait Time').get_categories()
+        categories = self.get_wait_categories()
         mode = survey_utils.get_mode(responses, categories)
         len_mode = len([i for i in responses if i == mode])
         return mode, len_mode
