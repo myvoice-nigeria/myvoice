@@ -1,7 +1,7 @@
     <table class="table table-bordered table-striped web-only">
       <thead>
         <tr>
-          <th class="special-th weeks_filter">Services {{ min_date|date:"b j, Y" }} - {{ max_date|date:"b j, Y" }}</th>
+          <th class="special-th weeks_filter">Services {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
           {% for heading in service_labels %}
             <th>{{ heading }}</th>
           {% endfor %}
