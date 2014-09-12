@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% load static from staticfiles %}
 
@@ -109,7 +110,15 @@
             {% if result == None %}
               <td class="{{label}}">N/A (0)</td>
             {% else %}
-              <td class="{{label}}">{{ result }} ({{ total_respondents }})</td>
+              {% if total_respondents %}
+                <td class="{{label}}">{{ result }} ({{ total_respondents }})</td>
+              {% else %}
+                {% if label == "Quality" %}
+                  <td class="{{label}}">{{ result }}</td>
+                {% else %}
+                  <td class="{{label}}">{{ result|intcomma }}</td>
+                {% endif %}
+              {% endif %}
             {% endif %}
             {% endfor %}
         </tr>

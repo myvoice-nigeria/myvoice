@@ -422,6 +422,19 @@ class RegionReport(ReportMixin, DetailView):
         question_labels = [i.question_label for i in self.questions]
         return default_labels + question_labels
 
+    def get_clinic_score(self, clinic, ref_date=None):
+        """Return quality and quantity scores for the clinic and quarter in which
+        ref_date is in."""
+        if not ref_date:
+            ref_date = timezone.datetime.now().date()
+        try:
+            score = models.ClinicScore.objects.get(
+                clinic=clinic, start_date__lte=ref_date, end_date__gte=ref_date)
+        except (models.ClinicScore.DoesNotExist, models.ClinicScore.MultipleObjectsReturned):
+            return None
+        else:
+            return score
+
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
         data = []
@@ -452,9 +465,18 @@ class RegionReport(ReportMixin, DetailView):
             clinic_data.append(
                 ('Patient Satisfaction', satis_percent, satis_total))
 
-            # Some dummy data
-            clinic_data.append(("Quality", None, 0))
-            clinic_data.append(("Quantity", None, 0))
+            # Quality and quantity scores
+            if self.start_date:
+                score_date = self.start_date
+            else:
+                score_date = None
+            score = self.get_clinic_score(clinic, score_date)
+            if not score:
+                clinic_data.append(("Quality", None, 0))
+                clinic_data.append(("Quantity", None, 0))
+            else:
+                clinic_data.append(("Quality", "{}%".format(score.quality), ""))
+                clinic_data.append(("Quantity", "{}".format(score.quantity), ""))
 
             # Indices for each question
             target_questions = self.questions.exclude(label='Wait Time')
