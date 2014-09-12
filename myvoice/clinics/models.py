@@ -198,3 +198,17 @@ class GenericFeedback(models.Model):
 
     def __unicode__(self):
         return self.sender
+
+
+class ClinicScore(models.Model):
+    """Keeps quality and quantity scores for clinics.
+
+    Changes every quarter."""
+    clinic = models.ForeignKey('Clinic')
+    quality = models.DecimalField(max_digits=5, decimal_places=2)
+    quantity = models.PositiveIntegerField()
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def __unicode__(self):
+        return unicode(self.clinic)

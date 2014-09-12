@@ -90,6 +90,16 @@ class GenericFeedback(factory.django.DjangoModelFactory):
     sender = factory.fuzzy.FuzzyText()
 
 
+class ClinicScore(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.ClinicScore
+
+    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
+    quality = factory.fuzzy.FuzzyDecimal(0.0, high=100.0)
+    quantity = factory.fuzzy.FuzzyInteger(0)
+    start_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
+    end_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
+
+
 class Survey(factory.django.DjangoModelFactory):
     FACTORY_FOR = survey.Survey
 
