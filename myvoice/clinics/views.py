@@ -390,14 +390,6 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         # Collect the Comments filtered by the weeks
         clinic_data = self.get_feedback_data(start_date, end_date, clinic)
 
-        # Render template
-
-        #tmpl = get_template('clinics/report_service.html')
-        #cntxt = Context(clinic_data)
-        #html = tmpl.render(cntxt)
-
-        #return HttpResponse(html, content_type='text/html')
-
         return HttpResponse(
             json.dumps(clinic_data, cls=DjangoJSONEncoder), content_type='text/json')
 
