@@ -156,7 +156,7 @@
       <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ANALYTICS</h2>
     </div>
     {% for week in feedback_by_week %}
-      <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F-j-Y" }}">
+      <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F j Y" }}">
         <div class="col-xs-12">
           <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}<br/>
             <span class="survey_num">
@@ -225,6 +225,7 @@
 
     <p>Number of patients with this service who reported this feedback.</p>
 
+    <div id="feedback-container">
     <table class="table table-bordered table-striped" id="feedback_on_services">
       <thead>
         <tr>
@@ -251,6 +252,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div><!-- / .container#feedback-on-services -->
 
   {% if detailed_comments %}
@@ -406,7 +408,6 @@
     $("#service-feedback-weeks").change( function() {
       
       // Update the Feedback on Services Table by Week
-      // console.log("Updating by Week");
       filter_feedback_by_week();
 
       // Update the Values within the Charts to the Select Value
@@ -445,6 +446,10 @@
       $("#perc_started").text("("+data.perc_started+"%)");
       $("#num_completed").text(data.num_completed);
       $("#perc_completed").text("("+data.perc_completed+"%)");
+
+      console.log(data);
+      $("#feedback-container").html(data.fos_html);
+      // return;
 
 
       // Update Feedback of Services Chart

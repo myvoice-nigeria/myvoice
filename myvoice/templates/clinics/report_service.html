@@ -1,0 +1,27 @@
+ <table class="table table-bordered table-striped" id="feedback_on_services">
+      <thead>
+        <tr>
+          <th class="special-th service-feedback-weeks">
+            {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}
+          </th>
+          {% for label in question_labels %}
+            <th>{{ label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for service, service_data in feedback_by_service %}
+          <tr id="service{{service.name}}">
+            <td>{{ service.name }}</td>
+            {% for label, result, total_respondents in service_data %}
+              {% if result == None %}
+                <td>N/A (0)</td>
+              {% else %}
+                <td class="label{{ forloop.counter }}">{{ result }} ({{ total_respondents }})</td>
+              {% endif %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>

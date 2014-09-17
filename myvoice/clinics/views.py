@@ -347,13 +347,27 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         else:
             percent_completed = None
             percent_started = None
+
+        # Render template for table
+        tmpl = get_template('clinics/report_service.html')
+        questions = report.get_survey_questions(start_date, end_date)
+        cntxt = Context(
+            {
+                'feedback_by_service': fos,
+                'question_labels': [qtn.question_label for qtn in questions],
+                'min_date': start_date,
+                'max_date': end_date
+            })
+        html = tmpl.render(cntxt)
+
         return {
             'num_registered': num_registered,
             'num_started': num_started,
             'perc_started': percent_started,
             'num_completed': num_completed,
             'perc_completed': percent_completed,
-            'fos': fos_array
+            'fos': fos_array,
+            'fos_html': html
         }
 
     def get(self, request, *args, **kwargs):
@@ -375,6 +389,14 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
         # Collect the Comments filtered by the weeks
         clinic_data = self.get_feedback_data(start_date, end_date, clinic)
+
+        # Render template
+
+        #tmpl = get_template('clinics/report_service.html')
+        #cntxt = Context(clinic_data)
+        #html = tmpl.render(cntxt)
+
+        #return HttpResponse(html, content_type='text/html')
 
         return HttpResponse(
             json.dumps(clinic_data, cls=DjangoJSONEncoder), content_type='text/json')
