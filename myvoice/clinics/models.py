@@ -151,6 +151,11 @@ class Visit(models.Model):
     def __unicode__(self):
         return unicode(self.patient)
 
+    class Meta:
+        permissions = (
+            ('readonly', 'Can Only Read Visits'),
+        )
+
 
 class VisitRegistrationError(models.Model):
     """Keeps current state of errors in Visit registration SMS.
