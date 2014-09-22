@@ -74,9 +74,14 @@ class GenericFeedbackAdmin(admin.ModelAdmin):
     list_display = ['sender', 'clinic', 'message', 'message_date']
 
 
+class ClinicScoreAdmin(admin.ModelAdmin):
+    list_display = ['clinic', 'quality', 'quantity', 'start_date', 'end_date']
+
+
 admin.site.register(models.Clinic, ClinicAdmin)
 admin.site.register(models.Region, RegionAdmin)
 admin.site.register(models.Patient, PatientAdmin)
 admin.site.register(models.Visit, VisitAdmin)
 admin.site.register(models.Service, ServiceAdmin)
 admin.site.register(models.GenericFeedback, GenericFeedbackAdmin)
+admin.site.register(models.ClinicScore, ClinicScoreAdmin)

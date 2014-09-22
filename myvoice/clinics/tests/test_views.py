@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.contrib.gis.geos import GEOSGeometry
 
 import json
+import decimal
 
 from myvoice.core.tests import factories
 
@@ -1201,6 +1202,97 @@ class TestRegionReportView(TestCase):
 
         self.assertEqual('<1 hour', mode)
         self.assertEqual(2, mode_len)
+
+    def test_get_clinic_score(self):
+        """Test that we can get quality and quantity scores."""
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=89.35,
+            quantity=5000,
+            start_date=timezone.datetime(2014, 7, 1),
+            end_date=timezone.datetime(2014, 9, 30))
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=70.50,
+            quantity=1200,
+            start_date=timezone.datetime(2014, 4, 1),
+            end_date=timezone.datetime(2014, 6, 30))
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+
+        d1 = timezone.datetime(2014, 5, 1)
+        d2 = timezone.datetime(2014, 8, 1)
+
+        score1 = report.get_clinic_score(self.clinic, d2)
+        self.assertEqual(score1.quality, decimal.Decimal('89.35'))
+        self.assertEqual(score1.quantity, 5000)
+
+        score2 = report.get_clinic_score(self.clinic, d1)
+        self.assertEqual(score2.quality, decimal.Decimal('70.50'))
+        self.assertEqual(score2.quantity, 1200)
+
+    def test_get_clinic_score_nodate(self):
+        """Test that current date is used as default ref_date."""
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=89.35,
+            quantity=5000,
+            start_date=timezone.datetime(2014, 7, 1),
+            end_date=timezone.now().date())
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+
+        score = report.get_clinic_score(self.clinic)
+        self.assertEqual(score.quality, decimal.Decimal('89.35'))
+        self.assertEqual(score.quantity, 5000)
+
+    def test_get_clinic_score_overlap(self):
+        """Test that when we have overlapping dates, return None as score."""
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=89.35,
+            quantity=5000,
+            start_date=timezone.datetime(2014, 7, 1),
+            end_date=timezone.datetime(2014, 9, 30))
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=70.50,
+            quantity=1200,
+            start_date=timezone.datetime(2014, 4, 1),
+            end_date=timezone.datetime(2014, 8, 30))
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+
+        dt = timezone.datetime(2014, 8, 20)
+
+        score1 = report.get_clinic_score(self.clinic, dt)
+        self.assertIsNone(score1)
+
+    def test_get_clinic_score_none(self):
+        """Test that when we have no scores for date, return None as score."""
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=89.35,
+            quantity=5000,
+            start_date=timezone.datetime(2014, 7, 1),
+            end_date=timezone.datetime(2014, 9, 30))
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=70.50,
+            quantity=1200,
+            start_date=timezone.datetime(2014, 4, 1),
+            end_date=timezone.datetime(2014, 8, 30))
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+
+        dt = timezone.datetime(2014, 1, 20)
+
+        score1 = report.get_clinic_score(self.clinic, dt)
+        self.assertIsNone(score1)
 
     def test_get_feedback_by_clinic(self):
         """Test get feedback by clinic."""
