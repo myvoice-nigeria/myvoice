@@ -64,6 +64,17 @@ class VisitAdmin(admin.ModelAdmin):
             writer.writerow(line)
         return response
 
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_superuser:
+            self.readonly_fields = ()
+            return True
+        elif request.user.has_perm('clinics.readonly'):
+            self.readonly_fields = [field.name for field in self.model._meta.fields
+                                    if not field.auto_created]
+            return True
+        else:
+            return False
+
 
 class ServiceAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'code']
