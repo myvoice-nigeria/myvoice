@@ -68,12 +68,12 @@
       <div class="date styled-select">
         <select id="service-feedback-weeks" dir="rtl">
             {% for week in weeks %}
-              {% if forloop.first %} 
+              {% if forloop.first %}
                 <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">All Weeks: {{ week.start|date:"M j" }} - {{ week.end|date:"M j, Y" }} </option>
               {% elif forloop.counter == 2 %}
                 <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">Current Week: {{ week.start|date:"M j" }} - {{ week.end|date:"M j, Y" }}</option>
               {% else %}
-                <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>            
+                <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>
               {% endif %}
             {% endfor %}
         </select>

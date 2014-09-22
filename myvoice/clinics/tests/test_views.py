@@ -494,6 +494,25 @@ class TestReportMixin(TestCase):
                     timezone.datetime(2014, 9, 21, 23, 59, 59, 999999), timezone.utc)),
             week_ranges[2])
 
+    def test_get_week_ranges_future(self):
+        """Test that if week_end is in the future,
+        we make week_end today and week_start 6 days ago."""
+        d1 = timezone.make_aware(timezone.datetime(2014, 9, 1), timezone.utc)
+        d2 = timezone.make_aware(timezone.datetime(2014, 9, 15), timezone.utc)
+        curr_dt = timezone.make_aware(timezone.datetime(2014, 9, 19), timezone.utc)
+
+        mixin = clinics.ReportMixin()
+        week_ranges = list(mixin.get_week_ranges(d1, d2, curr_dt))
+
+        self.assertEqual(3, len(week_ranges))
+        self.assertEqual(
+            (
+                timezone.make_aware(
+                    timezone.datetime(2014, 9, 13, 0, 0, 0), timezone.utc),
+                timezone.make_aware(
+                    timezone.datetime(2014, 9, 19, 23, 59, 59, 999999), timezone.utc)),
+            week_ranges[2])
+
     def test_get_survey_questions(self):
         """Test that get_survey_questions returns correct questions.
 

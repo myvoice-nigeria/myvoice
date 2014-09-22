@@ -71,8 +71,15 @@ def calculate_weeks_ranges(start_date, end_date):
     if not end_date:
         end_date = today
 
+    curr_week_start = get_week_start(today)
+    curr_week_end = get_week_end(today)
+    if curr_week_end > today:
+        date_diff = (curr_week_end.date() - today.date()).days
+        curr_week_start = curr_week_start - datetime.timedelta(date_diff)
+        curr_week_end = curr_week_end - datetime.timedelta(date_diff)
+
     week_list = [{"start": start_date, "end": end_date}]
-    week_list.append({"start": get_week_start(today), "end": get_week_end(today)})
+    week_list.append({"start": curr_week_start, "end": curr_week_end})
     start_date = get_week_start(start_date)
 
     next_monday = start_date

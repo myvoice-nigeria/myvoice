@@ -83,15 +83,28 @@ class ClinicReportSelectClinic(FormView):
 
 class ReportMixin(object):
 
-    def get_week_ranges(self, start_date, end_date):
+    def get_week_ranges(self, start_date, end_date, curr_date=None):
         """
         Break a date range into a group of date ranges representing weeks.
+
+        If end_date > today, use today as the end_date, and start_date as today-6
+        i.e. the last 7 days.
         """
+        if not curr_date:
+            curr_date = timezone.now()
+
         if not start_date or not end_date:
             return
         while start_date <= end_date:
             week_start = get_week_start(start_date)
             week_end = get_week_end(start_date)
+
+            # Check if week_end is greater than current date
+            if week_end > curr_date:
+                date_diff = (week_end.date() - curr_date.date()).days
+                week_start = week_start - timedelta(date_diff)
+                week_end = week_end - timedelta(date_diff)
+
             yield week_start, week_end
 
             start_date = week_end + timezone.timedelta(microseconds=1)
