@@ -732,9 +732,6 @@ class TestClinicReportView(TestCase):
         report.get_object()
         feedback = report.get_feedback_by_week()
 
-        # Basic checks
-        #self.assertEqual(2, len(feedback))
-
         # More checks
         self.assertEqual(2, feedback[0]['survey_num'])
         self.assertEqual(None, feedback[0]['patient_satisfaction'])
@@ -997,7 +994,6 @@ class TestRegionReportView(TestCase):
         report.request = request
         report.get(request)
 
-        #import pdb;pdb.set_trace()
         self.assertEqual(4, report.responses.count())
 
     def test_bad_date_from_request_params(self):
