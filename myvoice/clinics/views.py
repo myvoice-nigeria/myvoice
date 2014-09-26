@@ -251,7 +251,7 @@ class ClinicReport(ReportMixin, DetailView):
             return get_week_start(min_date), get_week_end(max_date)
         return None, None
 
-    def get_detailed_comments(self, start_date="", end_date=""):
+    def get_detailed_comments(self, start_date=None, end_date=None):
         """Combine open-ended survey comments with General Feedback."""
         open_ended_responses = self.responses.filter(
             question__question_type=SurveyQuestion.OPEN_ENDED)
