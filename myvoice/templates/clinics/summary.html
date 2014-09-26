@@ -27,12 +27,10 @@
       <h1>
       <div class="styled-select full-width">
         <select id="weeks_filter" dir="rtl" class="float-right">
-          {% for week in weeks %}
-            {% if forloop.first %} 
-              <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">All Weeks</option>
-            {% else %}
-              <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>            
-            {% endif %}
+            <option value="{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}">All Weeks: {{ min_date|date:"M j, Y" }} - {{ max_date|date:"M j, Y" }}</option>
+            <option value='{{ week_start|date:"F j, Y" }} - {{ week_end|date:"F j, Y" }}'> Current Week: {{ week_start|date:"M j, Y" }} - {{ week_end|date:"M j, Y" }}</option>
+          {% for start, end in week_ranges %}
+            <option value='{{ start|date:"F j, Y" }} - {{ end|date:"F j, Y" }}'>{{ start|date:"M j, Y" }} - {{ end|date:"M j, Y" }}</option>
           {% endfor %}
         </select>
       </div>

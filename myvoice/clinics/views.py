@@ -1,10 +1,9 @@
 import json
-from operator import attrgetter
 import logging
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from django.db.models.aggregates import Min, Max
+from django.db.models.aggregates import Min
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
@@ -13,7 +12,7 @@ from django.template.loader import get_template
 from django.template.context import Context
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
-from myvoice.core.utils import get_date, calculate_weeks_ranges, hour_to_hr
+from myvoice.core.utils import get_date, hour_to_hr
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
@@ -82,6 +81,16 @@ class ClinicReportSelectClinic(FormView):
 
 
 class ReportMixin(object):
+
+    def start_day(self, dt):
+        """Change time to midnight."""
+        return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    def get_current_week(self):
+        end_date = timezone.now()
+        start_date = end_date - timezone.timedelta(6)
+        start_date = self.start_day(start_date)
+        return start_date, end_date
 
     def get_week_ranges(self, start_date, end_date, curr_date=None):
         """
@@ -216,7 +225,7 @@ class ClinicReport(ReportMixin, DetailView):
 
         visits = self.visits.filter(survey_started=True)
         min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
-        max_date = self.responses.aggregate(Max('datetime'))['datetime__max']
+        max_date = timezone.now()
 
         week_ranges = self.get_week_ranges(min_date, max_date)
 
@@ -257,13 +266,6 @@ class ClinicReport(ReportMixin, DetailView):
             })
         return data
 
-    def get_date_range(self):
-        if self.responses:
-            min_date = min(self.responses, key=attrgetter('datetime')).datetime
-            max_date = max(self.responses, key=attrgetter('datetime')).datetime
-            return get_week_start(min_date), get_week_end(max_date)
-        return None, None
-
     def get_detailed_comments(self, start_date="", end_date=""):
         """Combine open-ended survey comments with General Feedback."""
         open_ended_responses = self.responses.filter(
@@ -302,7 +304,15 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         question_labels = [qtn.question_label for qtn in self.questions]
         kwargs['question_labels'] = question_labels
-        kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
+
+        if self.responses:
+            min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
+            kwargs['min_date'] = get_week_start(min_date)
+            kwargs['max_date'] = timezone.now()
+        else:
+            kwargs['min_date'] = None
+            kwargs['max_date'] = None
+
         num_registered = self.visits.count()
         num_started = self.visits.filter(survey_started=True).count()
         num_completed = self.visits.filter(survey_completed=True).count()
@@ -319,7 +329,11 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['percent_started'] = percent_started
         kwargs['num_completed'] = num_completed
         kwargs['percent_completed'] = percent_completed
-        kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
+
+        kwargs['week_ranges'] = [
+            (self.start_day(start), self.start_day(end)) for start, end in
+            self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
+        kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
 
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
@@ -434,9 +448,19 @@ class RegionReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
         kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
-        kwargs['min_date'] = self.start_date
-        kwargs['max_date'] = self.end_date
-        kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
+
+        if self.responses:
+            min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
+            kwargs['min_date'] = get_week_start(min_date)
+            kwargs['max_date'] = timezone.now()
+        else:
+            kwargs['min_date'] = None
+            kwargs['max_date'] = None
+
+        kwargs['week_ranges'] = [
+            (self.start_day(start), self.start_day(end)) for start, end in
+            self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
+        kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
         data = super(RegionReport, self).get_context_data(**kwargs)
         return data
 
