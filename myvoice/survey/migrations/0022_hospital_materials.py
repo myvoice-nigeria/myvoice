@@ -33,11 +33,8 @@ class Migration(DataMigration):
         treatment_question.save()
 
         # Now point all treatment_question responses before 25/8/2014 to clean_question
-        #import pdb;pdb.set_trace()
-        #treatment_question.surveyquestionresponse_set.filter(
-        #    datetime__lt=datetime.date(2014, 8, 25)).update(question=clean_question)
         treatment_question.surveyquestionresponse_set.filter(
-            datetime__lt=datetime.date(2014, 8, 25))
+            datetime__lt=datetime.date(2014, 8, 25)).update(question=clean_question)
 
     def backwards(self, orm):
         "Write your backwards methods here."
@@ -47,7 +44,6 @@ class Migration(DataMigration):
             return
         clean_question = orm.SurveyQuestion.objects.get(label='Hospital Materials-Old')
         treatment_question = orm.SurveyQuestion.objects.get(label='Hospital Materials')
-        #import pdb;pdb.set_trace()
         clean_question.surveyquestionresponse_set.update(
             question=treatment_question)
         treatment_question.start_date = None

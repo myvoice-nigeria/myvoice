@@ -280,6 +280,7 @@ class ClinicReport(ReportMixin, DetailView):
                         'response': feedback.message
                     })
 
+        #import pdb;pdb.set_trace()
         return sorted(comments, key=lambda item: (item['question'], item['datetime']))
 
     def get_context_data(self, **kwargs):
