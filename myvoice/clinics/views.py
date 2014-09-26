@@ -468,8 +468,8 @@ class RegionReport(ReportMixin, DetailView):
         default_labels = [
             'Feedback Participation',
             'Patient Satisfaction',
-            'Quality (Score, Q1)',
-            'Quantity (Score, Q1)']
+            'Quality - Q2 2014 (%)',
+            'Quantity - Q2 2014 (N)']
         question_labels = [i.question_label for i in self.questions]
         return default_labels + question_labels
 
