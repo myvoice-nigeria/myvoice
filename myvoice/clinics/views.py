@@ -262,7 +262,7 @@ class ClinicReport(ReportMixin, DetailView):
 
         comments = [
             {
-                'question': r.question.label,
+                'question': r.question.question_label,
                 'datetime': r.datetime,
                 'response': r.response,
             }
