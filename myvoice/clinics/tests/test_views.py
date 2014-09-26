@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.contrib.gis.geos import GEOSGeometry
 
 import json
+import decimal
 
 from myvoice.core.tests import factories
 
@@ -494,6 +495,25 @@ class TestReportMixin(TestCase):
                     timezone.datetime(2014, 9, 21, 23, 59, 59, 999999), timezone.utc)),
             week_ranges[2])
 
+    def test_get_week_ranges_future(self):
+        """Test that if week_end is in the future,
+        we make week_end today and week_start 6 days ago."""
+        d1 = timezone.make_aware(timezone.datetime(2014, 9, 1), timezone.utc)
+        d2 = timezone.make_aware(timezone.datetime(2014, 9, 15), timezone.utc)
+        curr_dt = timezone.make_aware(timezone.datetime(2014, 9, 19), timezone.utc)
+
+        mixin = clinics.ReportMixin()
+        week_ranges = list(mixin.get_week_ranges(d1, d2, curr_dt))
+
+        self.assertEqual(3, len(week_ranges))
+        self.assertEqual(
+            (
+                timezone.make_aware(
+                    timezone.datetime(2014, 9, 13, 0, 0, 0), timezone.utc),
+                timezone.make_aware(
+                    timezone.datetime(2014, 9, 19, 23, 59, 59, 999999), timezone.utc)),
+            week_ranges[2])
+
     def test_get_survey_questions(self):
         """Test that get_survey_questions returns correct questions.
 
@@ -712,9 +732,6 @@ class TestClinicReportView(TestCase):
         report.get_object()
         feedback = report.get_feedback_by_week()
 
-        # Basic checks
-        self.assertEqual(2, len(feedback))
-
         # More checks
         self.assertEqual(2, feedback[0]['survey_num'])
         self.assertEqual(None, feedback[0]['patient_satisfaction'])
@@ -753,26 +770,6 @@ class TestClinicReportView(TestCase):
         self.assertEqual(comments[0]['response'], 'Hello')
         self.assertEqual(comments[1]['question'], 'General Feedback')
         self.assertEqual(comments[1]['response'], 'Hello2')
-
-    def test_get_date_range(self):
-        dt1 = timezone.make_aware(timezone.datetime(2014, 7, 14), timezone.utc)
-        dt2 = timezone.make_aware(timezone.datetime(2014, 7, 21), timezone.utc)
-        factories.SurveyQuestionResponse(
-            question=self.questions[0],
-            visit=factories.Visit(patient__clinic=self.clinic, service__code=2),
-            datetime=dt1)
-        factories.SurveyQuestionResponse(
-            question=self.questions[0],
-            visit=factories.Visit(patient__clinic=self.clinic, service__code=3),
-            datetime=dt2)
-
-        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
-        report.get_object()
-        start, end = report.get_date_range()
-        self.assertEqual(dt1, start)
-        _dt3 = timezone.datetime(2014, 7, 28) - timezone.timedelta(microseconds=1)
-        dt3 = timezone.make_aware(_dt3, timezone.utc)
-        self.assertEqual(dt3, end)
 
 
 class TestClinicReportFilterByWeek(TestCase):
@@ -977,13 +974,30 @@ class TestRegionReportView(TestCase):
 
     def test_default_responses(self):
         """Test that without date in request params, all responses used."""
+        # Test that all responses are taken
+        dt = timezone.now().replace(year=2014, month=7, day=14, second=0, microsecond=0)
+        v2 = factories.Visit.create(
+            service=factories.Service.create(code=3),
+            visit_time=dt + timezone.timedelta(2),
+            survey_sent=dt + timezone.timedelta(2),
+            patient=factories.Patient.create(clinic=self.clinic, serial=115)
+        )
+        factories.SurveyQuestionResponse.create(
+            question=self.respect,
+            datetime=timezone.now(),
+            visit=v2,
+            clinic=self.clinic, response='No')
+
         url = '/reports/region/599/'
         request = self.factory.get(url)
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.request = request
         report.get(request)
 
-        # Test that all responses are taken
+        self.assertEqual(4, report.responses.count())
+
+    def test_bad_date_from_request_params(self):
+        """Test that if date values from request params are wrong, all responses taken."""
         dt = timezone.now().replace(year=2014, month=7, day=14, second=0, microsecond=0)
         v2 = factories.Visit.create(
             service=factories.Service.create(code=3),
@@ -997,30 +1011,12 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        self.assertEqual(4, report.responses.count())
-
-    def test_bad_date_from_request_params(self):
-        """Test that if date values from request params are wrong, all responses taken."""
         url = '/reports/region/599/?day=x&month=7&year=2014'
         request = self.factory.get(url)
         report = clinics.RegionReport(kwargs={'pk': self.region.pk})
         report.request = request
         report.get(request)
-        dt = timezone.now().replace(year=2014, month=7, day=14, second=0, microsecond=0)
         self.assertIsNone(report.curr_date)
-
-        # Test that all responses are taken
-        v2 = factories.Visit.create(
-            service=factories.Service.create(code=3),
-            visit_time=dt + timezone.timedelta(2),
-            survey_sent=dt + timezone.timedelta(2),
-            patient=factories.Patient.create(clinic=self.clinic, serial=115)
-        )
-        factories.SurveyQuestionResponse.create(
-            question=self.respect,
-            datetime=timezone.now(),
-            visit=v2,
-            clinic=self.clinic, response='No')
 
         self.assertEqual(4, report.responses.count())
 
@@ -1182,6 +1178,97 @@ class TestRegionReportView(TestCase):
 
         self.assertEqual('<1 hour', mode)
         self.assertEqual(2, mode_len)
+
+    def test_get_clinic_score(self):
+        """Test that we can get quality and quantity scores."""
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=89.35,
+            quantity=5000,
+            start_date=timezone.datetime(2014, 7, 1),
+            end_date=timezone.datetime(2014, 9, 30))
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=70.50,
+            quantity=1200,
+            start_date=timezone.datetime(2014, 4, 1),
+            end_date=timezone.datetime(2014, 6, 30))
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+
+        d1 = timezone.datetime(2014, 5, 1)
+        d2 = timezone.datetime(2014, 8, 1)
+
+        score1 = report.get_clinic_score(self.clinic, d2)
+        self.assertEqual(score1.quality, decimal.Decimal('89.35'))
+        self.assertEqual(score1.quantity, 5000)
+
+        score2 = report.get_clinic_score(self.clinic, d1)
+        self.assertEqual(score2.quality, decimal.Decimal('70.50'))
+        self.assertEqual(score2.quantity, 1200)
+
+    def test_get_clinic_score_nodate(self):
+        """Test that current date is used as default ref_date."""
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=89.35,
+            quantity=5000,
+            start_date=timezone.datetime(2014, 7, 1),
+            end_date=timezone.now().date())
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+
+        score = report.get_clinic_score(self.clinic)
+        self.assertEqual(score.quality, decimal.Decimal('89.35'))
+        self.assertEqual(score.quantity, 5000)
+
+    def test_get_clinic_score_overlap(self):
+        """Test that when we have overlapping dates, return None as score."""
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=89.35,
+            quantity=5000,
+            start_date=timezone.datetime(2014, 7, 1),
+            end_date=timezone.datetime(2014, 9, 30))
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=70.50,
+            quantity=1200,
+            start_date=timezone.datetime(2014, 4, 1),
+            end_date=timezone.datetime(2014, 8, 30))
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+
+        dt = timezone.datetime(2014, 8, 20)
+
+        score1 = report.get_clinic_score(self.clinic, dt)
+        self.assertIsNone(score1)
+
+    def test_get_clinic_score_none(self):
+        """Test that when we have no scores for date, return None as score."""
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=89.35,
+            quantity=5000,
+            start_date=timezone.datetime(2014, 7, 1),
+            end_date=timezone.datetime(2014, 9, 30))
+        factories.ClinicScore.create(
+            clinic=self.clinic,
+            quality=70.50,
+            quantity=1200,
+            start_date=timezone.datetime(2014, 4, 1),
+            end_date=timezone.datetime(2014, 8, 30))
+
+        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report.get_object()
+
+        dt = timezone.datetime(2014, 1, 20)
+
+        score1 = report.get_clinic_score(self.clinic, dt)
+        self.assertIsNone(score1)
 
     def test_get_feedback_by_clinic(self):
         """Test get feedback by clinic."""

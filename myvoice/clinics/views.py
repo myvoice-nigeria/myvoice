@@ -1,10 +1,9 @@
 import json
-from operator import attrgetter
 import logging
 
 from django.http import HttpResponse
 from django.shortcuts import redirect
-from django.db.models.aggregates import Min, Max
+from django.db.models.aggregates import Min
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView
 from django.utils import timezone
@@ -13,7 +12,7 @@ from django.template.loader import get_template
 from django.template.context import Context
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage
-from myvoice.core.utils import get_date, calculate_weeks_ranges, hour_to_hr
+from myvoice.core.utils import get_date, hour_to_hr
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 
@@ -83,15 +82,38 @@ class ClinicReportSelectClinic(FormView):
 
 class ReportMixin(object):
 
-    def get_week_ranges(self, start_date, end_date):
+    def start_day(self, dt):
+        """Change time to midnight."""
+        return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    def get_current_week(self):
+        end_date = timezone.now()
+        start_date = end_date - timezone.timedelta(6)
+        start_date = self.start_day(start_date)
+        return start_date, end_date
+
+    def get_week_ranges(self, start_date, end_date, curr_date=None):
         """
         Break a date range into a group of date ranges representing weeks.
+
+        If end_date > today, use today as the end_date, and start_date as today-6
+        i.e. the last 7 days.
         """
+        if not curr_date:
+            curr_date = timezone.now()
+
         if not start_date or not end_date:
             return
         while start_date <= end_date:
             week_start = get_week_start(start_date)
             week_end = get_week_end(start_date)
+
+            # Check if week_end is greater than current date
+            if week_end > curr_date:
+                date_diff = (week_end.date() - curr_date.date()).days
+                week_start = week_start - timedelta(date_diff)
+                week_end = week_end - timedelta(date_diff)
+
             yield week_start, week_end
 
             start_date = week_end + timezone.timedelta(microseconds=1)
@@ -203,7 +225,7 @@ class ClinicReport(ReportMixin, DetailView):
 
         visits = self.visits.filter(survey_started=True)
         min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
-        max_date = self.responses.aggregate(Max('datetime'))['datetime__max']
+        max_date = timezone.now()
 
         week_ranges = self.get_week_ranges(min_date, max_date)
 
@@ -244,13 +266,6 @@ class ClinicReport(ReportMixin, DetailView):
             })
         return data
 
-    def get_date_range(self):
-        if self.responses:
-            min_date = min(self.responses, key=attrgetter('datetime')).datetime
-            max_date = max(self.responses, key=attrgetter('datetime')).datetime
-            return get_week_start(min_date), get_week_end(max_date)
-        return None, None
-
     def get_detailed_comments(self, start_date=None, end_date=None):
         """Combine open-ended survey comments with General Feedback."""
         open_ended_responses = self.responses.filter(
@@ -280,7 +295,6 @@ class ClinicReport(ReportMixin, DetailView):
                         'response': feedback.message
                     })
 
-        #import pdb;pdb.set_trace()
         return sorted(comments, key=lambda item: (item['question'], item['datetime']))
 
     def get_context_data(self, **kwargs):
@@ -290,7 +304,15 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
         question_labels = [qtn.question_label for qtn in self.questions]
         kwargs['question_labels'] = question_labels
-        kwargs['min_date'], kwargs['max_date'] = self.get_date_range()
+
+        if self.responses:
+            min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
+            kwargs['min_date'] = get_week_start(min_date)
+            kwargs['max_date'] = timezone.now()
+        else:
+            kwargs['min_date'] = None
+            kwargs['max_date'] = None
+
         num_registered = self.visits.count()
         num_started = self.visits.filter(survey_started=True).count()
         num_completed = self.visits.filter(survey_completed=True).count()
@@ -307,7 +329,11 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['percent_started'] = percent_started
         kwargs['num_completed'] = num_completed
         kwargs['percent_completed'] = percent_completed
-        kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
+
+        kwargs['week_ranges'] = [
+            (self.start_day(start), self.start_day(end)) for start, end in
+            self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
+        kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
 
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
@@ -348,13 +374,27 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         else:
             percent_completed = None
             percent_started = None
+
+        # Render template for table
+        tmpl = get_template('clinics/report_service.html')
+        questions = report.get_survey_questions(start_date, end_date)
+        cntxt = Context(
+            {
+                'feedback_by_service': fos,
+                'question_labels': [qtn.question_label for qtn in questions],
+                'min_date': start_date,
+                'max_date': end_date
+            })
+        html = tmpl.render(cntxt)
+
         return {
             'num_registered': num_registered,
             'num_started': num_started,
             'perc_started': percent_started,
             'num_completed': num_completed,
             'perc_completed': percent_completed,
-            'fos': fos_array
+            'fos': fos_array,
+            'fos_html': html
         }
 
     def get(self, request, *args, **kwargs):
@@ -408,9 +448,19 @@ class RegionReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
         kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
-        kwargs['min_date'] = self.start_date
-        kwargs['max_date'] = self.end_date
-        kwargs['weeks'] = calculate_weeks_ranges(kwargs['min_date'], kwargs['max_date'])
+
+        if self.responses:
+            min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
+            kwargs['min_date'] = get_week_start(min_date)
+            kwargs['max_date'] = timezone.now()
+        else:
+            kwargs['min_date'] = None
+            kwargs['max_date'] = None
+
+        kwargs['week_ranges'] = [
+            (self.start_day(start), self.start_day(end)) for start, end in
+            self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
+        kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
         data = super(RegionReport, self).get_context_data(**kwargs)
         return data
 
@@ -418,10 +468,23 @@ class RegionReport(ReportMixin, DetailView):
         default_labels = [
             'Feedback Participation',
             'Patient Satisfaction',
-            'Quality (Score, Q1)',
-            'Quantity (Score, Q1)']
+            'Quality - Q2 2014 (%)',
+            'Quantity - Q2 2014 (N)']
         question_labels = [i.question_label for i in self.questions]
         return default_labels + question_labels
+
+    def get_clinic_score(self, clinic, ref_date=None):
+        """Return quality and quantity scores for the clinic and quarter in which
+        ref_date is in."""
+        if not ref_date:
+            ref_date = timezone.datetime.now().date()
+        try:
+            score = models.ClinicScore.objects.get(
+                clinic=clinic, start_date__lte=ref_date, end_date__gte=ref_date)
+        except (models.ClinicScore.DoesNotExist, models.ClinicScore.MultipleObjectsReturned):
+            return None
+        else:
+            return score
 
     def get_feedback_by_clinic(self):
         """Return analyzed feedback by clinic then question."""
@@ -453,9 +516,18 @@ class RegionReport(ReportMixin, DetailView):
             clinic_data.append(
                 ('Patient Satisfaction', satis_percent, satis_total))
 
-            # Some dummy data
-            clinic_data.append(("Quality", None, 0))
-            clinic_data.append(("Quantity", None, 0))
+            # Quality and quantity scores
+            if self.start_date:
+                score_date = self.start_date
+            else:
+                score_date = None
+            score = self.get_clinic_score(clinic, score_date)
+            if not score:
+                clinic_data.append(("Quality", None, 0))
+                clinic_data.append(("Quantity", None, 0))
+            else:
+                clinic_data.append(("Quality", "{}%".format(score.quality), ""))
+                clinic_data.append(("Quantity", "{}".format(score.quantity), ""))
 
             # Indices for each question
             target_questions = self.questions.exclude(label='Wait Time')

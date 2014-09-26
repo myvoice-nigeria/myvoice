@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% load static from staticfiles %}
 
@@ -26,12 +27,10 @@
       <h1>
       <div class="styled-select full-width">
         <select id="weeks_filter" dir="rtl" class="float-right">
-          {% for week in weeks %}
-            {% if forloop.first %} 
-              <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">All Weeks</option>
-            {% else %}
-              <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>            
-            {% endif %}
+            <option value="{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}">All Weeks: {{ min_date|date:"M j, Y" }} - {{ max_date|date:"M j, Y" }}</option>
+            <option value='{{ week_start|date:"F j, Y" }} - {{ week_end|date:"F j, Y" }}'> Current Week: {{ week_start|date:"M j, Y" }} - {{ week_end|date:"M j, Y" }}</option>
+          {% for start, end in week_ranges %}
+            <option value='{{ start|date:"F j, Y" }} - {{ end|date:"F j, Y" }}'>{{ start|date:"M j, Y" }} - {{ end|date:"M j, Y" }}</option>
           {% endfor %}
         </select>
       </div>
@@ -109,7 +108,15 @@
             {% if result == None %}
               <td class="{{label}}">N/A (0)</td>
             {% else %}
-              <td class="{{label}}">{{ result }} ({{ total_respondents }})</td>
+              {% if total_respondents %}
+                <td class="{{label}}">{{ result }} ({{ total_respondents }})</td>
+              {% else %}
+                {% if label == "Quality" %}
+                  <td class="{{label}}">{{ result }}</td>
+                {% else %}
+                  <td class="{{label}}">{{ result }}</td>
+                {% endif %}
+              {% endif %}
             {% endif %}
             {% endfor %}
         </tr>
@@ -129,10 +136,10 @@
             Patient<br>Satisfaction
           </th>
           <th>
-            Quality<br>(Score, Q1)
+              Quality - Q2 2014 <br>%
           </th>
           <th>
-            Quantity<br>(Score, Q1)
+              Quantity - Q2 2014 <br>N
           </th>
           <th>
             Open<br>Facility
