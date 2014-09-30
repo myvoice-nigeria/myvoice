@@ -111,9 +111,10 @@
       {% block content %}{% endblock content %}
 
       {% block footer %}
-        <div class="container print-only">
+        <!-- // This keeps getting cut off in print reports. Until we have a better means, take it out.
+        <div class="container print-only" id="footer-logo">
           <div class="col-xs-5"><img src="{% static 'img/myvoice-logo-dark.png' %}"></div>
-        </div>
+        </div> -->
 
         <div class="footer web-only">
           <div class="container">

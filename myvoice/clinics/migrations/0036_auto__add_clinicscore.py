@@ -8,14 +8,22 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'ClinicScore'
+        db.create_table(u'clinics_clinicscore', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('clinic', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['clinics.Clinic'])),
+            ('quality', self.gf('django.db.models.fields.DecimalField')(max_digits=5, decimal_places=2)),
+            ('quantity', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('start_date', self.gf('django.db.models.fields.DateField')()),
+            ('end_date', self.gf('django.db.models.fields.DateField')()),
+        ))
+        db.send_create_signal(u'clinics', ['ClinicScore'])
 
-        # Changing field 'GenericFeedback.message'
-        db.alter_column(u'clinics_genericfeedback', 'message', self.gf('django.db.models.fields.TextField')())
 
     def backwards(self, orm):
+        # Deleting model 'ClinicScore'
+        db.delete_table(u'clinics_clinicscore')
 
-        # Changing field 'GenericFeedback.message'
-        pass
 
     models = {
         u'auth.group': {
@@ -61,6 +69,15 @@ class Migration(SchemaMigration):
             'town': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'ward': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+        },
+        u'clinics.clinicscore': {
+            'Meta': {'object_name': 'ClinicScore'},
+            'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']"}),
+            'end_date': ('django.db.models.fields.DateField', [], {}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'quality': ('django.db.models.fields.DecimalField', [], {'max_digits': '5', 'decimal_places': '2'}),
+            'quantity': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'start_date': ('django.db.models.fields.DateField', [], {})
         },
         u'clinics.clinicstaff': {
             'Meta': {'object_name': 'ClinicStaff'},

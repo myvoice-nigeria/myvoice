@@ -35,7 +35,7 @@ def get_mode(answers, acceptable_answers=None):
         answers = [a for a in answers if a in acceptable_answers]
     if answers:
         mode = max(Counter(answers).iteritems(), key=itemgetter(1))[0]
-        return mode.replace('hour', 'hr')
+        return mode
     return None
 
 
@@ -122,9 +122,14 @@ def get_completion_qcount(responses=None, clinic=None, service=None,
     return get_completion_query(responses, clinic, service, start_date, end_date).count()
 
 
-def get_registration_count(clinic):
+def get_registration_count(clinic, start_date=None, end_date=None):
     """Returns the count of patients who should have received this survey."""
     from myvoice.clinics.models import Visit
+    if start_date and end_date:
+        return Visit.objects.filter(
+            visit_time__range=(start_date, end_date),
+            survey_sent__isnull=False,
+            patient__clinic=clinic).count()
     return Visit.objects.filter(survey_sent__isnull=False, patient__clinic=clinic).count()
 
 

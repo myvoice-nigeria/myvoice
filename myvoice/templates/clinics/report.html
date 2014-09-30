@@ -26,10 +26,10 @@
         yAxisFontSize: 12
       };
 
-  var createChart = function(id, data) {
+  var createChart = function(id, qtn_labels, data) {
     var chart = $(id)[0].getContext('2d');
     var barData = {
-      labels: labels,
+      labels: qtn_labels,
       datasets : [{fillColor: fillColor, data: data}]
     };
     return new Chart(chart).Bar(barData, barOptions);
@@ -37,6 +37,10 @@
   $(function() {
     {% for week in feedback_by_week %}
       createChart("#weekChart{{ forloop.counter }}", [
+        {% for label in week.question_labels %}
+        "{{ label }}"{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+        ], [
         {% for percentage, count in week.data %}
           {{ percentage|default:0 }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
@@ -61,20 +65,32 @@
     </div>
 
     <div class="col-xs-6 participation-module no-padding-right">
-      <div class="date">{{ min_date.date|date:"F j, Y" }} - {{ max_date.date|date:"F j, Y" }}</div>
-        
-
+      <div class="date styled-select">
+        <select id="service-feedback-weeks" dir="rtl">
+            <option value='{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}'> All Weeks: {{ min_date|date:"M j, Y" }} - {{ max_date|date:"M j, Y" }}</option>
+            <option value='{{ week_start|date:"F j, Y" }} - {{ week_end|date:"F j, Y" }}'> Current Week: {{ week_start|date:"M j, Y" }} - {{ week_end|date:"M j, Y" }}</option>
+            {% for start, end in week_ranges %}
+            <option value='{{ start|date:"F j, Y" }} - {{ end|date:"F j, Y" }}'>{{ start|date:"M j, Y" }} - {{ end|date:"M j, Y" }}</option>
+            {% endfor %}
+        </select>
+        </div>
         <div class="content web-only">
           <h2>SURVEY PARTICIPATION</h2>
           {% if num_registered %}
             <div class="col-xs-4">
-              <h1>{{ num_registered }}</h1> Sent
+              <h1 id="num_registered">{{ num_registered }}</h1> Sent
             </div>
             <div class="col-xs-4">
-              <h1>{{ num_started }} <span class="report-percent">({{ percent_started|floatformat:"0" }}%)</span></h1> Started
+              <h1>
+                  <span id="num_started">{{ num_started }}</span> 
+                  <span id="perc_started" class="report-percent">({{ percent_started|floatformat:"0" }}%)</span>
+              </h1> Started
             </div>
             <div class="col-xs-4">
-              <h1>{{ num_completed }} <span class="report-percent">({{ percent_completed|floatformat:"0" }}%)</span></h1> Completed 
+              <h1>
+                <span id="num_completed">{{ num_completed }}</span> 
+                <span id="perc_completed" class="report-percent">({{ percent_completed|floatformat:"0" }}%)</span>
+              </h1> Completed 
             </div>
           {% else %}
             <div class="col-xs-12">
@@ -135,9 +151,8 @@
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
       <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ANALYTICS</h2>
     </div>
-
     {% for week in feedback_by_week %}
-      <div class="col-xs-6 chart-container">
+      <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F j Y" }}">
         <div class="col-xs-12">
           <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}<br/>
             <span class="survey_num">
@@ -163,9 +178,25 @@
           </div>
           <div class="green-box-label">Most common<br />wait time</div>
         </div>
-        <canvas id="weekChart{{ forloop.counter }}" height="250" width="275"></canvas>
+        <canvas id="weekChart{{ forloop.counter }}" height="210" width="275"></canvas>
       </div>
+
+      {% if forloop.counter == 4 %}
+        
+        <div class="print-break print-only chart-break"><br/><br/><br/></div>
+
+        <div class="col-xs-12 no-padding-left print-only chart-break">
+          <br/><br/><br/>
+          <h1>
+            <span style="font-weight: 700;">{{ object.name }}</span><br />
+            Facility Report
+          </h1>
+        </div>
+      
+        
+      {% endif %}
     {% endfor %}
+
   </div><!-- / .container#feedback-analytics -->
   <div class="print-only"><br/><br/></div>
 
@@ -190,32 +221,34 @@
 
     <p>Number of patients with this service who reported this feedback.</p>
 
-    <table class="table table-bordered table-striped">
+    <div id="feedback-container">
+    <table class="table table-bordered table-striped" id="feedback_on_services">
       <thead>
         <tr>
-          <th class="special-th">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
-          <th>Open Facility</th>
-          <th>Respectful<br />Staff Treatment</th>
-          <th>Clean<br />Hospital Materials</th>
-          <th>Charged Fairly</th>
-          <th>Most Common<br />Wait Time (hrs)</th>
+          <th class="special-th service-feedback-weeks">
+            {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}
+          </th>
+          {% for label in question_labels %}
+            <th>{{ label }}</th>
+          {% endfor %}
         </tr>
       </thead>
       <tbody>
         {% for service, service_data in feedback_by_service %}
-          <tr>
+          <tr id="service{{service.name}}">
             <td>{{ service.name }}</td>
-            {% for result, total_respondents in service_data %}
+            {% for label, result, total_respondents in service_data %}
               {% if result == None %}
                 <td>N/A (0)</td>
               {% else %}
-                <td>{{ result }} ({{ total_respondents }})</td>
+                <td class="label{{ forloop.counter }}">{{ result }} ({{ total_respondents }})</td>
               {% endif %}
             {% endfor %}
           </tr>
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div><!-- / .container#feedback-on-services -->
 
   {% if detailed_comments %}
@@ -233,19 +266,19 @@
       <thead>
         <tr>
           <th class="special-th no-bottom-border">Date</th>
-          <th class="no-bottom-border">Comments</th>
+          <th class="no-bottom-border width100">Comments</th>
         </tr>
       </thead>
       <tbody>
         {% regroup detailed_comments by question as comments %}
         {% for comment_group in comments %}
-          <tr>
+          <tr class="comment-head">
             <td colspan="6" class="special-table-row">
               {{ comment_group.grouper|upper }}
             </td>
           </tr>
           {% for comment in comment_group.list %}
-          <tr id="comment{% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as webcycle %}">
+          <tr class="comment" id="comment{% cycle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 as webcycle %}">
               <td>{{ comment.datetime|date:"d/m/Y" }}</td>
               <td class="comment_text">{{ comment.response }}</td>
             </tr>
@@ -264,8 +297,8 @@
       <tbody>
         {% regroup detailed_comments by question as comments %}
         {% for comment_group in comments %}
-          <tr>
-            <td colspan="6" class="special-table-row">
+          <tr class="special-table-row">
+            <td colspan="6">
               {{ comment_group.grouper|upper }}
             </td>
           </tr>
@@ -304,3 +337,195 @@
   {% endif %}
 {% endif %}
 {% endblock content %}
+
+
+{% block js %}
+
+<script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
+<script>
+
+  var m_names = new Array("January", "February", "March", 
+      "April", "May", "June", "July", "August", "September", 
+      "October", "November", "December"); 
+      // I wish there was a better solution to this but new Date().format doesn't work any longer.
+
+  function getLastWeek(start_date){
+
+    var start_date = start_date;
+    var lastWeek = new Date(start_date.getFullYear(), start_date.getMonth(), start_date.getDate() - 7);
+    return lastWeek ;
+  }
+
+  function get_four_week_cutoff(end_date) {
+    var dt = new Date(end_date.getTime());
+    dt.setDate(dt.getDate()-21);
+    return dt;
+  }
+
+  function getLastThreeWeeks(start_date) {
+    var results = []
+    results.push(start_date);
+    for(i=0; i<3; i++){ 
+      start_date = getLastWeek(start_date);
+      results.push(start_date);
+    }
+    
+    return results
+  }
+
+  // Hide the extra page header if we have less than 4 charts. 
+  function showhideChartHeader() {
+    if($("div.chart-container:visible").length > 4) {
+      $(".chart-break").show()  
+    }
+    else 
+      $(".chart-break").hide() 
+    
+  }
+
+  function showAllCharts() {
+    $("div.chart-container").each(function(){
+      $(this).show();
+    });
+  }
+
+  function hideOtherCharts() {
+    // Hide Charts to show only Selected and Previous Three Charts.
+    var start = $("#service-feedback-weeks").val().split("-")[0];
+    var start_date = new Date(start);
+    var three_weeks = get_four_week_cutoff(start_date);
+
+    var counter = 0;
+    $("div.chart-container").each(function(){
+        $(this).hide();
+        var dt = new Date($(this).attr("id")).getTime();
+        if ((dt >= three_weeks.getTime()) && (dt <= start_date.getTime()))
+          $(this).show();
+    });
+
+  }
+
+ $(document).ready( function () {
+
+    $("#service-feedback-weeks").change( function() {
+
+      // Update the Feedback on Services Table by Week
+      filter_feedback_by_week();
+
+      // Update the Values within the Charts to the Select Value
+      $( ".service-feedback-weeks" ).each(function( index ) {
+        $( this ).text($("#service-feedback-weeks").val());
+      });
+
+      // Show / Hide Charts
+      if($('#service-feedback-weeks option:selected').text().indexOf("All Weeks") > -1)
+        showAllCharts();
+      else
+        hideOtherCharts();
+
+      // Show / Hide Comments
+      hideOtherComments();
+
+      // Show / Hide Chart Header (for print versions only)
+      showhideChartHeader();
+    });
+
+
+});
+    
+  function filter_feedback_by_week() {
+    
+    // Completion Rate Table - Get Dates from Selected option.
+    var start_date = $("#service-feedback-weeks").val().split(" - ")[0];
+    var end_date = $("#service-feedback-weeks").val().split(" - ")[1];
+
+    // Send dates via Ajax to our Filter and parse the results.
+    $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date, 'clinic_id':{{object.id}} }, function(data,status){
+      
+      // Update the Participation Summary on the top
+      $("#num_registered").text(data.num_registered);
+      $("#num_started").text(data.num_started);
+      $("#perc_started").text("("+data.perc_started+"%)");
+      $("#num_completed").text(data.num_completed);
+      $("#perc_completed").text("("+data.perc_completed+"%)");
+
+      console.log(data);
+      $("#feedback-container").html(data.fos_html);
+      // return;
+
+
+      // Update Feedback of Services Chart
+      $.each(data.fos, function(num, results){
+      
+        service_name = results[0];
+        core_data = results[1];
+        label_counter=0;
+
+      // Update Core Data
+      $.each(core_data, function(num, results2){
+        label = results2[0];
+        perc = results2[1];
+        num = results2[2];
+        label_counter++;
+        $("tr#service"+service_name+" td.label"+label_counter).text(perc + " ("+num+")");
+        });
+      });
+    });
+  }
+
+  function parseDate(input) {
+    var str= input.split('/');
+    return new Date(str[2], str[1]-1, str[0]); 
+  }
+
+  function hideOtherComments() {
+
+    // Hide Charts to show only Selected and Previous Three Charts.
+    var start_date_text = $("#service-feedback-weeks").val().split(" - ")[0];
+    var end_date_text = $("#service-feedback-weeks").val().split(" - ")[1];
+    var start_date = new Date(start_date_text);
+    var end_date = new Date(end_date_text);
+
+    // Loop Comments Table Entries
+    $("table#comments-table tbody tr.comment").each(function(){
+
+      // Look for the first td which has a date in it.
+      comment_date = parseDate($(this).children(":first").text());
+      if(start_date <= comment_date && comment_date <= end_date) {
+        $(this).show();
+      }
+      else { 
+        $(this).hide();
+      }
+    });
+
+    // Hide Individual Sections if there are no comments
+    $("table#comments-table tbody tr.comment-head").each(function(){
+      if($(this).nextUntil( "tr.comment-head", "tr.comment:visible").length == 0) {
+        $(this).hide();
+      }
+      else
+        $(this).show();
+    });
+
+    // Hide Entire Comment Sections if all the comments within are hidden, replace with text stating no comments.
+    hidden_comments_num = $("table#comments-table tbody tr.comment:hidden").length
+    visible_comments_num = $("table#comments-table tbody tr.comment:visible").length
+    //console.log("Visible comments: " + visible_comments_num);
+    //console.log("Hidden comments: " + hidden_comments_num);
+
+    // Add the no comments message
+    if(visible_comments_num == 0) {
+      $("table#comments-table tbody tr").hide();
+      $("table#comments-table tbody").prepend("<tr class='no-comments'><td colspan=2>No comments during "+start_date_text+" - "+end_date_text+"</td></tr>");
+    }
+
+    else {    
+      // Remove all 'No Comments' rows for housekeeping purposes.
+      $(".no-comments").remove();
+    }
+  }
+
+
+</script>
+{% endblock js %}
