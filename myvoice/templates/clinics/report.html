@@ -67,14 +67,10 @@
     <div class="col-xs-6 participation-module no-padding-right">
       <div class="date styled-select">
         <select id="service-feedback-weeks" dir="rtl">
-            {% for week in weeks %}
-              {% if forloop.first %} 
-                <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">All Weeks: {{ week.start|date:"M j" }} - {{ week.end|date:"M j, Y" }} </option>
-              {% elif forloop.counter == 2 %}
-                <option value="{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}">Current Week: {{ week.start|date:"M j" }} - {{ week.end|date:"M j, Y" }}</option>
-              {% else %}
-                <option>{{ week.start|date:"F j, Y" }} - {{ week.end|date:"F j, Y" }}</option>            
-              {% endif %}
+            <option value='{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}'> All Weeks: {{ min_date|date:"M j, Y" }} - {{ max_date|date:"M j, Y" }}</option>
+            <option value='{{ week_start|date:"F j, Y" }} - {{ week_end|date:"F j, Y" }}'> Current Week: {{ week_start|date:"M j, Y" }} - {{ week_end|date:"M j, Y" }}</option>
+            {% for start, end in week_ranges %}
+            <option value='{{ start|date:"F j, Y" }} - {{ end|date:"F j, Y" }}'>{{ start|date:"M j, Y" }} - {{ end|date:"M j, Y" }}</option>
             {% endfor %}
         </select>
         </div>
@@ -156,7 +152,7 @@
       <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ANALYTICS</h2>
     </div>
     {% for week in feedback_by_week %}
-      <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F-j-Y" }}">
+      <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F j Y" }}">
         <div class="col-xs-12">
           <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}<br/>
             <span class="survey_num">
@@ -225,6 +221,7 @@
 
     <p>Number of patients with this service who reported this feedback.</p>
 
+    <div id="feedback-container">
     <table class="table table-bordered table-striped" id="feedback_on_services">
       <thead>
         <tr>
@@ -251,6 +248,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div><!-- / .container#feedback-on-services -->
 
   {% if detailed_comments %}
@@ -358,6 +356,12 @@
     return lastWeek ;
   }
 
+  function get_four_week_cutoff(end_date) {
+    var dt = new Date(end_date.getTime());
+    dt.setDate(dt.getDate()-21);
+    return dt;
+  }
+
   function getLastThreeWeeks(start_date) {
     var results = []
     results.push(start_date);
@@ -387,16 +391,16 @@
 
   function hideOtherCharts() {
     // Hide Charts to show only Selected and Previous Three Charts.
-    var start_date = new Date($("#service-feedback-weeks").val().split(" - ")[0]);
-    var three_weeks = getLastThreeWeeks(start_date);
+    var start = $("#service-feedback-weeks").val().split("-")[0];
+    var start_date = new Date(start);
+    var three_weeks = get_four_week_cutoff(start_date);
 
-    // Loop All Charts
+    var counter = 0;
     $("div.chart-container").each(function(){
-      $(this).hide();
-
-      for(var i=0; i<three_weeks.length; i++)
-        if(new Date($(this).attr("id")).getTime() == three_weeks[i].getTime())
-          $(this).show();       // Maybe it was hidden from a previous cycle of this..  
+        $(this).hide();
+        var dt = new Date($(this).attr("id")).getTime();
+        if ((dt >= three_weeks.getTime()) && (dt <= start_date.getTime()))
+          $(this).show();
     });
 
   }
@@ -404,9 +408,8 @@
  $(document).ready( function () {
 
     $("#service-feedback-weeks").change( function() {
-      
+
       // Update the Feedback on Services Table by Week
-      // console.log("Updating by Week");
       filter_feedback_by_week();
 
       // Update the Values within the Charts to the Select Value
@@ -445,6 +448,10 @@
       $("#perc_started").text("("+data.perc_started+"%)");
       $("#num_completed").text(data.num_completed);
       $("#perc_completed").text("("+data.perc_completed+"%)");
+
+      console.log(data);
+      $("#feedback-container").html(data.fos_html);
+      // return;
 
 
       // Update Feedback of Services Chart
