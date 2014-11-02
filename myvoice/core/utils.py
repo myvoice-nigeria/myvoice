@@ -1,7 +1,6 @@
 import datetime
 from dateutil.parser import parse
 from django.utils import timezone
-from dateutil.parser import parse
 
 
 def hour_to_hr(txt):

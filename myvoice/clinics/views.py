@@ -396,7 +396,6 @@ class AnalystSummary(TemplateView):
             visit_params.update({'service__name': service})
 
         # Loop through the Clinics, summating the data required.
-        #for a_clinic in clinics_to_add:
         for a_clinic in all_clinics:
             visit_qset = models.Visit.objects.filter(**visit_params).filter(
                 patient__clinic=a_clinic)
@@ -561,7 +560,6 @@ class CompletionFilter(FilterMixin, View):
             }
 
         return HttpResponse(json.dumps(content), content_type="text/json")
-
 
 
 class FeedbackFilter(FilterMixin, View):
