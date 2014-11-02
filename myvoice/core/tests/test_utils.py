@@ -129,7 +129,7 @@ class TestCSVExport(TestCase):
 class TestGetDate(TestCase):
 
     def setUp(self):
-        self.dt1 = timezone.datetime(2014, 07, 21)
+        self.dt1 = timezone.make_aware(timezone.datetime(2014, 07, 21), timezone.utc)
 
     def test_date_datetime(self):
         dt = timezone.datetime(2014, 07, 21)
@@ -140,7 +140,7 @@ class TestGetDate(TestCase):
         self.assertEqual(self.dt1, utils.get_date(dtstr))
 
     def test_date_none(self):
-        self.assertIsNone(utils.get_date())
+        self.assertIsNone(utils.get_date(''))
 
 
 class TestDateRange(TestCase):

@@ -1,7 +1,6 @@
 import datetime
 from dateutil.parser import parse
 from django.utils import timezone
-import datetime
 from dateutil.parser import parse
 
 
@@ -65,7 +64,9 @@ def daterange(start_date, end_date):
 
 
 def get_date(the_date):
-    if the_date and isinstance(the_date, basestring):
+    if isinstance(the_date, datetime.datetime):
+        return timezone.make_aware(the_date, timezone.utc)
+    elif the_date and isinstance(the_date, basestring):
         return timezone.make_aware(parse(the_date), timezone.utc)
 
 

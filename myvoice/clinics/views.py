@@ -425,38 +425,18 @@ class AnalystSummary(TemplateView):
             visit_params.update({'service__name': service})
             survey_params.update({'service__name': service})
 
-        visit_counts = self.get_visit_counts(all_clinics, **visit_params)
-        started_qset = SurveyQuestionResponse.objects.filter(
-            question__label__iexact='Open Facility',
-            question__question_type__iexact='multiple-choice')
-        started_counts = self.get_survey_counts(started_qset, all_clinics, **survey_params)
         # Loop through the Clinics, summating the data required.
-        for a_clinic in clinics_to_add:
-
-            survey_responses = SurveyQuestionResponse.objects.all()
-
-            if start_date:
-                survey_responses = survey_responses.filter(visit__visit_time__gte=start_date)
-            if end_date:
-                survey_responses = survey_responses.filter(visit__visit_time__lte=end_date)
-            if service:
-                survey_responses = survey_responses.filter(service__name__iexact=service)
-
-            survey_responses = survey_responses.filter(clinic=a_clinic)
-
-            # Surveys Triggered Query Statistics
-            st_count = survey_responses.filter(visit__survey_sent__isnull=False).count()
+        #for a_clinic in clinics_to_add:
+        for a_clinic in all_clinics:
+            visit_qset = models.Visit.objects.filter(**visit_params).filter(
+                patient__clinic=a_clinic)
+            st_count = visit_qset.count()
             st_total += st_count
 
-            survey_responses = survey_responses.filter(question__label__iexact="Open Facility")\
-                .filter(question__question_type__iexact="multiple-choice")
-
-            # Survey Started Query Statistics
-            ss_count = survey_responses.filter(visit__survey_started=True).count()
+            ss_count = visit_qset.filter(survey_started=True).count()
             ss_total += ss_count
 
-            # Survey Completed Query Statistics
-            sc_count = survey_responses.filter(visit__survey_completed=True).count()
+            sc_count = visit_qset.filter(survey_completed=True).count()
             sc_total += sc_count
 
             # Survey Percentages
