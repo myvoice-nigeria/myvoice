@@ -389,9 +389,13 @@ class AnalystSummary(TemplateView):
         # Build params for to filter by start_date, end_date and service
         visit_params = {'survey_sent__isnull': False}
         if start_date and isinstance(start_date, basestring):
-            visit_params.update({'visit_time__gte': parse(start_date)})
+            visit_params.update(
+                {'visit_time__gte': timezone.make_aware(parse(start_date), timezone.utc)}
+            )
         if end_date and isinstance(end_date, basestring):
-            visit_params.update({'visit_time__lte': parse(end_date)})
+            visit_params.update(
+                {'visit_time__lte': timezone.make_aware(parse(end_date), timezone.utc)}
+            )
         if service and isinstance(service, basestring):
             visit_params.update({'service__name': service})
 
@@ -527,27 +531,24 @@ class FilterMixin(object):
         return data
 
 
-class CompletionFilter(FilterMixin, View):
+class CompletionFilter(View):
 
     def get(self, request):
 
-        the_service = self.get_variable(request, "service", "Service")
-        the_start_date = self.get_variable(request, "start_date", "Start Date")
-        the_end_date = self.get_variable(request, "end_date", "End Date")
+        service = request.GET.get('service')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
 
-        if not the_start_date or "Start Date" in the_start_date:
-            the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        else:
-            the_start_date = parse(the_start_date)
-
-        if not the_end_date or "End Date" in the_end_date:
-            the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
-        else:
-            the_end_date = parse(the_end_date)
+        params = {}
+        if service:
+            params.update({'service': service})
+        if start_date:
+            params.update({'start_date': start_date})
+        if end_date:
+            params.update({'end_date': end_date})
 
         a = AnalystSummary()
-        data = a.get_completion_table(
-            start_date=the_start_date, end_date=the_end_date, service=the_service)
+        data = a.get_completion_table(**params)
         content = {"clinic_data": {}}
         for a_clinic in data:
             content["clinic_data"][a_clinic["clinic_id"]] = {
@@ -565,19 +566,28 @@ class CompletionFilter(FilterMixin, View):
 class FeedbackFilter(FilterMixin, View):
 
     def get(self, request):
-        the_service = self.get_variable(request, "service", "Service")
-        the_clinic = self.get_variable(request, "clinic", "Clinic")
-        the_start_date = self.get_variable(request, "start_date", "Start Date")
-        the_end_date = self.get_variable(request, "end_date", "End Date")
+        clinic = request.GET.get('clinic')
+        service = request.GET.get('service')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
 
-        qset = SurveyQuestionResponse.objects.all()
-        responses = survey_utils.filter_sqr_query(
-            qset, clinic=the_clinic, service=the_service,
-            start_date=the_start_date, end_date=the_end_date)
+        params = {}
+        if clinic:
+            params.update({'clinic__name__iexact': clinic})
+        if service:
+            params.update({'service__name__iexact': service})
+        if start_date:
+            start_date = timezone.make_aware(parse(start_date), timezone.utc)
+            params.update({'visit__visit_time__gte': start_date})
+        if end_date:
+            end_date = timezone.make_aware(parse(end_date), timezone.utc)
+            params.update({'visit__visit_time__lte': end_date})
+
+        qset = SurveyQuestionResponse.objects.filter(**params)
 
         # Render template with responses as context
         tmpl = get_template('analysts/_rates.html')
-        ctx = Context({'responses': responses})
+        ctx = Context({'responses': qset})
         html = tmpl.render(ctx)
         return HttpResponse(html, content_type='text/html')
 
