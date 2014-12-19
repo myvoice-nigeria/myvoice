@@ -412,7 +412,7 @@ class TestReportMixin(TestCase):
     def setUp(self):
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
-        clinic = factories.Clinic.create(code=5)
+        self.clinic = factories.Clinic.create(code=5)
 
         self.q1 = factories.SurveyQuestion.create(
             label='One',
@@ -443,27 +443,28 @@ class TestReportMixin(TestCase):
             start_date=timezone.now(),
             report_order=50)
 
-        p1 = factories.Patient.create(clinic=clinic, serial=111)
-        p2 = factories.Patient.create(clinic=clinic, serial=222)
-        p3 = factories.Patient.create(clinic=clinic, serial=333)
+        self.p1 = factories.Patient.create(clinic=self.clinic, serial=111)
+        self.p2 = factories.Patient.create(clinic=self.clinic, serial=222)
+        self.p3 = factories.Patient.create(clinic=self.clinic, serial=333)
 
-        s1 = factories.Service.create(code=1)
-        s2 = factories.Service.create(code=2)
-        s3 = factories.Service.create(code=3)
+        self.s1 = factories.Service.create(code=1)
+        self.s2 = factories.Service.create(code=2)
+        self.s3 = factories.Service.create(code=3)
 
-        v1 = factories.Visit.create(service=s1, patient=p1)
-        v2 = factories.Visit.create(service=s2, patient=p2)
-        v3 = factories.Visit.create(service=s3, patient=p3)
-        v4 = factories.Visit.create(service=s1, patient=p1)
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        self.v1 = factories.Visit.create(service=self.s1, patient=self.p1, survey_sent=sent)
+        self.v2 = factories.Visit.create(service=self.s2, patient=self.p2, survey_sent=sent)
+        self.v3 = factories.Visit.create(service=self.s3, patient=self.p3, survey_sent=sent)
+        self.v4 = factories.Visit.create(service=self.s1, patient=self.p1, survey_sent=sent)
 
         self.r1 = factories.SurveyQuestionResponse.create(
-            question=self.q1, visit=v1, clinic=clinic)
+            question=self.q1, visit=self.v1, clinic=self.clinic)
         self.r2 = factories.SurveyQuestionResponse.create(
-            question=self.q2, visit=v2, clinic=clinic)
+            question=self.q2, visit=self.v2, clinic=self.clinic)
         self.r3 = factories.SurveyQuestionResponse.create(
-            question=self.q3, visit=v3, clinic=clinic)
+            question=self.q3, visit=self.v3, clinic=self.clinic)
         self.r4 = factories.SurveyQuestionResponse.create(
-            question=self.q2, visit=v4, clinic=clinic)
+            question=self.q2, visit=self.v4, clinic=self.clinic)
 
     def test_get_start_end_dates(self):
         """Test that we can break down a start and end dates
@@ -571,6 +572,37 @@ class TestReportMixin(TestCase):
         self.assertEqual(2, len(questions))
         self.assertEqual(self.q1, questions[0])
         self.assertEqual(self.q3, questions[1])
+
+    def test_get_feedback_participation(self):
+        """Test that get_feedback_participation returns % of surveys responded
+        to and total visit count."""
+        mixin = clinics.ReportMixin()
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        v5 = factories.Visit.create(service=self.s1, patient=self.p2, survey_sent=sent)
+        visits = models.Visit.objects.filter(
+            pk__in=[self.v1.pk, self.v2.pk, self.v3.pk, v5.pk])
+        percent, total_started = mixin.get_feedback_participation(visits)
+
+        self.assertEqual(75, percent)
+        self.assertEqual(3, total_started)
+
+    def test_get_feedback_statistics(self):
+        """Test that we can get correct statistics for clinic.
+
+        Statistics are: surveys_sent, surveys_started, surveys_completed.
+        They are returned as a dict {'sent': 75, 'started': 50, 'completed': 25}
+        for e.g. and we pass in the visits."""
+        mixin = clinics.ReportMixin()
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        v5 = factories.Visit.create(service=self.s1, patient=self.p2, survey_sent=sent)
+        visits = models.Visit.objects.filter(
+            pk__in=[self.v1.pk, self.v2.pk, self.v3.pk, v5.pk])
+        stats = mixin.get_feedback_statistics(visits)
+
+        self.assertEqual(3, len(stats.keys()))
+        self.assertEqual(100, stats['sent'])
+        self.assertEqual(75, stats['started'])
+        self.assertEqual(0, stats['completed'])
 
 
 class TestClinicReportView(TestCase):
@@ -1219,6 +1251,7 @@ class TestRegionReportView(TestCase):
         self.assertEqual(4, report.responses.count())
 
     def test_feedback_participation(self):
+        # FIXME: Should this not be in the ReportMixin test?
         factories.Visit.create(
             service=self.service,
             visit_time=timezone.now(),

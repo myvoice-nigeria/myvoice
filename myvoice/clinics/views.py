@@ -184,6 +184,18 @@ class ReportMixin(object):
             survey_percent = None
         return survey_percent, survey_started
 
+    def get_feedback_statistics(self, visits):
+        """Return dict of surveys_sent, surveys_started and surveys_completed."""
+        total = visits.count()
+        sent = visits.filter(survey_sent__isnull=False).count()
+        started = visits.filter(survey_started=True).count()
+        completed = visits.filter(survey_completed=True).count()
+        return {
+            'sent': make_percentage(sent, total),
+            'started': make_percentage(started, total),
+            'completed': make_percentage(completed, total)
+        }
+
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
