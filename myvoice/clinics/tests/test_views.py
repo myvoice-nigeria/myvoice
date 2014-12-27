@@ -586,7 +586,7 @@ class TestReportMixin(TestCase):
         self.assertEqual(75, percent)
         self.assertEqual(3, total_started)
 
-    def test_get_feedback_statistics(self):
+    def test_clinic_feedback_statistics(self):
         """Test that we can get correct statistics for clinic.
 
         Statistics are: surveys_sent, surveys_started, surveys_completed.
@@ -597,12 +597,81 @@ class TestReportMixin(TestCase):
         v5 = factories.Visit.create(service=self.s1, patient=self.p2, survey_sent=sent)
         visits = models.Visit.objects.filter(
             pk__in=[self.v1.pk, self.v2.pk, self.v3.pk, v5.pk])
-        stats = mixin.get_feedback_statistics(visits)
+        stats = mixin.get_clinic_feedback_statistics(visits)
 
         self.assertEqual(3, len(stats.keys()))
         self.assertEqual(100, stats['sent'])
         self.assertEqual(75, stats['started'])
         self.assertEqual(0, stats['completed'])
+
+    def test_get_related_clinics(self):
+        """Test that we get all clinics in same LGA as reference."""
+        cl1 = factories.Clinic.create(code=1, lga='one')
+        cl2 = factories.Clinic.create(code=2, lga='one')
+        cl3 = factories.Clinic.create(code=3, lga='two')
+        mixin = clinics.ReportMixin()
+        clncs = mixin.get_related_clinics(cl1)
+
+        self.assertTrue(cl1 in clncs)
+        self.assertTrue(cl2 in clncs)
+        self.assertFalse(cl3 in clncs)
+        self.assertEqual(2, len(clncs))
+
+    def test_get_feedback_statistics(self):
+        """Test get_feedback_statistics.
+
+        Takes a list of clinics
+        Returns 3 lists of surveys sent, started and completed
+        in order of clinics passed in."""
+        cl1 = factories.Clinic.create(code=1, lga='one')
+        cl2 = factories.Clinic.create(code=2, lga='one')
+
+        p1 = factories.Patient.create(clinic=cl1, serial=444)
+        p2 = factories.Patient.create(clinic=cl2, serial=555)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        factories.Visit.create(
+            service=self.s1,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=False,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 5), timezone.utc))
+        factories.Visit.create(
+            service=self.s3,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 11, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+
+        mixin = clinics.ReportMixin()
+        start = timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc)
+        end = timezone.make_aware(timezone.datetime(2014, 12, 31), timezone.utc)
+        stats = mixin.get_feedback_statistics([cl1, cl2], start, end)
+
+        self.assertEqual(3, len(stats))
+        self.assertEqual([100, 50], stats['sent'])
+        self.assertEqual([100, 50], stats['started'])
+        self.assertEqual([50, 50], stats['completed'])
 
 
 class TestClinicReportView(TestCase):

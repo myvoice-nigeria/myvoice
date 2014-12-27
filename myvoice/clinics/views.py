@@ -184,7 +184,7 @@ class ReportMixin(object):
             survey_percent = None
         return survey_percent, survey_started
 
-    def get_feedback_statistics(self, visits):
+    def get_clinic_feedback_statistics(self, visits):
         """Return dict of surveys_sent, surveys_started and surveys_completed."""
         total = visits.count()
         sent = visits.filter(survey_sent__isnull=False).count()
@@ -195,6 +195,32 @@ class ReportMixin(object):
             'started': make_percentage(started, total),
             'completed': make_percentage(completed, total)
         }
+
+    def get_related_clinics(self, clinic):
+        """Return list of clinics in same LGA as clinic, including clinic."""
+        return models.Clinic.objects.filter(lga=clinic.lga)
+
+    def get_feedback_statistics(self, clinics, start_date, end_date):
+        """Return dict of surveys_sent, surveys_started and surveys_completed."""
+        visits = models.Visit.objects.filter(
+            patient__clinic__in=clinics,
+            visit_time__range=(start_date, end_date))
+        sent = list(visits.filter(survey_sent__isnull=False).values_list(
+            'patient__clinic', flat=True))
+        started = list(visits.filter(survey_started=True).values_list(
+            'patient__clinic', flat=True))
+        completed = list(visits.filter(survey_completed=True).values_list(
+            'patient__clinic', flat=True))
+
+        _sent = [sent.count(clinic.pk) for clinic in clinics]
+        _started = [started.count(clinic.pk) for clinic in clinics]
+        _completed = [completed.count(clinic.pk) for clinic in clinics]
+        _total = [visits.filter(patient__clinic=clinic).count() for clinic in clinics]
+        return {
+            'sent': [make_percentage(s, t) for s, t in zip(_sent, _total)],
+            'started': [make_percentage(s, t) for s, t in zip(_started, _total)],
+            'completed': [make_percentage(s, t) for s, t in zip(_completed, _total)],
+            }
 
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
@@ -280,6 +306,9 @@ class ClinicReport(ReportMixin, DetailView):
             })
         return data
 
+    def get_feedback_statistics(self, clinic, start_date=None, end_date=None):
+        """Get the feedback stats for all clinics in same LGA as clinic and date range."""
+
     def get_detailed_comments(self, start_date=None, end_date=None):
         """Combine open-ended survey comments with General Feedback."""
         open_ended_responses = self.responses.filter(
@@ -316,6 +345,8 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['feedback_by_week'] = self.get_feedback_by_week()
+        kwargs['feedback_stats'] = self.get_feedback_statistics()
+        # import pdb;pdb.set_trace()
         question_labels = [qtn.question_label for qtn in self.questions]
         kwargs['question_labels'] = question_labels
 
