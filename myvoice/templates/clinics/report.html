@@ -7,22 +7,52 @@
 {% block extra-js %}
 <script src="{% static 'lib/chartnew/ChartNew.js' %}"></script>
 <script>
+  var barOptions = {
+        //barShowStroke: true,
+        // scale
+        scaleOverride: true,
+        scaleStartValue: 0,
+        scaleSteps: 4,
+        scaleStepWidth: 25,
+        scaleFontSize: 10,
+        scaleFontFamily: "'Source Sans Pro', sans-serif",
+
+        // in-graph data
+        inGraphDataShow: true,
+        inGraphDataFontColor: '#6d6e71',
+        inGraphDataFontFamily: "'Source Sans Pro', sans-serif",
+        inGraphDataFontSize: 10,
+
+        //spacing
+        barDatasetSpacing: 0,
+        barValueSpacing: 3,
+
+        annotateDisplay: true,
+        pointLabelFontSize: 10,
+
+        // legend
+        legend: true,
+        legendPosX: 0,
+        legendPosY: 0,
+        legendXPadding: -10,
+        //barValueSpacing: 3,
+    }
   var labels = ['Open\nFacility', 'Respectful\nStaff\nTreatment',
                 'Clean\nHospital\nMaterials', 'Charged\nFairly'],
       fillColor = ['#6D6E71', '#808184', '#929497', '#A6A8AB'],
-      barOptions = {
+      barOptions1 = {
         barShowStroke: false,
         scaleFontSize: 9,
         scaleFontFamily: "'Source Sans Pro', sans-serif",
-        barValueSpacing: 8,
+        //barValueSpacing: 8,
         inGraphDataShow: true,
-        inGraphDataYPosition: 2,
+        //inGraphDataYPosition: 2,
         inGraphDataFontColor: 'black',
         scaleOverride: true,
         scaleStartValue: 0,
         scaleSteps: 5,
         scaleStepWidth: 20,
-        yAxisLabel: "Percentage",
+        //yAxisLabel: "Percentage",
         yAxisFontSize: 12
       };
 
@@ -46,6 +76,50 @@
         {% endfor %}
       ]);
     {% endfor %}
+  });
+
+  $(function() {
+      var barData = {
+        labels: [
+          {% for label in feedback_clinics %}
+            "{{ label }}"{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        ],
+        datasets: [
+          {
+            fillColor: '#6d6e71',
+            strokeColor: '#6d6e71',
+            data: [
+              {% for sent in feedback_stats.sent %}
+                {{ sent }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys sent'
+          },
+          {
+            fillColor: '#929497',
+            strokeColor: '#929497',
+            data: [
+              {% for started in feedback_stats.started %}
+                {{ started }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys started'
+          },
+          {
+            fillColor: '#a6a8ab',
+            strokeColor: '#a6a8ab',
+            data: [
+              {% for completed in feedback_stats.completed %}
+                {{ completed }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys completed'
+          }
+        ]
+      }
+      var chart = $('#facility-chart')[0].getContext('2d');
+      return new Chart(chart).Bar(barData, barOptions);
   });
 </script>
 {% endblock extra-js %}
@@ -199,6 +273,30 @@
 
   </div><!-- / .container#feedback-analytics -->
   <div class="print-only"><br/><br/></div>
+
+  <!-- .container#feedback-chart -->
+
+  <div id="feedback-chart" class="container print-break">
+      <div class="col-xs-12 section-heading web-only">
+          <h2>PARTICIPATION BY FACILITY</h2>
+      </div>
+
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">PARTICIPATION BY FACILITY</h2>
+    </div>
+    <!-- chart div -->
+    <div class="col-xs-6 chart-container" id="facility-participation-chart">
+        <div class="col-xs-12"></div>
+        <canvas id="facility-chart" height="310" width="615"></canvas>
+    </div>
+    <!-- chart div -->
+    <div class="col-xs-6 chart-container" id="facility-participation-chart">
+        <div class="col-xs-12"></div>
+        <canvas id="facility-chart1" height="310" width="615"></canvas>
+    </div>
+</div>
+<!-- .container#feedback-chart -->
 
   
   <div id="feedback-on-services" class="container">
