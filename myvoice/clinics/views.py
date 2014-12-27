@@ -329,8 +329,7 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['responses'] = self.responses
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
-        #kwargs['feedback_by_week'] = self.get_feedback_by_week()
-        # import pdb;pdb.set_trace()
+        # kwargs['feedback_by_week'] = self.get_feedback_by_week()
         question_labels = [qtn.question_label for qtn in self.questions]
         kwargs['question_labels'] = question_labels
 
