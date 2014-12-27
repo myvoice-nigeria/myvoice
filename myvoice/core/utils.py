@@ -27,6 +27,8 @@ def get_week_end(date):
 
 def make_percentage(numerator, denominator, places=0):
     """Returns a percentage out of 100 to the number of places given."""
+    if not denominator:
+        return 0
     percentage = float(numerator) / float(denominator)
     return round(percentage * 100, places)
 

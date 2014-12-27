@@ -36,6 +36,11 @@ class TestUtils(TestCase):
         percentage = utils.make_percentage(1, 10000, 2)
         self.assertEqual(0.01, percentage)
 
+    def test_make_percentage_zero_division(self):
+        """Test that we take care of zero-division error :) ."""
+        percentage = utils.make_percentage(100, 0, 2)
+        self.assertEqual(0, percentage)
+
     def test_get_date(self):
         """Test that we can parse date string properly."""
         self.assertEqual(self.dt, utils.get_date('July 07, 2014'))
