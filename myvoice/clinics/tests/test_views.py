@@ -723,7 +723,6 @@ class TestReportMixin(TestCase):
         mixin = clinics.ReportMixin()
         questions = [self.q1, self.q4]
         stats = mixin.get_response_statistics([self.clinic, clinic], questions)
-        print stats
 
         self.assertEqual(1, stats[0][0])
         self.assertEqual('100.0%', stats[0][1])
