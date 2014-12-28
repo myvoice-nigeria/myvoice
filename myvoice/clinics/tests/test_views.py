@@ -419,6 +419,7 @@ class TestReportMixin(TestCase):
             survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             start_date=timezone.make_aware(timezone.datetime(2014, 8, 30), timezone.utc),
+            categories='Yes\nNo',
             report_order=10)
         self.q2 = factories.SurveyQuestion.create(
             label='two',
@@ -429,18 +430,21 @@ class TestReportMixin(TestCase):
             label='Three',
             survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            categories='Yes\nNo',
             report_order=30)
         self.q4 = factories.SurveyQuestion.create(
             label='Four',
             survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             end_date=timezone.make_aware(timezone.datetime(2014, 8, 10), timezone.utc),
+            categories='Yes\nNo',
             report_order=40)
         self.q5 = factories.SurveyQuestion.create(
             label='Five',
             survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             start_date=timezone.now(),
+            categories='Yes\nNo',
             report_order=50)
 
         self.p1 = factories.Patient.create(clinic=self.clinic, serial=111)
@@ -458,11 +462,11 @@ class TestReportMixin(TestCase):
         self.v4 = factories.Visit.create(service=self.s1, patient=self.p1, survey_sent=sent)
 
         self.r1 = factories.SurveyQuestionResponse.create(
-            question=self.q1, visit=self.v1, clinic=self.clinic)
+            question=self.q1, visit=self.v1, clinic=self.clinic, response='Yes')
         self.r2 = factories.SurveyQuestionResponse.create(
             question=self.q2, visit=self.v2, clinic=self.clinic)
         self.r3 = factories.SurveyQuestionResponse.create(
-            question=self.q3, visit=self.v3, clinic=self.clinic)
+            question=self.q3, visit=self.v3, clinic=self.clinic, response='No')
         self.r4 = factories.SurveyQuestionResponse.create(
             question=self.q2, visit=self.v4, clinic=self.clinic)
 
@@ -694,6 +698,38 @@ class TestReportMixin(TestCase):
         self.assertEqual([100, 50], stats['started'])
         self.assertEqual([67, 50], stats['completed'])
 
+    def test_feedback_response_statistics(self):
+        """Test get_response_statistics.
+
+        Takes list of clinics, survey questions, responses
+        Returns list of:
+          (Count of positive responses, %age of positive responses)
+        """
+        clinic = factories.Clinic.create(code=6)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        p1 = factories.Patient.create(clinic=clinic, serial=111)
+        v1 = factories.Visit.create(service=self.s1, patient=p1, survey_sent=sent)
+        v2 = factories.Visit.create(service=self.s2, patient=p1, survey_sent=sent)
+        v3 = factories.Visit.create(service=self.s3, patient=p1, survey_sent=sent)
+
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v1, clinic=clinic, response='Yes')
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v3, clinic=clinic, response='No')
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v2, clinic=clinic, response='Yes')
+
+        mixin = clinics.ReportMixin()
+        questions = [self.q1, self.q4]
+        stats = mixin.get_response_statistics([self.clinic, clinic], questions)
+        print stats
+
+        self.assertEqual(1, stats[0][0])
+        self.assertEqual('100.0%', stats[0][1])
+        self.assertEqual(2, stats[1][0])
+        self.assertEqual('67.0%', stats[1][1])
+
 
 class TestClinicReportView(TestCase):
 
@@ -745,13 +781,6 @@ class TestClinicReportView(TestCase):
         response = self.make_request()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render()))
-
-    def _test_check_assumptions(self):
-        """Test that if hard-coded assumptions are not met, exception is raised.
-        """
-        # Removed hard-coded assumptions
-        survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
-        self.assertRaises(Exception, self.make_request)
 
     def test_get_detailed_comments(self):
         """Test that generic feedback is combined with open-ended survey responses."""

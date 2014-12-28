@@ -37,46 +37,6 @@
         legendXPadding: -10,
         //barValueSpacing: 3,
     }
-  var labels = ['Open\nFacility', 'Respectful\nStaff\nTreatment',
-                'Clean\nHospital\nMaterials', 'Charged\nFairly'],
-      fillColor = ['#6D6E71', '#808184', '#929497', '#A6A8AB'],
-      barOptions1 = {
-        barShowStroke: false,
-        scaleFontSize: 9,
-        scaleFontFamily: "'Source Sans Pro', sans-serif",
-        //barValueSpacing: 8,
-        inGraphDataShow: true,
-        //inGraphDataYPosition: 2,
-        inGraphDataFontColor: 'black',
-        scaleOverride: true,
-        scaleStartValue: 0,
-        scaleSteps: 5,
-        scaleStepWidth: 20,
-        //yAxisLabel: "Percentage",
-        yAxisFontSize: 12
-      };
-
-  var createChart = function(id, qtn_labels, data) {
-    var chart = $(id)[0].getContext('2d');
-    var barData = {
-      labels: qtn_labels,
-      datasets : [{fillColor: fillColor, data: data}]
-    };
-    return new Chart(chart).Bar(barData, barOptions);
-  }
-  $(function() {
-    {% for week in feedback_by_week %}
-      createChart("#weekChart{{ forloop.counter }}", [
-        {% for label in week.question_labels %}
-        "{{ label }}"{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-        ], [
-        {% for percentage, count in week.data %}
-          {{ percentage|default:0 }}{% if not forloop.last %}, {% endif %}
-        {% endfor %}
-      ]);
-    {% endfor %}
-  });
 
   $(function() {
       var barData = {
@@ -216,62 +176,6 @@
     Please try again later!</p>
   </div>
 {% else %}
-  <div id="feedback-analytics" class="container print-break">
-    <div class="col-xs-12 section-heading web-only">
-      <h2>FEEDBACK ANALYTICS</h2>
-    </div>
-
-    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
-      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
-      <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ANALYTICS</h2>
-    </div>
-    {% for week in feedback_by_week %}
-      <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F j Y" }}">
-        <div class="col-xs-12">
-          <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}<br/>
-            <span class="survey_num">
-          {{ week.survey_num }} Surveys</span></h2>
-        </div>
-        <div class="col-xs-6" >  
-          <div class="green-box">
-            {% if week.patient_satisfaction == None %}
-              N/A
-            {% else %}
-              {{ week.patient_satisfaction }}%
-            {% endif %}
-          </div>
-          <div class="green-box-label">Patient<br />satisfaction</div>
-        </div>
-        <div class="col-xs-6">
-          <div class="green-box">
-            {% if week.wait_time_mode == None %}
-              N/A
-            {% else %}
-              {{ week.wait_time_mode }}
-            {% endif %}
-          </div>
-          <div class="green-box-label">Most common<br />wait time</div>
-        </div>
-        <canvas id="weekChart{{ forloop.counter }}" height="210" width="275"></canvas>
-      </div>
-
-      {% if forloop.counter == 4 %}
-        
-        <div class="print-break print-only chart-break"><br/><br/><br/></div>
-
-        <div class="col-xs-12 no-padding-left print-only chart-break">
-          <br/><br/><br/>
-          <h1>
-            <span style="font-weight: 700;">{{ object.name }}</span><br />
-            Facility Report
-          </h1>
-        </div>
-      
-        
-      {% endif %}
-    {% endfor %}
-
-  </div><!-- / .container#feedback-analytics -->
   <div class="print-only"><br/><br/></div>
 
   <!-- .container#feedback-chart -->
@@ -291,14 +195,46 @@
         <canvas id="facility-chart" height="310" width="615"></canvas>
     </div>
     <!-- chart div -->
-    <div class="col-xs-6 chart-container" id="facility-participation-chart">
-        <div class="col-xs-12"></div>
-        <canvas id="facility-chart1" height="310" width="615"></canvas>
-    </div>
 </div>
 <!-- .container#feedback-chart -->
 
-  
+<!-- .container#patient-feedback-responses -->
+<div id="feedback-chart" class="container print-break">
+      <div class="col-xs-12 section-heading web-only">
+          <h2>PATIENT FEEDBACK RESPONSES</h2>
+      </div>
+
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">PATIENT FEEDBACK RESPONSES</h2>
+    </div>
+    <p>&nbsp;</p>
+    <!-- body div -->
+
+    <div id="patient-feedback-container">
+    <table class="table" id="feedback_responses">
+      <thead>
+        <tr>
+            <th colspan=2>Patients from {{ clinic.name }} said:</th>
+            <th colspan=2>Patients from other facilities said:</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for question, clinic_stat, other_stat in response_stats %}
+         <tr>
+             <td>{{ clinic_stat.0 }} ({{ clinic_stat.1 }})</td>
+             <td>{{ question.display_label }}</td>
+             <td>{{ other_stat.0 }} ({{ other_stat.1 }})</td>
+             <td>{{ question.display_label }}</td>
+         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <!-- body div -->
+</div>
+<!-- .container#patient-feedback-responses -->
+
   <div id="feedback-on-services" class="container">
     <div class="col-xs-12 no-padding-left print-only">
       <h1>

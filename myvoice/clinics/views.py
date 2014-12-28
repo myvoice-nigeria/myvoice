@@ -207,6 +207,11 @@ class ReportMixin(object):
             'completed': [make_percentage(s, t) for s, t in zip(_completed, _total)],
             }
 
+    def get_response_statistics(self, clinics, questions):
+        """Get total and %ge of +ve responses to questions in clinics."""
+        responses = SurveyQuestionResponse.objects.filter(clinic__in=clinics)
+        return [(i[2], i[1]) for i in self.get_indices(questions, responses)]
+
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
@@ -245,7 +250,7 @@ class ClinicReport(ReportMixin, DetailView):
         self.generic_feedback = obj.genericfeedback_set.filter(display_on_dashboard=True)
 
         # So we can get the clinics related to obj
-        self.lga = obj.lga
+        self.clinic = obj
         return obj
 
     def get_feedback_by_week(self):
@@ -341,9 +346,19 @@ class ClinicReport(ReportMixin, DetailView):
             kwargs['min_date'] = None
             kwargs['max_date'] = None
 
-        lga_clinics = models.Clinic.objects.filter(lga=self.lga)
+        # Feedback stats
+        lga_clinics = models.Clinic.objects.filter(lga=self.clinic.lga)
         kwargs['feedback_stats'] = self.get_feedback_statistics(lga_clinics)
         kwargs['feedback_clinics'] = [clinic.name for clinic in lga_clinics]
+
+        # Response stats
+        other_clinics = lga_clinics.exclude(pk=self.clinic.pk)
+        current_clinic_stats = self.get_response_statistics(
+            (self.clinic, ), self.questions)
+        other_stats = self.get_response_statistics(
+            other_clinics, self.questions)
+        # Now combine questions, current and othere clinic stats
+        kwargs['response_stats'] = zip(self.questions, current_clinic_stats, other_stats)
 
         num_registered = self.visits.count()
         num_started = self.visits.filter(survey_started=True).count()
