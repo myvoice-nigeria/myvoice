@@ -32,13 +32,80 @@
 
         // legend
         legend: true,
-        legendPosX: 0,
-        legendPosY: 0,
-        legendXPadding: -10,
+        //legendPosX: 0,
+        //legendPosY: 0,
+        //legendXPadding: -10,
         //barValueSpacing: 3,
-    }
+    };
 
-  $(function() {
+  // Keep chart in global scope to make it available for updates
+
+  var prepareChartData = function(labels, sentData, startedData, completedData){
+      var barData = {
+        labels: labels,
+        datasets: [
+          {
+            fillColor: '#6d6e71',
+            strokeColor: '#6d6e71',
+            data: sentData,
+            title: 'Surveys sent'
+          },
+          {
+            fillColor: '#929497',
+            strokeColor: '#929497',
+            data: startedData,
+            title: 'Surveys started'
+          },
+          {
+            fillColor: '#a6a8ab',
+            strokeColor: '#a6a8ab',
+            data: completedData,
+            title: 'Surveys completed'
+          }
+        ]
+      };
+
+      return barData;
+
+  }
+
+  var buildChart = function(labels, sentData, startedData, completedData){
+      var chart = $('#facility-chart')[0].getContext('2d');
+      var chartData = prepareChartData(labels, sentData, startedData, completedData);
+      var chartObject = new Chart(chart)
+      chartObject.Bar(chartData, barOptions);
+  }
+  
+  var updateChartData = function(labels, sentData, startedData, completedData){
+      var chartData = prepareChartData(labels, sentData, startedData, completedData);
+      updateChart(chart, chartData, barOptions);
+  }
+
+$(function() {
+    var labels = [
+        {% for label in feedback_clinics %}
+            "{{ label }}"{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+    var sent = [
+        {% for sent in feedback_stats.sent %}
+            {{ sent }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+    var started = [
+        {% for started in feedback_stats.started %}
+            {{ started }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+    var completed = [
+        {% for completed in feedback_stats.completed %}
+            {{ completed }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+
+    buildChart(labels, sent, started, completed);
+});
+/*  $(function() {
       var barData = {
         labels: [
           {% for label in feedback_clinics %}
@@ -81,6 +148,7 @@
       var chart = $('#facility-chart')[0].getContext('2d');
       return new Chart(chart).Bar(barData, barOptions);
   });
+  */
 </script>
 {% endblock extra-js %}
 
@@ -192,7 +260,9 @@
     <!-- chart div -->
     <div class="col-xs-6 chart-container" id="facility-participation-chart">
         <div class="col-xs-12"></div>
-        <canvas id="facility-chart" height="310" width="615"></canvas>
+        <div id="chart-container">
+            <canvas id="facility-chart" width=615 height=310></canvas>
+        </div>
     </div>
     <!-- chart div -->
 </div>
@@ -446,6 +516,11 @@
       // Update the Feedback on Services Table by Week
       filter_feedback_by_week();
 
+      // Show / Hide Comments
+      hideOtherComments();
+
+      return;
+
       // Update the Values within the Charts to the Select Value
       $( ".service-feedback-weeks" ).each(function( index ) {
         $( this ).text($("#service-feedback-weeks").val());
@@ -456,9 +531,6 @@
         showAllCharts();
       else
         hideOtherCharts();
-
-      // Show / Hide Comments
-      hideOtherComments();
 
       // Show / Hide Chart Header (for print versions only)
       showhideChartHeader();
@@ -474,7 +546,7 @@
     var end_date = $("#service-feedback-weeks").val().split(" - ")[1];
 
     // Send dates via Ajax to our Filter and parse the results.
-    $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date, 'clinic_id':{{object.id}} }, function(data,status){
+    $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date, 'clinic_id':{{object.id}} }, function(data, status){
       
       // Update the Participation Summary on the top
       $("#num_registered").text(data.num_registered);
@@ -483,9 +555,17 @@
       $("#num_completed").text(data.num_completed);
       $("#perc_completed").text("("+data.perc_completed+"%)");
 
-      console.log(data);
       $("#feedback-container").html(data.fos_html);
-      // return;
+
+      //$("#facility-participation-chart").html(data.chart_html);
+
+      $("#chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
+      buildChart(
+          data.feedback_clinics,
+          data.feedback_stats.sent,
+          data.feedback_stats.started,
+          data.feedback_stats.completed);
+      return;
 
 
       // Update Feedback of Services Chart
@@ -505,6 +585,7 @@
         });
       });
     });
+
   }
 
   function parseDate(input) {

@@ -1,0 +1,84 @@
+{% load static from staticfiles %}
+{% block extra-js %}
+<script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
+<script src="{% static 'lib/chartnew/ChartNew.js' %}"></script>
+<script>
+  var barOptions = {
+        //barShowStroke: true,
+        // scale
+        scaleOverride: true,
+        scaleStartValue: 0,
+        scaleSteps: 4,
+        scaleStepWidth: 25,
+        scaleFontSize: 10,
+        scaleFontFamily: "'Source Sans Pro', sans-serif",
+
+        // in-graph data
+        inGraphDataShow: true,
+        inGraphDataFontColor: '#6d6e71',
+        inGraphDataFontFamily: "'Source Sans Pro', sans-serif",
+        inGraphDataFontSize: 10,
+
+        //spacing
+        barDatasetSpacing: 0,
+        barValueSpacing: 3,
+
+        annotateDisplay: true,
+        pointLabelFontSize: 10,
+
+        // legend
+        legend: true,
+        legendPosX: 0,
+        legendPosY: 0,
+        legendXPadding: -10,
+        //barValueSpacing: 3,
+    }
+
+  $(function() {
+      var barData = {
+        labels: [
+          {% for label in feedback_clinics %}
+            "{{ label }}"{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        ],
+        datasets: [
+          {
+            fillColor: '#6d6e71',
+            strokeColor: '#6d6e71',
+            data: [
+              {% for sent in feedback_stats.sent %}
+                {{ sent }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys sent'
+          },
+          {
+            fillColor: '#929497',
+            strokeColor: '#929497',
+            data: [
+              {% for started in feedback_stats.started %}
+                {{ started }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys started'
+          },
+          {
+            fillColor: '#a6a8ab',
+            strokeColor: '#a6a8ab',
+            data: [
+              {% for completed in feedback_stats.completed %}
+                {{ completed }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys completed'
+          }
+        ]
+      }
+      var chart = $('#facility-chart')[0].getContext('2d');
+      return new Chart(chart).Bar(barData, barOptions);
+  });
+</script>
+{% endblock extra-js %}
+
+        <div class="col-xs-12"></div>
+        <canvas id="facility-chart" height="310" width="615"></canvas>

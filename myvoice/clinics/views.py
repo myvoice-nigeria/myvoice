@@ -346,7 +346,7 @@ class ClinicReport(ReportMixin, DetailView):
             kwargs['min_date'] = None
             kwargs['max_date'] = None
 
-        # Feedback stats
+        # Feedback stats for chart
         lga_clinics = models.Clinic.objects.filter(lga=self.clinic.lga)
         kwargs['feedback_stats'] = self.get_feedback_statistics(lga_clinics)
         kwargs['feedback_clinics'] = [clinic.name for clinic in lga_clinics]
@@ -685,6 +685,18 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             })
         html = tmpl.render(cntxt)
 
+        # Feedback stats for chart
+        lga_clinics = models.Clinic.objects.filter(lga=report.object.lga)
+        chart_stats = report.get_feedback_statistics(lga_clinics, start_date, end_date)
+        chart_clinics = [clnc.name for clnc in lga_clinics]
+        chart_tmpl = get_template('clinics/report_chart.html')
+        chart_ctxt = Context(
+            {
+                'feedback_clinics': chart_clinics,
+                'feedback_stats': chart_stats
+            })
+        chart_html = chart_tmpl.render(chart_ctxt)
+
         return {
             'num_registered': num_registered,
             'num_started': num_started,
@@ -692,7 +704,10 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             'num_completed': num_completed,
             'perc_completed': percent_completed,
             'fos': fos_array,
-            'fos_html': html
+            'fos_html': html,
+            'chart_html': chart_html,
+            'feedback_stats': chart_stats,
+            'feedback_clinics': chart_clinics
         }
 
     def get(self, request, *args, **kwargs):
