@@ -729,6 +729,43 @@ class TestReportMixin(TestCase):
         self.assertEqual(2, stats[1][0])
         self.assertEqual('67.0%', stats[1][1])
 
+    def test_feedback_response_statistics_daterange(self):
+        """Test get_response_statistics respects date ranges.
+
+        Takes list of clinics, survey questions, responses, start and end dates
+        Returns list of:
+          (Count of positive responses, %age of positive responses)
+        """
+        clinic = factories.Clinic.create(code=6)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        time1 = timezone.make_aware(timezone.datetime(2014, 8, 5), timezone.utc)
+        time2 = timezone.make_aware(timezone.datetime(2014, 8, 15), timezone.utc)
+        time3 = timezone.make_aware(timezone.datetime(2014, 8, 25), timezone.utc)
+        p1 = factories.Patient.create(clinic=clinic, serial=111)
+        v1 = factories.Visit.create(
+            service=self.s1, patient=p1, survey_sent=sent, visit_time=time1)
+        v2 = factories.Visit.create(
+            service=self.s2, patient=p1, survey_sent=sent, visit_time=time2)
+        v3 = factories.Visit.create(
+            service=self.s3, patient=p1, survey_sent=sent, visit_time=time3)
+
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v1, clinic=clinic, response='Yes')
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v2, clinic=clinic, response='No')
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v3, clinic=clinic, response='Yes')
+
+        mixin = clinics.ReportMixin()
+        questions = [self.q1, self.q4]
+        stats = mixin.get_response_statistics([clinic], questions, time1, time2)
+
+        self.assertEqual(0, stats[0][0])
+        self.assertIsNone(stats[0][1])
+        self.assertEqual(1, stats[1][0])
+        self.assertEqual('50.0%', stats[1][1])
+
 
 class TestClinicReportView(TestCase):
 

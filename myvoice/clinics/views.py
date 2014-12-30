@@ -207,9 +207,11 @@ class ReportMixin(object):
             'completed': [make_percentage(s, t) for s, t in zip(_completed, _total)],
             }
 
-    def get_response_statistics(self, clinics, questions):
+    def get_response_statistics(self, clinics, questions, start_date=None, end_date=None):
         """Get total and %ge of +ve responses to questions in clinics."""
         responses = SurveyQuestionResponse.objects.filter(clinic__in=clinics)
+        if start_date and end_date:
+            responses = responses.filter(visit__visit_time__range=(start_date, end_date))
         return [(i[2], i[1]) for i in self.get_indices(questions, responses)]
 
     def get_feedback_by_service(self):
@@ -351,7 +353,7 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['feedback_stats'] = self.get_feedback_statistics(lga_clinics)
         kwargs['feedback_clinics'] = [clinic.name for clinic in lga_clinics]
 
-        # Response stats
+        # Patient feedback responses
         other_clinics = lga_clinics.exclude(pk=self.clinic.pk)
         current_clinic_stats = self.get_response_statistics(
             (self.clinic, ), self.questions)
@@ -673,7 +675,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             percent_completed = None
             percent_started = None
 
-        # Render template for table
+        # Calculate and render template for feedback on services
         tmpl = get_template('clinics/report_service.html')
         questions = report.get_survey_questions(start_date, end_date)
         cntxt = Context(
@@ -685,17 +687,24 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             })
         html = tmpl.render(cntxt)
 
-        # Feedback stats for chart
-        lga_clinics = models.Clinic.objects.filter(lga=report.object.lga)
+        # Calculate feedback stats for chart
+        lga_clinics = models.Clinic.objects.filter(lga=clinic.lga)
         chart_stats = report.get_feedback_statistics(lga_clinics, start_date, end_date)
         chart_clinics = [clnc.name for clnc in lga_clinics]
-        chart_tmpl = get_template('clinics/report_chart.html')
-        chart_ctxt = Context(
+
+        # Calculate and render template for patient feedback responses
+        response_tmpl = get_template('clinics/report_responses.html')
+        other_clinics = lga_clinics.exclude(pk=clinic.pk)
+        current_stats = report.get_response_statistics(
+            (clinic, ), questions, start_date, end_date)
+        other_stats = report.get_response_statistics(
+            other_clinics, questions, start_date, end_date)
+        response_ctxt = Context(
             {
-                'feedback_clinics': chart_clinics,
-                'feedback_stats': chart_stats
+                'clinic_name': clinic.name,
+                'response_stats': zip(questions, current_stats, other_stats),
             })
-        chart_html = chart_tmpl.render(chart_ctxt)
+        response_html = response_tmpl.render(response_ctxt)
 
         return {
             'num_registered': num_registered,
@@ -705,9 +714,9 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             'perc_completed': percent_completed,
             'fos': fos_array,
             'fos_html': html,
-            'chart_html': chart_html,
             'feedback_stats': chart_stats,
-            'feedback_clinics': chart_clinics
+            'feedback_clinics': chart_clinics,
+            'responses_html': response_html
         }
 
     def get(self, request, *args, **kwargs):
