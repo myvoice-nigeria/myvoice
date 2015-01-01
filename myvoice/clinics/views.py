@@ -743,19 +743,19 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             json.dumps(clinic_data, cls=DjangoJSONEncoder), content_type='text/json')
 
 
-class RegionReport(ReportMixin, DetailView):
+class LGAReport(ReportMixin, DetailView):
     template_name = 'clinics/summary.html'
     model = models.Region
 
     def __init__(self, *args, **kwargs):
-        super(RegionReport, self).__init__(*args, **kwargs)
+        super(LGAReport, self).__init__(*args, **kwargs)
         self.curr_date = None
         self.start_date = None
         self.end_date = None
         self.weeks = None
 
     def get_object(self, queryset=None):
-        obj = super(RegionReport, self).get_object(queryset)
+        obj = super(LGAReport, self).get_object(queryset)
         self.responses = SurveyQuestionResponse.objects.filter(clinic__lga__iexact=obj.name)
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(
@@ -783,7 +783,7 @@ class RegionReport(ReportMixin, DetailView):
             (self.start_day(start), self.start_day(end)) for start, end in
             self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
         kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
-        data = super(RegionReport, self).get_context_data(**kwargs)
+        data = super(LGAReport, self).get_context_data(**kwargs)
         return data
 
     def get_clinic_labels(self):
@@ -931,7 +931,7 @@ class LGAReportFilterByClinic(View):
         start_date = get_date(_start_date)
         end_date = get_date(_end_date)
 
-        report = RegionReport()
+        report = LGAReport()
 
         feedback_data = self.get_feedback_data(report, start_date, end_date)
         data = {

@@ -1266,7 +1266,7 @@ class TestFeedbackFilterView(TestCase):
         self.assertEqual(200, response.status_code)
 
 
-class TestRegionReportView(TestCase):
+class TestLGAReportView(TestCase):
 
     def setUp(self):
         geom = GEOSGeometry('MULTIPOLYGON((( 1 1, 1 2, 2 2, 1 1)))')
@@ -1349,7 +1349,7 @@ class TestRegionReportView(TestCase):
             data = {}
         url = '/reports/region/599/'
         request = self.factory.get(url, data=data)
-        return clinics.RegionReport.as_view()(request, pk=599)
+        return clinics.LGAReport.as_view()(request, pk=599)
 
     def test_region_report_page_loads(self):
         """Smoke test to make sure page loads and returns some context."""
@@ -1375,7 +1375,7 @@ class TestRegionReportView(TestCase):
 
         url = '/reports/region/599/'
         request = self.factory.get(url)
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.request = request
         report.get(request)
 
@@ -1398,7 +1398,7 @@ class TestRegionReportView(TestCase):
 
         url = '/reports/region/599/?day=x&month=7&year=2014'
         request = self.factory.get(url)
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.request = request
         report.get(request)
         self.assertIsNone(report.curr_date)
@@ -1413,7 +1413,7 @@ class TestRegionReportView(TestCase):
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=311)
         )
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
         visits = models.Visit.objects.filter(
             patient__clinic=self.clinic, survey_sent__isnull=False)
@@ -1423,7 +1423,7 @@ class TestRegionReportView(TestCase):
 
     def test_get_satisfaction_counts(self):
         """Test number of visits that patient was not unsatisfied."""
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         p1 = factories.Patient.create(serial=1111, clinic=self.clinic)
         p2 = factories.Patient.create(serial=2222, clinic=self.clinic)
 
@@ -1463,7 +1463,7 @@ class TestRegionReportView(TestCase):
 
     def test_get_satisfaction_counts_waittime(self):
         """Test number of visits that patient was not unsatisfied because of Wait Time."""
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         p1 = factories.Patient.create(serial=1111, clinic=self.clinic)
         p2 = factories.Patient.create(serial=2222, clinic=self.clinic)
 
@@ -1504,7 +1504,7 @@ class TestRegionReportView(TestCase):
         """Test get satisfaction counts with no responses."""
         clinic = factories.Clinic.create(code=3, lga='Wamba1', name='TEST2')
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
 
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=clinic)
@@ -1526,7 +1526,7 @@ class TestRegionReportView(TestCase):
             visit=self.v2,
             clinic=self.clinic, response='Not Clean')
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
         target_questions = survey_models.SurveyQuestion.objects.filter(
@@ -1557,7 +1557,7 @@ class TestRegionReportView(TestCase):
             datetime=timezone.now(),
             visit=v3,
             clinic=self.clinic, response='1-2 hours')
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
         mode, mode_len = report.get_wait_mode(responses)
@@ -1580,7 +1580,7 @@ class TestRegionReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 6, 30))
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
 
         d1 = timezone.datetime(2014, 5, 1)
@@ -1603,7 +1603,7 @@ class TestRegionReportView(TestCase):
             start_date=timezone.datetime(2014, 7, 1),
             end_date=timezone.now().date())
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
 
         score = report.get_clinic_score(self.clinic)
@@ -1625,7 +1625,7 @@ class TestRegionReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 8, 30))
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
 
         dt = timezone.datetime(2014, 8, 20)
@@ -1648,7 +1648,7 @@ class TestRegionReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 8, 30))
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
 
         dt = timezone.datetime(2014, 1, 20)
@@ -1658,7 +1658,7 @@ class TestRegionReportView(TestCase):
 
     def test_get_feedback_by_clinic(self):
         """Test get feedback by clinic."""
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
         report.get_object()
         feedback = report.get_feedback_by_clinic()
         self.assertEqual('TEST1', feedback[0][1])
@@ -1872,7 +1872,7 @@ class TestLGAReportFilterByClinic(TestCase):
         start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
         end_date = timezone.make_aware(timezone.datetime(2014, 8, 8), timezone.utc)
         obj = clinics.LGAReportFilterByClinic()
-        report = clinics.RegionReport()
+        report = clinics.LGAReport()
         data = obj.get_feedback_data(report, start_date, end_date)
 
         self.assertEqual('Clinic 1', data[0][1])
