@@ -27,6 +27,23 @@ class Region(gis.Model):
         return u"{} - {}".format(self.get_type_display(), self.name)
 
 
+class State(models.Model):
+    """A State."""
+    name = models.CharField(max_length=255)
+
+    def __unicode__(self):
+        return self.name
+
+
+class LGA(models.Model):
+    """Local Government Area."""
+    name = models.CharField(max_length=255)
+    state = models.ForeignKey('State')
+
+    def __unicode__(self):
+        return self.name
+
+
 class Clinic(models.Model):
     """A health clinic."""
     name = models.CharField(max_length=100, unique=True)
