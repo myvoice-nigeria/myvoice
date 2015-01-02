@@ -596,8 +596,9 @@ class TestReportMixin(TestCase):
         Takes a list of clinics
         Returns 3 lists of surveys sent, started and completed
         in order of clinics passed in."""
-        cl1 = factories.Clinic.create(code=1, lga='one')
-        cl2 = factories.Clinic.create(code=2, lga='one')
+        lga = factories.LGA.create(name='one')
+        cl1 = factories.Clinic.create(code=1, lga=lga)
+        cl2 = factories.Clinic.create(code=2, lga=lga)
 
         p1 = factories.Patient.create(clinic=cl1, serial=444)
         p2 = factories.Patient.create(clinic=cl2, serial=555)
@@ -650,8 +651,9 @@ class TestReportMixin(TestCase):
         """Test get_feedback_statistics with no start/end dates passed in takes all the visits
         """
 
-        cl1 = factories.Clinic.create(code=1, lga='one')
-        cl2 = factories.Clinic.create(code=2, lga='one')
+        lga = factories.LGA.create(name='one')
+        cl1 = factories.Clinic.create(code=1, lga=lga)
+        cl2 = factories.Clinic.create(code=2, lga=lga)
 
         p1 = factories.Patient.create(clinic=cl1, serial=444)
         p2 = factories.Patient.create(clinic=cl2, serial=555)
@@ -1269,9 +1271,12 @@ class TestFeedbackFilterView(TestCase):
 class TestLGAReportView(TestCase):
 
     def setUp(self):
-        geom = GEOSGeometry('MULTIPOLYGON((( 1 1, 1 2, 2 2, 1 1)))')
+        # geom = GEOSGeometry('MULTIPOLYGON((( 1 1, 1 2, 2 2, 1 1)))')
         self.factory = RequestFactory()
-        self.region = factories.Region.create(pk=599, name='Wamba', type='lga', boundary=geom)
+        # self.region = factories.Region.create(
+        #     pk=599, name='Wamba', type='lga', boundary=geom)
+        # state = factories.State.create(pk=1, name='Nasarawa')
+        self.lga = factories.LGA.create(pk=1, name='Wamba')
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
         self.open = factories.SurveyQuestion.create(
@@ -1308,7 +1313,7 @@ class TestLGAReportView(TestCase):
             for_satisfaction=True,
             report_order=50)
 
-        self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
+        self.clinic = factories.Clinic.create(code=1, lga=self.lga, name='TEST1')
 
         self.service = factories.Service.create(code=2)
 
@@ -1347,11 +1352,11 @@ class TestLGAReportView(TestCase):
         """Make Test request with POST data."""
         if data is None:
             data = {}
-        url = '/reports/region/599/'
+        url = '/reports/region/1/'
         request = self.factory.get(url, data=data)
-        return clinics.LGAReport.as_view()(request, pk=599)
+        return clinics.LGAReport.as_view()(request, pk=1)
 
-    def test_region_report_page_loads(self):
+    def test_lga_report_page_loads(self):
         """Smoke test to make sure page loads and returns some context."""
         response = self.make_request()
         self.assertEqual(response.status_code, 200)
@@ -1373,9 +1378,9 @@ class TestLGAReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        url = '/reports/region/599/'
+        url = '/reports/region/1/'
         request = self.factory.get(url)
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.request = request
         report.get(request)
 
@@ -1396,9 +1401,9 @@ class TestLGAReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        url = '/reports/region/599/?day=x&month=7&year=2014'
+        url = '/reports/region/1/?day=x&month=7&year=2014'
         request = self.factory.get(url)
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.request = request
         report.get(request)
         self.assertIsNone(report.curr_date)
@@ -1413,7 +1418,7 @@ class TestLGAReportView(TestCase):
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=311)
         )
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
         visits = models.Visit.objects.filter(
             patient__clinic=self.clinic, survey_sent__isnull=False)
@@ -1423,7 +1428,7 @@ class TestLGAReportView(TestCase):
 
     def test_get_satisfaction_counts(self):
         """Test number of visits that patient was not unsatisfied."""
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         p1 = factories.Patient.create(serial=1111, clinic=self.clinic)
         p2 = factories.Patient.create(serial=2222, clinic=self.clinic)
 
@@ -1433,26 +1438,27 @@ class TestLGAReportView(TestCase):
         v2 = factories.Visit.create(patient=p2, service=service)
         v3 = factories.Visit.create(patient=p1, service=service)
         v4 = factories.Visit.create(patient=p2, service=service)
+        #import pdb;pdb.set_trace()
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v1)
+            question=self.respect, response='Yes', visit=v1, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v1)
+            question=self.wait, response='<1 hour', visit=v1, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='No', visit=v2)
+            question=self.respect, response='No', visit=v2, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='1-2 hours', visit=v2)
+            question=self.wait, response='1-2 hours', visit=v2, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v3)
+            question=self.respect, response='Yes', visit=v3, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v3)
+            question=self.wait, response='<1 hour', visit=v3, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.fair, response='Yes', visit=v4)
+            question=self.fair, response='Yes', visit=v4, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v4)
+            question=self.wait, response='<1 hour', visit=v4, clinic=self.clinic)
 
         report.get_object()
 
@@ -1463,7 +1469,7 @@ class TestLGAReportView(TestCase):
 
     def test_get_satisfaction_counts_waittime(self):
         """Test number of visits that patient was not unsatisfied because of Wait Time."""
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         p1 = factories.Patient.create(serial=1111, clinic=self.clinic)
         p2 = factories.Patient.create(serial=2222, clinic=self.clinic)
 
@@ -1475,24 +1481,24 @@ class TestLGAReportView(TestCase):
         v4 = factories.Visit.create(patient=p2, service=service)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v1)
+            question=self.respect, response='Yes', visit=v1, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v1)
+            question=self.wait, response='<1 hour', visit=v1, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v2)
+            question=self.respect, response='Yes', visit=v2, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='1-2 hours', visit=v2)
+            question=self.wait, response='1-2 hours', visit=v2, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v3)
+            question=self.respect, response='Yes', visit=v3, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v3)
+            question=self.wait, response='<1 hour', visit=v3, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.fair, response='Yes', visit=v4)
+            question=self.fair, response='Yes', visit=v4, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='4+ hours', visit=v4)
+            question=self.wait, response='4+ hours', visit=v4, clinic=self.clinic)
         report.get_object()
 
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
@@ -1502,9 +1508,9 @@ class TestLGAReportView(TestCase):
 
     def test_get_satisfaction_counts_no_responses(self):
         """Test get satisfaction counts with no responses."""
-        clinic = factories.Clinic.create(code=3, lga='Wamba1', name='TEST2')
+        clinic = factories.Clinic.create(code=3, lga=self.lga, name='TEST2')
 
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=clinic)
@@ -1526,7 +1532,7 @@ class TestLGAReportView(TestCase):
             visit=self.v2,
             clinic=self.clinic, response='Not Clean')
 
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
         target_questions = survey_models.SurveyQuestion.objects.filter(
@@ -1557,7 +1563,7 @@ class TestLGAReportView(TestCase):
             datetime=timezone.now(),
             visit=v3,
             clinic=self.clinic, response='1-2 hours')
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
         mode, mode_len = report.get_wait_mode(responses)
@@ -1580,7 +1586,7 @@ class TestLGAReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 6, 30))
 
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         d1 = timezone.datetime(2014, 5, 1)
@@ -1603,7 +1609,7 @@ class TestLGAReportView(TestCase):
             start_date=timezone.datetime(2014, 7, 1),
             end_date=timezone.now().date())
 
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         score = report.get_clinic_score(self.clinic)
@@ -1625,7 +1631,7 @@ class TestLGAReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 8, 30))
 
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         dt = timezone.datetime(2014, 8, 20)
@@ -1648,7 +1654,7 @@ class TestLGAReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 8, 30))
 
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         dt = timezone.datetime(2014, 1, 20)
@@ -1658,7 +1664,7 @@ class TestLGAReportView(TestCase):
 
     def test_get_feedback_by_clinic(self):
         """Test get feedback by clinic."""
-        report = clinics.LGAReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
         feedback = report.get_feedback_by_clinic()
         self.assertEqual('TEST1', feedback[0][1])

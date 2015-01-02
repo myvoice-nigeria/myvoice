@@ -745,7 +745,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
 class LGAReport(ReportMixin, DetailView):
     template_name = 'clinics/summary.html'
-    model = models.Region
+    model = models.LGA
 
     def __init__(self, *args, **kwargs):
         super(LGAReport, self).__init__(*args, **kwargs)
@@ -756,7 +756,7 @@ class LGAReport(ReportMixin, DetailView):
 
     def get_object(self, queryset=None):
         obj = super(LGAReport, self).get_object(queryset)
-        self.responses = SurveyQuestionResponse.objects.filter(clinic__lga__iexact=obj.name)
+        self.responses = SurveyQuestionResponse.objects.filter(clinic__lga=obj)
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(
                 visit__visit_time__range=(self.start_date, self.end_date))
