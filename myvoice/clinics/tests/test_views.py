@@ -1,7 +1,6 @@
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone
-from django.contrib.gis.geos import GEOSGeometry
 
 import json
 import datetime
@@ -1271,11 +1270,7 @@ class TestFeedbackFilterView(TestCase):
 class TestLGAReportView(TestCase):
 
     def setUp(self):
-        # geom = GEOSGeometry('MULTIPOLYGON((( 1 1, 1 2, 2 2, 1 1)))')
         self.factory = RequestFactory()
-        # self.region = factories.Region.create(
-        #     pk=599, name='Wamba', type='lga', boundary=geom)
-        # state = factories.State.create(pk=1, name='Nasarawa')
         self.lga = factories.LGA.create(pk=1, name='Wamba')
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
@@ -1438,7 +1433,6 @@ class TestLGAReportView(TestCase):
         v2 = factories.Visit.create(patient=p2, service=service)
         v3 = factories.Visit.create(patient=p1, service=service)
         v4 = factories.Visit.create(patient=p2, service=service)
-        #import pdb;pdb.set_trace()
 
         factories.SurveyQuestionResponse.create(
             question=self.respect, response='Yes', visit=v1, clinic=self.clinic)
