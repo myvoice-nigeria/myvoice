@@ -54,7 +54,7 @@ class Clinic(models.Model):
     # designator that we are most interested in.
     town = models.CharField(max_length=100)
     ward = models.CharField(max_length=100)
-    lga = models.CharField(max_length=100, verbose_name='LGA')
+    lga = models.ForeignKey(LGA, null=True)
     location = gis.PointField(null=True, blank=True)
 
     lga_rank = models.IntegerField(
