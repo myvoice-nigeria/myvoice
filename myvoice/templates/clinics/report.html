@@ -72,7 +72,7 @@
   var buildChart = function(labels, sentData, startedData, completedData){
       var chart = $('#facility-chart')[0].getContext('2d');
       var chartData = prepareChartData(labels, sentData, startedData, completedData);
-      var chartObject = new Chart(chart)
+      var chartObject = new Chart(chart);
       chartObject.Bar(chartData, barOptions);
   }
   
@@ -248,7 +248,7 @@ $(function() {
 
   <!-- .container#feedback-chart -->
 
-  <div id="feedback-chart" class="container print-break">
+  <div id="feedback-chart" class="container">
       <div class="col-xs-12 section-heading web-only">
           <h2>PARTICIPATION BY FACILITY</h2>
       </div>
@@ -269,7 +269,7 @@ $(function() {
 <!-- .container#feedback-chart -->
 
 <!-- .container#patient-feedback-responses -->
-<div id="feedback-on-responses" class="container print-break">
+<div id="feedback-on-responses" class="container">
       <div class="col-xs-12 section-heading web-only">
           <h2>PATIENT FEEDBACK RESPONSES</h2>
       </div>

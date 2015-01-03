@@ -58,6 +58,39 @@ var buildFeedbackChart = function(labels, data){
     chartObject.Bar(chartData, barOptions);
 }
 
+var buildFacilityChart = function(labels, sent, started, completed){
+
+      var barData = {
+        labels: labels,
+        datasets: [
+          {
+            fillColor: '#6d6e71',
+            strokeColor: '#6d6e71',
+            data: sent,
+            title: 'Surveys sent'
+          },
+          {
+            fillColor: '#929497',
+            strokeColor: '#929497',
+            data: started,
+            title: 'Surveys started'
+          },
+          {
+            fillColor: '#a6a8ab',
+            strokeColor: '#a6a8ab',
+            data: completed,
+            title: 'Surveys completed'
+          }
+        ]
+      };
+
+      var opts = barOptions;
+      opts['legend'] = true;
+      var chart = $('#facility-chart')[0].getContext('2d');
+      var chartObject = new Chart(chart);
+      chartObject.Bar(barData, barOptions);
+}
+
 $(function() {
     var labels = [
     {% for label in question_labels %}
@@ -71,6 +104,29 @@ $(function() {
     ];
 
     buildFeedbackChart(labels, data);
+
+    var labels = [
+        {% for label in feedback_clinics %}
+            "{{ label }}"{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+    var sent = [
+        {% for sent in feedback_stats.sent %}
+            {{ sent }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+    var started = [
+        {% for started in feedback_stats.started %}
+            {{ started }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+    var completed = [
+        {% for completed in feedback_stats.completed %}
+            {{ completed }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+
+    buildFacilityChart(labels, sent, started, completed);
 });
 
 </script>
@@ -108,7 +164,7 @@ $(function() {
       </div>
       </h1>
     </div>
-    <div class="col-xs-12 section-heading">
+    <div class="col-xs-12 section-heading web-only">
       <h2>FEEDBACK ON SERVICES</h2>
     </div>
 
@@ -118,9 +174,10 @@ $(function() {
     </div>
 
 
+    <div>
     <p>Number of patients with this service who reported this feedback.</p>
 
-    <table class="table table-bordered table-striped web-only">
+    <table class="table table-bordered table-striped">
       <thead>
         <tr>
           <th class="special-th weeks_filter">Services {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
@@ -145,11 +202,12 @@ $(function() {
         {% endfor %}
       </tbody>
     </table>
+</div>
   </div><!-- / #feedback-on-services .container -->
 
 
   <!-- #lga-wide-patient-feedback -->
-  <div id="feedback-facility" class="container">
+  <div id="lga-wide-patient-feedback" class="container">
     <div class="col-xs-12 section-heading web-only">
       <h2>LGA-WIDE PATIENT FEEDBACK</h2>
     </div>
@@ -160,22 +218,27 @@ $(function() {
     </div>
 
   
-  <div id="patient-feedback"
-      <div id="patient-feedback-chart" class="two-col-div">
         <p>Summary of patients reports on {{ lga.name }} facility experience.</p>
+     <div id="patient-feedback">
+      <div id="patient-feedback-chart" class="two-col-div">
           <canvas id="feedback-chart" width=310 height=310></canvas>
       </div>
       <div id="patient-feedback-comments" class="two-col-div">
-          <table>
+          <table class="table table-striped">
               <thead>
                   <tr>
-                      <th>Main Comments:</th>
-                      <th># Reported</th>
+                      <th class="special-th">Main Comments:</th>
+                      <th class="special-th">Reported</th>
                   </tr>
               </thead>
               <tbody>
+                  {% for comment in main_comments %}
+                      <tr>
+                          <td>{{ comment.0 }}</td>
+                          <td>{{ comment.1 }}</td>
+                      </tr>
+                  {% endfor %}
               </tbody>
-          </table>
           </table>
       </div>
   </div>
@@ -183,7 +246,7 @@ $(function() {
   </div>
   <!-- #lga-wide-patient-feedback -->
 
-  <div id="feedback-facility" class="container">
+  <div id="feedback-facility" class="container print-break">
     <div class="col-xs-12 section-heading web-only">
       <h2>FEEDBACK REPORTED BY FACILITY</h2>
     </div>
@@ -196,7 +259,7 @@ $(function() {
 
     <p>Number of patients with this service who reported this feedback.</p>
 
-    <table class="table table-bordered table-striped web-only">
+    <table class="table table-bordered table-striped">
       <thead>
         <tr>
             <th class="special-th weeks_filter">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
@@ -233,143 +296,31 @@ $(function() {
       </tbody>
     </table>
 
-  <div id="feedback-facility" class="container">
-    <div class="col-xs-12 section-heading web-only">
-      <h2>FEEDBACK REPORTED BY FACILITY</h2>
-    </div>
-
-    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
-      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
-      <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK REPORTED BY FACILITY</h2>
-    </div>
-      
-
-    <p>Number of patients with this service who reported this feedback.</p>
-
-    <table class="table table-bordered table-striped web-only">
-      <thead>
-        <tr>
-            <th class="special-th weeks_filter">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
-            {% for heading in clinic_labels %}
-              <th>
-                <div class="green-question-dot" data-toggle="popover" data-placement="bottom" data-content="This response was generated by using key satisfaction indicators based on customer responses in SMS survey.">?</div>
-                {{ heading }}
-              </th>
-            {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-      {% for clinic_id, clinic, clinic_data in feedback_by_clinic %}
-        <tr id="clinic{{clinic_id}}">
-            <td class="clinic_name">{{ clinic }}</td>
-            {% for label, result, total_respondents in clinic_data %}
-            {% if result == None %}
-              <td class="{{label}}">N/A (0)</td>
-            {% else %}
-              {% if total_respondents %}
-                <td class="{{label}}">{{ result }} ({{ total_respondents }})</td>
-              {% else %}
-                {% if label == "Quality" %}
-                  <td class="{{label}}">{{ result }}</td>
-                {% else %}
-                  <td class="{{label}}">{{ result }}</td>
-                {% endif %}
-              {% endif %}
-            {% endif %}
-            {% endfor %}
-        </tr>
-      {% endfor %}
-
-      </tbody>
-    </table>
-
-      <table class="table table-bordered table-striped print-only">
-      <thead>
-        <tr>
-            <th class="special-th">Facility {{ min_date|date:"F j, Y" }}-{{ max_date|date:"F j, Y" }}</th>
-          <th>
-            Feedback<br>Participation
-          </th>
-          <th>
-            Patient<br>Satisfaction
-          </th>
-          <th>
-              Quality - Q2 2014 <br>%
-          </th>
-          <th>
-              Quantity - Q2 2014 <br>N
-          </th>
-          <th>
-            Open<br>Facility
-          </th>
-          <th>
-            Respectful<br>Staff Treatment
-          </th>
-          <th>
-            Clean<br>Hospital Materials
-          </th>
-          <th>
-            Charged<br>Fairly
-          </th>
-          <th>
-            Most<br>Common<br>Wait Time<br>(hrs)
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for clinic, clinic_data in feedback_by_clinic %}
-        <tr>
-            <td>{{ clinic }}</td>
-            {% for result, total_respondents in clinic_data %}
-            {% if result == None %}
-              <td>N/A (0)</td>
-            {% else %}
-              <td>{{ result }} ({{ total_respondents }})</td>
-            {% endif %}
-            {% endfor %}
-        </tr>
-        {% if forloop.counter == 3 %}
-          </table>
-          <div class="print-break"></div><br/><br/>
-          <table class="table table-bordered table-striped print-only">
-          <thead>
-            <tr>
-                <th class="special-th">{{ min_date|date:"F j, Y" }}-{{ max_date|date:"F j, Y" }}</th>
-              <th>
-                Feedback<br>Participation
-              </th>
-              <th>
-                Patient<br>Satisfaction
-              </th>
-              <th>
-                Quality<br>(Score, Q1)
-              </th>
-              <th>
-                Quantity<br>(Score, Q1)
-              </th>
-              <th>
-                Open<br>Facility
-              </th>
-              <th>
-                Respectful<br>Staff Treatment
-              </th>
-              <th>
-                Clean<br>Hospital Materials
-              </th>
-              <th>
-                Charged<br>Fairly
-              </th>
-              <th>
-                Most<br>Common<br>Wait Time<br>(hrs)
-              </th>
-            </tr>
-          </thead>
-        {% endif %}
-      {% endfor %}
-      </tbody>
-    </table>
 
   </div><!-- / #feedback-facility .container -->
+
+  <!-- .container#facility-chart -->
+
+  <div id="feedback-chart" class="container">
+      <div class="col-xs-12 section-heading web-only">
+          <h2>PARTICIPATION BY FACILITY</h2>
+      </div>
+
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">PARTICIPATION BY FACILITY</h2>
+    </div>
+    <!-- chart div -->
+    <div class="col-xs-6 chart-container" id="facility-participation-chart">
+        <div class="col-xs-12"></div>
+        <div id="chart-container">
+            <canvas id="facility-chart" width=615 height=310></canvas>
+        </div>
+    </div>
+    <!-- chart div -->
+</div>
+<!-- .container#facility-chart -->
+
 {% endblock content %}
 
 {% block js %}

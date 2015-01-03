@@ -1,4 +1,10 @@
 /* Account for fixed navbar */
+@page {
+    /*size: 8.5in 11in;*/
+    size: landscape;
+    margin-top: 5cm;
+}
+
 body {
   min-width: 595px;
   padding-top: 70px;
@@ -202,6 +208,12 @@ select::-ms-expand {
 .two-col-div {
     float: left;
     width: 50%;
+}
+
+.two-col-div table {
+    padding-left: 20px;
+    float: right;
+    width: 90%;
 }
 
 .section-heading {
@@ -497,6 +509,10 @@ th {
 
 td {
 	font-size: 12px;
+}
+
+.no-border {
+    border: 0;
 }
 
 .form-signin {

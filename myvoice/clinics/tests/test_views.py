@@ -1665,6 +1665,45 @@ class TestLGAReportView(TestCase):
         self.assertEqual(('Participation', '100.0%', 2), feedback[0][2][0])
         self.assertEqual(('Patient Satisfaction', '0.0%', 0), feedback[0][2][1])
 
+    def test_get_main_comments(self):
+        """Test that we get comments from GeneralFeedback that are marked to show on summary
+        reports."""
+        clinic1 = factories.Clinic.create()
+        clinic2 = factories.Clinic.create()
+        clinic3 = factories.Clinic.create()
+
+        factories.GenericFeedback.create(
+            clinic=clinic1,
+            message="Test1",
+            message_date=timezone.now(),
+            display_on_summary=True,
+            report_count=1)
+        factories.GenericFeedback.create(
+            clinic=clinic1,
+            message="Test2",
+            message_date=timezone.now(),
+            display_on_summary=False)
+        factories.GenericFeedback.create(
+            clinic=clinic2,
+            message="Test3",
+            message_date=timezone.now(),
+            display_on_summary=True,
+            report_count=3)
+        factories.GenericFeedback.create(
+            clinic=clinic3,
+            message="Test4",
+            message_date=timezone.now(),
+            display_on_summary=True,
+            report_count=1)
+
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
+        report.get_object()
+        comments = report.get_main_comments([clinic1, clinic2])
+
+        self.assertEqual(2, len(comments))
+        self.assertTrue(('Test1', 1) in comments)
+        self.assertTrue(('Test3', 3) in comments)
+
 
 class TestLGAReportFilterByService(TestCase):
 

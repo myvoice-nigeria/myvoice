@@ -763,6 +763,14 @@ class LGAReport(ReportMixin, DetailView):
         self.initialize_data()
         return obj
 
+    def get_main_comments(self, clinics):
+        """Get generic comments marked to show on summary pages."""
+        comments = [
+            (cmt.message, cmt.report_count)
+            for cmt in models.GenericFeedback.objects.filter(
+                clinic__in=clinics, display_on_summary=True)]
+        return comments
+
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
@@ -785,6 +793,13 @@ class LGAReport(ReportMixin, DetailView):
         clinic_stats = self.get_response_statistics(
             clinics, self.questions)
         kwargs['response_stats'] = clinic_stats
+
+        # Main comments
+        kwargs['main_comments'] = self.get_main_comments(clinics)
+
+        # Feedback stats for chart
+        kwargs['feedback_stats'] = self.get_feedback_statistics(clinics)
+        kwargs['feedback_clinics'] = [clinic.name for clinic in clinics]
 
         kwargs['week_ranges'] = [
             (self.start_day(start), self.start_day(end)) for start, end in
