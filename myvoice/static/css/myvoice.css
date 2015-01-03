@@ -199,6 +199,11 @@ select::-ms-expand {
 	padding-right:0;
 }
 
+.two-col-div {
+    float: left;
+    width: 50%;
+}
+
 .section-heading {
 	background-color: #A6A8AB;
 	color:#fff;

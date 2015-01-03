@@ -726,9 +726,9 @@ class TestReportMixin(TestCase):
         stats = mixin.get_response_statistics([self.clinic, clinic], questions)
 
         self.assertEqual(1, stats[0][0])
-        self.assertEqual('100.0%', stats[0][1])
+        self.assertEqual(100, stats[0][1])
         self.assertEqual(2, stats[1][0])
-        self.assertEqual('67.0%', stats[1][1])
+        self.assertEqual(67, stats[1][1])
 
     def test_feedback_response_statistics_daterange(self):
         """Test get_response_statistics respects date ranges.
@@ -765,7 +765,7 @@ class TestReportMixin(TestCase):
         self.assertEqual(0, stats[0][0])
         self.assertIsNone(stats[0][1])
         self.assertEqual(1, stats[1][0])
-        self.assertEqual('50.0%', stats[1][1])
+        self.assertEqual(50, stats[1][1])
 
 
 class TestClinicReportView(TestCase):
@@ -1534,9 +1534,9 @@ class TestLGAReportView(TestCase):
         indices = [i for i in report.get_indices(target_questions, responses)]
         self.assertEqual(4, len(indices))
 
-        self.assertEqual(('Open Facility', '100.0%', 1), indices[0])
-        self.assertEqual(('Respectful Staff Treatment', '0.0%', 0), indices[1])
-        self.assertEqual(('Clean Hospital Materials', '50.0%', 1), indices[2])
+        self.assertEqual(('Open Facility', 100, 1), indices[0])
+        self.assertEqual(('Respectful Staff Treatment', 0, 0), indices[1])
+        self.assertEqual(('Clean Hospital Materials', 50, 1), indices[2])
         self.assertEqual(('Charged Fairly', None, 0), indices[3])
 
     def test_get_wait_time_mode(self):

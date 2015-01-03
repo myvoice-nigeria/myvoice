@@ -158,9 +158,8 @@ class ReportMixin(object):
             question_responses = [r for r in responses if r.question_id == question.pk]
             total_resp = len(question_responses)
             positive = len([r for r in question_responses if r.positive_response])
-            percent = '{}%'.format(
-                make_percentage(positive, total_resp)) if total_resp else None
-            yield (question.question_label, percent, positive)
+            perc = make_percentage(positive, total_resp) if total_resp else None
+            yield (question.question_label, perc, positive)
 
     def get_satisfaction_counts(self, responses):
         """Return satisfaction percentage and total of survey participants."""
@@ -225,8 +224,10 @@ class ReportMixin(object):
         for service in services:
             service_data = []
             service_responses = responses.filter(service=service)
-            for result in self.get_indices(target_questions, service_responses):
-                service_data.append(result)
+            for label, perc, val in self.get_indices(target_questions, service_responses):
+                if perc or perc == 0:
+                    perc = '{}%'.format(perc)
+                service_data.append((label, perc, val))
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(service_responses)
@@ -279,9 +280,6 @@ class ClinicReport(ReportMixin, DetailView):
             questions = self.get_survey_questions(start_date, end_date).exclude(
                 label='Wait Time')
             for label, perc, tot in self.get_indices(questions, week_responses):
-                # FIXME: Get rid of percent sign (need to fix)
-                if perc:
-                    perc = perc.replace('%', '')
                 week_data.append((perc, tot))
 
             # Wait Time
@@ -756,6 +754,7 @@ class LGAReport(ReportMixin, DetailView):
 
     def get_object(self, queryset=None):
         obj = super(LGAReport, self).get_object(queryset)
+        self.lga = obj
         self.responses = SurveyQuestionResponse.objects.filter(clinic__lga=obj)
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(
@@ -770,6 +769,8 @@ class LGAReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
         kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
+        kwargs['question_labels'] = self.questions
+        kwargs['lga'] = self.lga
 
         if self.responses:
             min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
@@ -778,6 +779,12 @@ class LGAReport(ReportMixin, DetailView):
         else:
             kwargs['min_date'] = None
             kwargs['max_date'] = None
+
+        # Patient feedback responses
+        clinics = models.Clinic.objects.filter(lga=self.lga)
+        clinic_stats = self.get_response_statistics(
+            clinics, self.questions)
+        kwargs['response_stats'] = clinic_stats
 
         kwargs['week_ranges'] = [
             (self.start_day(start), self.start_day(end)) for start, end in
@@ -853,8 +860,10 @@ class LGAReport(ReportMixin, DetailView):
 
             # Indices for each question
             target_questions = self.questions.exclude(label='Wait Time')
-            for index in self.get_indices(target_questions, clinic_responses):
-                clinic_data.append(index)
+            for label, perc, val in self.get_indices(target_questions, clinic_responses):
+                if perc or perc == 0:
+                    perc = '{}%'.format(perc)
+                clinic_data.append((label, perc, val))
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(clinic_responses)
