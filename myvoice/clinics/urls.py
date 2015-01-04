@@ -34,12 +34,4 @@ urlpatterns = [
     url(r'^visit/$', views.VisitView.as_view(), name='visit'),
     url(r'^feedback/$', views.FeedbackView.as_view(), name='visit'),
     url(r'^lga_async/$', views.LGAReportAjax.as_view(), name='async_lga'),
-    #url(r'^lga_filter_feedback_by_clinic/$',
-    #    views.LGAReportAjax.as_view(), name='clinic_filter'),
-    #url(r'^lga_filter_feedback_by_clinic/$',
-    #    views.LGAReportFilterByClinic.as_view(), name='clinic_filter'),
-    #url(r'^lga_filter_feedback_by_service/$',
-    #    views.lgareportfilterbyservice.as_view(), name='service_filter'),
-    #url(r'^lga_filter_feedback_by_service/$',
-    #    views.LGAReportAjax.as_view(), name='service_filter'),
 ]
