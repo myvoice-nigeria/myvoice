@@ -127,6 +127,9 @@ $(function() {
     ];
 
     buildFacilityChart(labels, sent, started, completed);
+
+    //Set select-box to first option
+    $('#weeks_filter').val($('#weeks_filter option:first').val());
 });
 
 </script>
@@ -177,7 +180,7 @@ $(function() {
     <div>
     <p>Number of patients with this service who reported this feedback.</p>
 
-    <table class="table table-bordered table-striped">
+    <table id="services-table" class="table table-bordered table-striped">
       <thead>
         <tr>
           <th class="special-th weeks_filter">Services {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
@@ -220,7 +223,7 @@ $(function() {
   
         <p>Summary of patients reports on {{ lga.name }} facility experience.</p>
      <div id="patient-feedback">
-      <div id="patient-feedback-chart" class="two-col-div">
+      <div id="feedback-chart-container" class="two-col-div">
           <canvas id="feedback-chart" width=310 height=310></canvas>
       </div>
       <div id="patient-feedback-comments" class="two-col-div">
@@ -259,7 +262,7 @@ $(function() {
 
     <p>Number of patients with this service who reported this feedback.</p>
 
-    <table class="table table-bordered table-striped">
+    <table id="facilities-table" class="table table-bordered table-striped">
       <thead>
         <tr>
             <th class="special-th weeks_filter">{{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
@@ -313,7 +316,7 @@ $(function() {
     <!-- chart div -->
     <div class="col-xs-6 chart-container" id="facility-participation-chart">
         <div class="col-xs-12"></div>
-        <div id="chart-container">
+        <div id="facility-chart-container">
             <canvas id="facility-chart" width=615 height=310></canvas>
         </div>
     </div>
@@ -331,8 +334,9 @@ $(function() {
  $(document).ready( function () {
 
     $("#weeks_filter").change( function() {
-      filter_feedback_on_services_table();
-      filter_feedback_on_clinics_table();
+      do_async();
+      //filter_feedback_on_services_table();
+      //filter_feedback_on_clinics_table();
 
       // Update the Values within the Charts to the Select Value
       $( ".weeks_filter" ).each(function( index ) {
@@ -341,55 +345,30 @@ $(function() {
     });
 });
 
-  function filter_feedback_on_services_table() {
+  function do_async() {
 
     // Completion Rate Table - Get Dates from Selected option.
     var start_date = $("#weeks_filter").val().split(" - ")[0];
     var end_date = $("#weeks_filter").val().split(" - ")[1];
 
-    // Send dates via Ajax to our Filter and 
-    $.get("/lga_filter_feedback_by_service", {'start_date':start_date, 'end_date':end_date}, function(data,status){
-            $('div#feedback-on-services > table.web-only').html(data);
-            return;
-      $.each(data, function(num, results){
+    // Send dates and lga.pk via Ajax to our Filter and 
+    $.get("/lga_async", {"start_date":start_date, "end_date":end_date, "lga": {{ lga.pk }} }, function(data,status){
+        $("#services-table").html(data.services_html);
+        $("#facilities-table").html(data.facilities_html);
 
-        id = results[0];
-        name = results[1];
-        core_data = results[2];
+        //Facility Chart
+        $("#facility-chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
+        buildFacilityChart(
+            data.feedback_clinics,
+            data.feedback_stats.sent,
+            data.feedback_stats.started,
+            data.feedback_stats.completed);
 
-        $.each(core_data, function(num, results2){
-          label = results2[0];
-          perc = results2[1];
-          num = results2[2];
-
-          $("tr#service"+id+" td."+label).text(perc + " ("+num+")");
-        });
-      });
-    });
-  }
-
-  function filter_feedback_on_clinics_table() {
-
-    // Completion Rate Table - Selects
-    var start_date = $("#weeks_filter").val().split(" - ")[0];
-    var end_date = $("#weeks_filter").val().split(" - ")[1];
-
-    $.get("/lga_filter_feedback_by_clinic", {'start_date':start_date, 'end_date':end_date}, function(data, status){
-        $('div#feedback-facility > table.web-only').html(data);
-         return;
-      $.each(data, function(num, results ){
-        id = results[0];
-        name = results[1];
-        core_data = results[2];
-
-        $.each(core_data, function(num, results2){
-          label = results2[0];
-          perc = results2[1];
-          num = results2[2];
-
-          $("tr#clinic"+id+" td."+label).text(perc + "(" + num + ")");
-        });
-      });
+        //Feedback Chart
+        $("#feedback-chart-container").html('<canvas id="feedback-chart" width=310 height=310></canvas>');
+        buildFeedbackChart(
+            data.question_labels,
+            data.response_stats);
     });
   }
 

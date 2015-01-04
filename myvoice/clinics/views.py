@@ -2,7 +2,7 @@ import json
 from dateutil.parser import parse
 import logging
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
@@ -237,6 +237,94 @@ class ReportMixin(object):
 
             data.append((service, service_data))
         return data
+
+    def get_feedback_by_clinic(self, clinics, start_date=None, end_date=None):
+        """Return analyzed feedback by clinic then question."""
+        data = []
+
+        responses = self.responses.filter(question__in=self.questions)
+        visits = models.Visit.objects.filter(
+            survey_sent__isnull=False, patient__clinic__in=clinics)
+
+        if start_date and end_date:
+            responses = responses.filter(
+                visit__visit_time__range=(start_date, end_date))
+            visits = visits.filter(visit_time__range=(start_date, end_date))
+
+        for clinic in clinics:
+            clinic_data = []
+            clinic_responses = responses.filter(clinic=clinic)
+            clinic_visits = visits.filter(patient__clinic=clinic)
+            # Get feedback participation
+            part_percent, part_total = self.get_feedback_participation(clinic_visits)
+            if part_percent is not None:
+                part_percent = '{}%'.format(part_percent)
+            clinic_data.append(
+                ('Participation', part_percent, part_total))
+
+            # Get patient satisfaction
+            satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
+            if satis_percent is not None:
+                satis_percent = '{}%'.format(satis_percent)
+            clinic_data.append(
+                ('Patient Satisfaction', satis_percent, satis_total))
+
+            # Quality and quantity scores
+            score_date = start_date if start_date else None
+            score = self.get_clinic_score(clinic, score_date)
+            if not score:
+                clinic_data.append(("Quality", None, 0))
+                clinic_data.append(("Quantity", None, 0))
+            else:
+                clinic_data.append(("Quality", "{}%".format(score.quality), ""))
+                clinic_data.append(("Quantity", "{}".format(score.quantity), ""))
+
+            # Indices for each question
+            target_questions = self.questions.exclude(label='Wait Time')
+            for label, perc, val in self.get_indices(target_questions, clinic_responses):
+                if perc or perc == 0:
+                    perc = '{}%'.format(perc)
+                clinic_data.append((label, perc, val))
+
+            # Wait Time
+            mode, mode_len = self.get_wait_mode(clinic_responses)
+            if mode:
+                mode = hour_to_hr(mode)
+            clinic_data.append(('Wait Time', mode, mode_len))
+
+            data.append((clinic.id, clinic.name, clinic_data))
+
+        return data
+
+    def get_clinic_score(self, clinic, ref_date=None):
+        """Return quality and quantity scores for the clinic and quarter in which
+        ref_date is in."""
+        if not ref_date:
+            ref_date = timezone.datetime.now().date()
+        try:
+            score = models.ClinicScore.objects.get(
+                clinic=clinic, start_date__lte=ref_date, end_date__gte=ref_date)
+        except (models.ClinicScore.DoesNotExist, models.ClinicScore.MultipleObjectsReturned):
+            return None
+        else:
+            return score
+
+    def get_main_comments(self, clinics):
+        """Get generic comments marked to show on summary pages."""
+        comments = [
+            (cmt.message, cmt.report_count)
+            for cmt in models.GenericFeedback.objects.filter(
+                clinic__in=clinics, display_on_summary=True)]
+        return comments
+
+    def get_clinic_labels(self):
+        default_labels = [
+            'Feedback Participation',
+            'Patient Satisfaction',
+            'Quality - Q2 2014 (%)',
+            'Quantity - Q2 2014 (N)']
+        question_labels = [i.question_label for i in self.questions]
+        return default_labels + question_labels
 
 
 class ClinicReport(ReportMixin, DetailView):
@@ -567,15 +655,6 @@ class AnalystSummary(TemplateView):
         return context
 
 
-class FilterMixin(object):
-
-    def get_variable(self, request, variable_name, ignore_value):
-        data = request.GET.get(variable_name, ignore_value)
-        if not data or data == ignore_value:
-            return None
-        return data
-
-
 class CompletionFilter(View):
 
     def get(self, request):
@@ -608,7 +687,7 @@ class CompletionFilter(View):
         return HttpResponse(json.dumps(content), content_type="text/json")
 
 
-class FeedbackFilter(FilterMixin, View):
+class FeedbackFilter(View):
 
     def get(self, request):
         clinic = request.GET.get('clinic')
@@ -748,9 +827,14 @@ class LGAReport(ReportMixin, DetailView):
     def __init__(self, *args, **kwargs):
         super(LGAReport, self).__init__(*args, **kwargs)
         self.curr_date = None
-        self.start_date = None
-        self.end_date = None
         self.weeks = None
+
+        if 'start_date' in kwargs and 'end_date' in kwargs:
+            self.start_date = kwargs['start_date']
+            self.end_date = kwargs['end_date']
+        else:
+            self.start_date = None
+            self.end_date = None
 
     def get_object(self, queryset=None):
         obj = super(LGAReport, self).get_object(queryset)
@@ -763,18 +847,12 @@ class LGAReport(ReportMixin, DetailView):
         self.initialize_data()
         return obj
 
-    def get_main_comments(self, clinics):
-        """Get generic comments marked to show on summary pages."""
-        comments = [
-            (cmt.message, cmt.report_count)
-            for cmt in models.GenericFeedback.objects.filter(
-                clinic__in=clinics, display_on_summary=True)]
-        return comments
-
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
+
+        clinics = models.Clinic.objects.filter(lga=self.lga)
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
-        kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic()
+        kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic(clinics)
         kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
         kwargs['question_labels'] = self.questions
@@ -789,7 +867,6 @@ class LGAReport(ReportMixin, DetailView):
             kwargs['max_date'] = None
 
         # Patient feedback responses
-        clinics = models.Clinic.objects.filter(lga=self.lga)
         clinic_stats = self.get_response_statistics(
             clinics, self.questions)
         kwargs['response_stats'] = clinic_stats
@@ -808,169 +885,75 @@ class LGAReport(ReportMixin, DetailView):
         data = super(LGAReport, self).get_context_data(**kwargs)
         return data
 
-    def get_clinic_labels(self):
-        default_labels = [
-            'Feedback Participation',
-            'Patient Satisfaction',
-            'Quality - Q2 2014 (%)',
-            'Quantity - Q2 2014 (N)']
-        question_labels = [i.question_label for i in self.questions]
-        return default_labels + question_labels
 
-    def get_clinic_score(self, clinic, ref_date=None):
-        """Return quality and quantity scores for the clinic and quarter in which
-        ref_date is in."""
-        if not ref_date:
-            ref_date = timezone.datetime.now().date()
-        try:
-            score = models.ClinicScore.objects.get(
-                clinic=clinic, start_date__lte=ref_date, end_date__gte=ref_date)
-        except (models.ClinicScore.DoesNotExist, models.ClinicScore.MultipleObjectsReturned):
-            return None
-        else:
-            return score
+class LGAReportAjax(View):
 
-    def get_feedback_by_clinic(self):
-        """Return analyzed feedback by clinic then question."""
-        data = []
+    def get_data(self, start_date, end_date, lga):
 
-        responses = self.responses.filter(question__in=self.questions)
-        visits = models.Visit.objects.filter(survey_sent__isnull=False)
-
-        if self.start_date and self.end_date:
-            responses = responses.filter(
-                visit__visit_time__range=(self.start_date, self.end_date))
-            visits = visits.filter(visit_time__range=(self.start_date, self.end_date))
-
-        for clinic in models.Clinic.objects.all():
-            clinic_data = []
-            clinic_responses = responses.filter(clinic=clinic)
-            clinic_visits = visits.filter(patient__clinic=clinic)
-            # Get feedback participation
-            part_percent, part_total = self.get_feedback_participation(clinic_visits)
-            if part_percent is not None:
-                part_percent = '{}%'.format(part_percent)
-            clinic_data.append(
-                ('Participation', part_percent, part_total))
-
-            # Get patient satisfaction
-            satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
-            if satis_percent is not None:
-                satis_percent = '{}%'.format(satis_percent)
-            clinic_data.append(
-                ('Patient Satisfaction', satis_percent, satis_total))
-
-            # Quality and quantity scores
-            if self.start_date:
-                score_date = self.start_date
-            else:
-                score_date = None
-            score = self.get_clinic_score(clinic, score_date)
-            if not score:
-                clinic_data.append(("Quality", None, 0))
-                clinic_data.append(("Quantity", None, 0))
-            else:
-                clinic_data.append(("Quality", "{}%".format(score.quality), ""))
-                clinic_data.append(("Quantity", "{}".format(score.quantity), ""))
-
-            # Indices for each question
-            target_questions = self.questions.exclude(label='Wait Time')
-            for label, perc, val in self.get_indices(target_questions, clinic_responses):
-                if perc or perc == 0:
-                    perc = '{}%'.format(perc)
-                clinic_data.append((label, perc, val))
-
-            # Wait Time
-            mode, mode_len = self.get_wait_mode(clinic_responses)
-            if mode:
-                mode = hour_to_hr(mode)
-            clinic_data.append(('Wait Time', mode, mode_len))
-
-            data.append((clinic.id, clinic.name, clinic_data))
-
-        return data
-
-
-class LGAReportFilterByService(View):
-
-    def get_feedback_data(self, report, start_date, end_date):
-        # FIXME: Need to filter by the lga
-        report.responses = SurveyQuestionResponse.objects.filter(
-            visit__visit_time__range=(start_date, end_date))
-        report.initialize_data()
-
-        return report.get_feedback_by_service()
-
-    def get(self, request):
-
-        _start_date = request.GET.get('start_date')
-        _end_date = request.GET.get('end_date')
-
-        if not all((_start_date, _end_date)):
-            return HttpResponse('')
-
-        start_date = get_date(_start_date)
-        end_date = get_date(_end_date)
-
+        clinics = models.Clinic.objects.filter(lga=lga)
         report = ReportMixin()
-
-        feedback_data = self.get_feedback_data(report, start_date, end_date)
-        questions = report.get_survey_questions(start_date, end_date)
-        data = {
-            'feedback_by_service': feedback_data,
-            'min_date': start_date,
-            'max_date': end_date,
-            'service_labels': [i.question_label for i in questions]
-        }
-
-        # Render template
-        tmpl = get_template('clinics/by_service.html')
-        cntxt = Context(data)
-        html = tmpl.render(cntxt)
-
-        return HttpResponse(html, content_type="text/html")
-
-
-class LGAReportFilterByClinic(View):
-
-    def get_feedback_data(self, report, start_date, end_date):
-        report.start_date = start_date
-        report.end_date = end_date
         report.responses = SurveyQuestionResponse.objects.filter(
-            visit__visit_time__range=(start_date, end_date))
+            visit__visit_time__range=(start_date, end_date),
+            clinic__in=clinics)
         report.initialize_data()
         report.questions = report.get_survey_questions(start_date, end_date)
 
-        return report.get_feedback_by_clinic()
+        service_feedback = report.get_feedback_by_service()
+        clinic_feedback = report.get_feedback_by_clinic(clinics, start_date, end_date)
+        question_labels = [i.question_label for i in report.questions]
 
-    def get(self, request):
+        # Render html templates
+        data = {
+            'feedback_by_service': service_feedback,
+            'feedback_by_clinic': clinic_feedback,
+            'min_date': start_date,
+            'max_date': end_date,
+            'service_labels': question_labels,
+            'clinic_labels': report.get_clinic_labels(),
+        }
+        service_tmpl = get_template('clinics/by_service.html')
+        context = Context(data)
+        service_html = service_tmpl.render(context)
 
-        # Get the variables
+        clinic_tmpl = get_template('clinics/by_clinic.html')
+        clinic_html = clinic_tmpl.render(context)
+
+        # Calculate stats for feedback chart
+        chart_stats = report.get_feedback_statistics(clinics, start_date, end_date)
+
+        # Calculate and render template for patient feedback responses
+        response_stats = report.get_response_statistics(
+            clinics, report.questions, start_date, end_date)
+
+        return {
+            'facilities_html': clinic_html,
+            'services_html': service_html,
+            'feedback_stats': chart_stats,
+            'feedback_clinics': [clnc.name for clnc in clinics],
+            'response_stats': [i[1] for i in response_stats],
+            'question_labels': question_labels,
+        }
+
+    def get(self, request, *args, **kwargs):
+
         _start_date = request.GET.get('start_date')
         _end_date = request.GET.get('end_date')
+        _lga = request.GET.get('lga')
 
-        if not all((_start_date, _end_date)):
-            return HttpResponse('')
+        if not all((_start_date, _end_date, _lga)):
+            return HttpResponseBadRequest('')
 
         start_date = get_date(_start_date)
         end_date = get_date(_end_date)
+        try:
+            lga = models.LGA.objects.get(pk=_lga)
+        except models.LGA.DoesNotExist:
+            return HttpResponseBadRequest('Wrong LGA')
 
-        report = LGAReport()
+        data = self.get_data(start_date, end_date, lga)
+        json_data = json.dumps(data, cls=DjangoJSONEncoder)
 
-        feedback_data = self.get_feedback_data(report, start_date, end_date)
-        data = {
-            'feedback_by_clinic': feedback_data,
-            'min_date': start_date,
-            'max_date': end_date,
-            'clinic_labels': report.get_clinic_labels()
-        }
-
-        # Render template
-        tmpl = get_template('clinics/by_clinic.html')
-        cntxt = Context(data)
-        html = tmpl.render(cntxt)
-
-        return HttpResponse(html, content_type="text/html")
+        return HttpResponse(json_data, content_type='text/json')
 
 
 class FeedbackView(View):
