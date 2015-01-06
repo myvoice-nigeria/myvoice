@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
-from django.template.loader import get_template, get_template_from_string
+from django.template.loader import get_template
 from django.template import Context
 from django.core.serializers.json import DjangoJSONEncoder
 
@@ -445,7 +445,6 @@ class ClinicReport(ReportMixin, DetailView):
         lga_clinics = models.Clinic.objects.filter(lga=self.clinic.lga)
         kwargs['feedback_stats'] = self.get_feedback_statistics(lga_clinics)
         kwargs['feedback_clinics'] = self.format_chart_labels(lga_clinics)
-        #kwargs['feedback_clinics'] = [clinic.name for clinic in lga_clinics]
 
         # Patient feedback responses
         other_clinics = lga_clinics.exclude(pk=self.clinic.pk)
