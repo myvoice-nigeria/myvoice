@@ -32,6 +32,19 @@ class Region(factory.django.DjangoModelFactory):
     type = factory.fuzzy.FuzzyChoice(clinics.Region.TYPE_CHIOCES)
 
 
+class State(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.State
+
+    name = factory.fuzzy.FuzzyText()
+
+
+class LGA(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.LGA
+
+    name = factory.fuzzy.FuzzyText()
+    state = factory.SubFactory('myvoice.core.tests.factories.State')
+
+
 class Clinic(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.Clinic
 
@@ -39,7 +52,7 @@ class Clinic(factory.django.DjangoModelFactory):
     slug = factory.Sequence(lambda n: 'phc-{0}'.format(n))
     town = factory.fuzzy.FuzzyText()
     ward = factory.fuzzy.FuzzyText()
-    lga = factory.fuzzy.FuzzyText()
+    lga = factory.SubFactory('myvoice.core.tests.factories.LGA')
     code = factory.Sequence(lambda n: n)
 
 

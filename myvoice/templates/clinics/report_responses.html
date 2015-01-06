@@ -1,0 +1,34 @@
+{% load static from staticfiles %}
+
+      <div class="col-xs-12 section-heading web-only">
+          <h2>PATIENT FEEDBACK RESPONSES</h2>
+      </div>
+
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">PATIENT FEEDBACK RESPONSES</h2>
+    </div>
+    <p>&nbsp;</p>
+    <!-- body div -->
+
+    <div id="patient-feedback-container">
+    <table class="table" id="feedback_responses">
+      <thead>
+        <tr>
+            <th colspan=2>Patients from {{ clinic.name }} said:</th>
+            <th colspan=2>Patients from other facilities said:</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for question, clinic_stat, other_stat in response_stats %}
+         <tr>
+             <td>{{ clinic_stat.0 }} ({{ clinic_stat.1 }})</td>
+             <td>{{ question.display_label }}</td>
+             <td>{{ other_stat.0 }} ({{ other_stat.1 }})</td>
+             <td>{{ question.display_label }}</td>
+         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <!-- body div -->

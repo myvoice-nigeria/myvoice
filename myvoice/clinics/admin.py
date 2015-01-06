@@ -18,10 +18,18 @@ class ClinicStaffInline(admin.TabularInline):
 class ClinicAdmin(LeafletGeoAdmin):
     display_raw = True
     inlines = [ClinicStaffInline]
-    list_display = ['name', 'lga', 'code']
+    list_display = ['name', 'code']
     ordering = ['name']
     prepopulated_fields = {'slug': ['name']}
     readonly_fields = ['lga_rank', 'pbf_rank', 'created', 'updated']
+
+
+class StateAdmin(admin.ModelAdmin):
+    list_display = ['name']
+
+
+class LGAAdmin(admin.ModelAdmin):
+    list_display = ['name', 'state']
 
 
 class RegionAdmin(LeafletGeoAdmin):
@@ -90,6 +98,8 @@ class ClinicScoreAdmin(admin.ModelAdmin):
 
 
 admin.site.register(models.Clinic, ClinicAdmin)
+admin.site.register(models.State, StateAdmin)
+admin.site.register(models.LGA, LGAAdmin)
 admin.site.register(models.Region, RegionAdmin)
 admin.site.register(models.Patient, PatientAdmin)
 admin.site.register(models.Visit, VisitAdmin)

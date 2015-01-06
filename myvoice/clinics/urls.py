@@ -8,7 +8,7 @@ urlpatterns = [
     url(r'^clinics/patient/$', views.VisitView.as_view(), name='visit'),
 
     url(r'^reports/region/(?P<pk>\d+)/$',
-        login_required(views.RegionReport.as_view()),
+        login_required(views.LGAReport.as_view()),
         name='region_report'),
     url(r'^reports/facility/$',
         login_required(views.ClinicReportSelectClinic.as_view()),
@@ -26,7 +26,7 @@ urlpatterns = [
         views.FeedbackFilter.as_view(),
         name='feedback_filter'),
     url(r'^wamba_report/$',
-        views.RegionReport.as_view(),
+        views.LGAReport.as_view(),
         name='wamba',
         kwargs=dict(pk=599)),
     url(r'^report_filter_feedback_by_week/$',

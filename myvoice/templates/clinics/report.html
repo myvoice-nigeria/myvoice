@@ -7,46 +7,148 @@
 {% block extra-js %}
 <script src="{% static 'lib/chartnew/ChartNew.js' %}"></script>
 <script>
-  var labels = ['Open\nFacility', 'Respectful\nStaff\nTreatment',
-                'Clean\nHospital\nMaterials', 'Charged\nFairly'],
-      fillColor = ['#6D6E71', '#808184', '#929497', '#A6A8AB'],
-      barOptions = {
-        barShowStroke: false,
-        scaleFontSize: 9,
-        scaleFontFamily: "'Source Sans Pro', sans-serif",
-        barValueSpacing: 8,
-        inGraphDataShow: true,
-        inGraphDataYPosition: 2,
-        inGraphDataFontColor: 'black',
+  var barOptions = {
+        //barShowStroke: true,
+        // scale
         scaleOverride: true,
         scaleStartValue: 0,
-        scaleSteps: 5,
-        scaleStepWidth: 20,
-        yAxisLabel: "Percentage",
-        yAxisFontSize: 12
+        scaleSteps: 4,
+        scaleStepWidth: 25,
+        scaleFontSize: 10,
+        scaleFontFamily: "'Source Sans Pro', sans-serif",
+
+        // in-graph data
+        inGraphDataShow: true,
+        inGraphDataFontColor: '#6d6e71',
+        inGraphDataFontFamily: "'Source Sans Pro', sans-serif",
+        inGraphDataFontSize: 10,
+
+        //spacing
+        barDatasetSpacing: 0,
+        barValueSpacing: 3,
+
+        annotateDisplay: true,
+        pointLabelFontSize: 10,
+
+        // legend
+        legend: true,
+        //legendPosX: 0,
+        //legendPosY: 0,
+        //legendXPadding: -10,
+        //barValueSpacing: 3,
+    };
+
+  // Keep chart in global scope to make it available for updates
+
+  var prepareChartData = function(labels, sentData, startedData, completedData){
+      var barData = {
+        labels: labels,
+        datasets: [
+          {
+            fillColor: '#6d6e71',
+            strokeColor: '#6d6e71',
+            data: sentData,
+            title: 'Surveys sent'
+          },
+          {
+            fillColor: '#929497',
+            strokeColor: '#929497',
+            data: startedData,
+            title: 'Surveys started'
+          },
+          {
+            fillColor: '#a6a8ab',
+            strokeColor: '#a6a8ab',
+            data: completedData,
+            title: 'Surveys completed'
+          }
+        ]
       };
 
-  var createChart = function(id, qtn_labels, data) {
-    var chart = $(id)[0].getContext('2d');
-    var barData = {
-      labels: qtn_labels,
-      datasets : [{fillColor: fillColor, data: data}]
-    };
-    return new Chart(chart).Bar(barData, barOptions);
+      return barData;
+
   }
-  $(function() {
-    {% for week in feedback_by_week %}
-      createChart("#weekChart{{ forloop.counter }}", [
-        {% for label in week.question_labels %}
-        "{{ label }}"{% if not forloop.last %}, {% endif %}
+
+  var buildChart = function(labels, sentData, startedData, completedData){
+      var chart = $('#facility-chart')[0].getContext('2d');
+      var chartData = prepareChartData(labels, sentData, startedData, completedData);
+      var chartObject = new Chart(chart)
+      chartObject.Bar(chartData, barOptions);
+  }
+  
+  var updateChartData = function(labels, sentData, startedData, completedData){
+      var chartData = prepareChartData(labels, sentData, startedData, completedData);
+      updateChart(chart, chartData, barOptions);
+  }
+
+$(function() {
+    var labels = [
+        {% for label in feedback_clinics %}
+            "{{ label }}"{% if not forloop.last %}, {% endif %}
         {% endfor %}
-        ], [
-        {% for percentage, count in week.data %}
-          {{ percentage|default:0 }}{% if not forloop.last %}, {% endif %}
+    ];
+    var sent = [
+        {% for sent in feedback_stats.sent %}
+            {{ sent }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
-      ]);
-    {% endfor %}
+    ];
+    var started = [
+        {% for started in feedback_stats.started %}
+            {{ started }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+    var completed = [
+        {% for completed in feedback_stats.completed %}
+            {{ completed }}{% if not forloop.last %}, {% endif %}
+        {% endfor %}
+    ];
+
+    buildChart(labels, sent, started, completed);
+});
+/*  $(function() {
+      var barData = {
+        labels: [
+          {% for label in feedback_clinics %}
+            "{{ label }}"{% if not forloop.last %}, {% endif %}
+          {% endfor %}
+        ],
+        datasets: [
+          {
+            fillColor: '#6d6e71',
+            strokeColor: '#6d6e71',
+            data: [
+              {% for sent in feedback_stats.sent %}
+                {{ sent }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys sent'
+          },
+          {
+            fillColor: '#929497',
+            strokeColor: '#929497',
+            data: [
+              {% for started in feedback_stats.started %}
+                {{ started }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys started'
+          },
+          {
+            fillColor: '#a6a8ab',
+            strokeColor: '#a6a8ab',
+            data: [
+              {% for completed in feedback_stats.completed %}
+                {{ completed }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            ],
+            title: 'Surveys completed'
+          }
+        ]
+      }
+      var chart = $('#facility-chart')[0].getContext('2d');
+      return new Chart(chart).Bar(barData, barOptions);
   });
+  */
 </script>
 {% endblock extra-js %}
 
@@ -142,65 +244,67 @@
     Please try again later!</p>
   </div>
 {% else %}
-  <div id="feedback-analytics" class="container print-break">
-    <div class="col-xs-12 section-heading web-only">
-      <h2>FEEDBACK ANALYTICS</h2>
-    </div>
+  <div class="print-only"><br/><br/></div>
+
+  <!-- .container#feedback-chart -->
+
+  <div id="feedback-chart" class="container print-break">
+      <div class="col-xs-12 section-heading web-only">
+          <h2>PARTICIPATION BY FACILITY</h2>
+      </div>
 
     <div class="col-xs-12 section-heading print-only" style="padding: 0px">
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
-      <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ANALYTICS</h2>
+      <h2 style="position: absolute; top: 7px; left: 15px;">PARTICIPATION BY FACILITY</h2>
     </div>
-    {% for week in feedback_by_week %}
-      <div class="col-xs-6 chart-container" id="{{ week.week_start.date|date:"F j Y" }}">
-        <div class="col-xs-12">
-          <h2>{{ week.week_start.date|date:"F j" }} - {{ week.week_end.date|date:"F j" }}<br/>
-            <span class="survey_num">
-          {{ week.survey_num }} Surveys</span></h2>
+    <!-- chart div -->
+    <div class="col-xs-6 chart-container" id="facility-participation-chart">
+        <div class="col-xs-12"></div>
+        <div id="chart-container">
+            <canvas id="facility-chart" width=615 height=310></canvas>
         </div>
-        <div class="col-xs-6" >  
-          <div class="green-box">
-            {% if week.patient_satisfaction == None %}
-              N/A
-            {% else %}
-              {{ week.patient_satisfaction }}%
-            {% endif %}
-          </div>
-          <div class="green-box-label">Patient<br />satisfaction</div>
-        </div>
-        <div class="col-xs-6">
-          <div class="green-box">
-            {% if week.wait_time_mode == None %}
-              N/A
-            {% else %}
-              {{ week.wait_time_mode }}
-            {% endif %}
-          </div>
-          <div class="green-box-label">Most common<br />wait time</div>
-        </div>
-        <canvas id="weekChart{{ forloop.counter }}" height="210" width="275"></canvas>
+    </div>
+    <!-- chart div -->
+</div>
+<!-- .container#feedback-chart -->
+
+<!-- .container#patient-feedback-responses -->
+<div id="feedback-on-responses" class="container print-break">
+      <div class="col-xs-12 section-heading web-only">
+          <h2>PATIENT FEEDBACK RESPONSES</h2>
       </div>
 
-      {% if forloop.counter == 4 %}
-        
-        <div class="print-break print-only chart-break"><br/><br/><br/></div>
+    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
+      <h2 style="position: absolute; top: 7px; left: 15px;">PATIENT FEEDBACK RESPONSES</h2>
+    </div>
+    <p>&nbsp;</p>
+    <!-- body div -->
 
-        <div class="col-xs-12 no-padding-left print-only chart-break">
-          <br/><br/><br/>
-          <h1>
-            <span style="font-weight: 700;">{{ object.name }}</span><br />
-            Facility Report
-          </h1>
-        </div>
-      
-        
-      {% endif %}
-    {% endfor %}
+    <div id="patient-feedback-container">
+    <table class="table" id="feedback_responses">
+      <thead>
+        <tr>
+            <th colspan=2>Patients from {{ clinic.name }} said:</th>
+            <th colspan=2>Patients from other facilities said:</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for question, clinic_stat, other_stat in response_stats %}
+         <tr>
+             <td>{{ clinic_stat.0 }} ({{ clinic_stat.1 }})</td>
+             <td>{{ question.display_label }}</td>
+             <td>{{ other_stat.0 }} ({{ other_stat.1 }})</td>
+             <td>{{ question.display_label }}</td>
+         </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <!-- body div -->
+</div>
+<!-- .container#patient-feedback-responses -->
 
-  </div><!-- / .container#feedback-analytics -->
-  <div class="print-only"><br/><br/></div>
-
-  
   <div id="feedback-on-services" class="container">
     <div class="col-xs-12 no-padding-left print-only">
       <h1>
@@ -412,6 +516,11 @@
       // Update the Feedback on Services Table by Week
       filter_feedback_by_week();
 
+      // Show / Hide Comments
+      hideOtherComments();
+
+      return;
+
       // Update the Values within the Charts to the Select Value
       $( ".service-feedback-weeks" ).each(function( index ) {
         $( this ).text($("#service-feedback-weeks").val());
@@ -422,9 +531,6 @@
         showAllCharts();
       else
         hideOtherCharts();
-
-      // Show / Hide Comments
-      hideOtherComments();
 
       // Show / Hide Chart Header (for print versions only)
       showhideChartHeader();
@@ -440,7 +546,7 @@
     var end_date = $("#service-feedback-weeks").val().split(" - ")[1];
 
     // Send dates via Ajax to our Filter and parse the results.
-    $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date, 'clinic_id':{{object.id}} }, function(data,status){
+    $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date, 'clinic_id':{{object.id}} }, function(data, status){
       
       // Update the Participation Summary on the top
       $("#num_registered").text(data.num_registered);
@@ -449,9 +555,20 @@
       $("#num_completed").text(data.num_completed);
       $("#perc_completed").text("("+data.perc_completed+"%)");
 
-      console.log(data);
       $("#feedback-container").html(data.fos_html);
-      // return;
+
+      //$("#facility-participation-chart").html(data.chart_html);
+
+      $("#chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
+      buildChart(
+          data.feedback_clinics,
+          data.feedback_stats.sent,
+          data.feedback_stats.started,
+          data.feedback_stats.completed);
+
+      // patient responses
+      $("#feedback-on-responses").html(data.responses_html);
+      return;
 
 
       // Update Feedback of Services Chart
@@ -471,6 +588,7 @@
         });
       });
     });
+
   }
 
   function parseDate(input) {

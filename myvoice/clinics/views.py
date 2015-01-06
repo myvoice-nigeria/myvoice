@@ -184,6 +184,36 @@ class ReportMixin(object):
             survey_percent = None
         return survey_percent, survey_started
 
+    def get_feedback_statistics(self, clinics, start_date=None, end_date=None):
+        """Return dict of surveys_sent, surveys_started and surveys_completed."""
+        visits = models.Visit.objects.filter(patient__clinic__in=clinics)
+        if start_date and end_date:
+            visits = visits.filter(visit_time__range=(start_date, end_date))
+
+        sent = list(visits.filter(survey_sent__isnull=False).values_list(
+            'patient__clinic', flat=True))
+        started = list(visits.filter(survey_started=True).values_list(
+            'patient__clinic', flat=True))
+        completed = list(visits.filter(survey_completed=True).values_list(
+            'patient__clinic', flat=True))
+
+        _sent = [sent.count(clinic.pk) for clinic in clinics]
+        _started = [started.count(clinic.pk) for clinic in clinics]
+        _completed = [completed.count(clinic.pk) for clinic in clinics]
+        _total = [visits.filter(patient__clinic=clinic).count() for clinic in clinics]
+        return {
+            'sent': [make_percentage(s, t) for s, t in zip(_sent, _total)],
+            'started': [make_percentage(s, t) for s, t in zip(_started, _total)],
+            'completed': [make_percentage(s, t) for s, t in zip(_completed, _total)],
+            }
+
+    def get_response_statistics(self, clinics, questions, start_date=None, end_date=None):
+        """Get total and %ge of +ve responses to questions in clinics."""
+        responses = SurveyQuestionResponse.objects.filter(clinic__in=clinics)
+        if start_date and end_date:
+            responses = responses.filter(visit__visit_time__range=(start_date, end_date))
+        return [(i[2], i[1]) for i in self.get_indices(questions, responses)]
+
     def get_feedback_by_service(self):
         """Return analyzed feedback by service then question."""
         data = []
@@ -220,6 +250,9 @@ class ClinicReport(ReportMixin, DetailView):
             patient__clinic=obj, survey_sent__isnull=False)
         self.initialize_data()
         self.generic_feedback = obj.genericfeedback_set.filter(display_on_dashboard=True)
+
+        # So we can get the clinics related to obj
+        self.clinic = obj
         return obj
 
     def get_feedback_by_week(self):
@@ -303,7 +336,7 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['responses'] = self.responses
         kwargs['detailed_comments'] = self.get_detailed_comments()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
-        kwargs['feedback_by_week'] = self.get_feedback_by_week()
+        # kwargs['feedback_by_week'] = self.get_feedback_by_week()
         question_labels = [qtn.question_label for qtn in self.questions]
         kwargs['question_labels'] = question_labels
 
@@ -314,6 +347,20 @@ class ClinicReport(ReportMixin, DetailView):
         else:
             kwargs['min_date'] = None
             kwargs['max_date'] = None
+
+        # Feedback stats for chart
+        lga_clinics = models.Clinic.objects.filter(lga=self.clinic.lga)
+        kwargs['feedback_stats'] = self.get_feedback_statistics(lga_clinics)
+        kwargs['feedback_clinics'] = [clinic.name for clinic in lga_clinics]
+
+        # Patient feedback responses
+        other_clinics = lga_clinics.exclude(pk=self.clinic.pk)
+        current_clinic_stats = self.get_response_statistics(
+            (self.clinic, ), self.questions)
+        other_stats = self.get_response_statistics(
+            other_clinics, self.questions)
+        # Now combine questions, current and othere clinic stats
+        kwargs['response_stats'] = zip(self.questions, current_clinic_stats, other_stats)
 
         num_registered = self.visits.count()
         num_started = self.visits.filter(survey_started=True).count()
@@ -628,7 +675,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             percent_completed = None
             percent_started = None
 
-        # Render template for table
+        # Calculate and render template for feedback on services
         tmpl = get_template('clinics/report_service.html')
         questions = report.get_survey_questions(start_date, end_date)
         cntxt = Context(
@@ -640,6 +687,25 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             })
         html = tmpl.render(cntxt)
 
+        # Calculate feedback stats for chart
+        lga_clinics = models.Clinic.objects.filter(lga=clinic.lga)
+        chart_stats = report.get_feedback_statistics(lga_clinics, start_date, end_date)
+        chart_clinics = [clnc.name for clnc in lga_clinics]
+
+        # Calculate and render template for patient feedback responses
+        response_tmpl = get_template('clinics/report_responses.html')
+        other_clinics = lga_clinics.exclude(pk=clinic.pk)
+        current_stats = report.get_response_statistics(
+            (clinic, ), questions, start_date, end_date)
+        other_stats = report.get_response_statistics(
+            other_clinics, questions, start_date, end_date)
+        response_ctxt = Context(
+            {
+                'clinic_name': clinic.name,
+                'response_stats': zip(questions, current_stats, other_stats),
+            })
+        response_html = response_tmpl.render(response_ctxt)
+
         return {
             'num_registered': num_registered,
             'num_started': num_started,
@@ -647,7 +713,10 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             'num_completed': num_completed,
             'perc_completed': percent_completed,
             'fos': fos_array,
-            'fos_html': html
+            'fos_html': html,
+            'feedback_stats': chart_stats,
+            'feedback_clinics': chart_clinics,
+            'responses_html': response_html
         }
 
     def get(self, request, *args, **kwargs):
@@ -674,20 +743,20 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             json.dumps(clinic_data, cls=DjangoJSONEncoder), content_type='text/json')
 
 
-class RegionReport(ReportMixin, DetailView):
+class LGAReport(ReportMixin, DetailView):
     template_name = 'clinics/summary.html'
-    model = models.Region
+    model = models.LGA
 
     def __init__(self, *args, **kwargs):
-        super(RegionReport, self).__init__(*args, **kwargs)
+        super(LGAReport, self).__init__(*args, **kwargs)
         self.curr_date = None
         self.start_date = None
         self.end_date = None
         self.weeks = None
 
     def get_object(self, queryset=None):
-        obj = super(RegionReport, self).get_object(queryset)
-        self.responses = SurveyQuestionResponse.objects.filter(clinic__lga__iexact=obj.name)
+        obj = super(LGAReport, self).get_object(queryset)
+        self.responses = SurveyQuestionResponse.objects.filter(clinic__lga=obj)
         if self.start_date and self.end_date:
             self.responses = self.responses.filter(
                 visit__visit_time__range=(self.start_date, self.end_date))
@@ -714,7 +783,7 @@ class RegionReport(ReportMixin, DetailView):
             (self.start_day(start), self.start_day(end)) for start, end in
             self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
         kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
-        data = super(RegionReport, self).get_context_data(**kwargs)
+        data = super(LGAReport, self).get_context_data(**kwargs)
         return data
 
     def get_clinic_labels(self):
@@ -862,7 +931,7 @@ class LGAReportFilterByClinic(View):
         start_date = get_date(_start_date)
         end_date = get_date(_end_date)
 
-        report = RegionReport()
+        report = LGAReport()
 
         feedback_data = self.get_feedback_data(report, start_date, end_date)
         data = {

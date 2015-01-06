@@ -331,7 +331,10 @@ select::-ms-expand {
  }
 
  canvas#weekChart {
-  margin-top:20px;
+  /*margin-top:20px;*/
+  width: 100% !important;
+  max-width: 615px;
+  height: auto !important;
  }
 
 .bold {

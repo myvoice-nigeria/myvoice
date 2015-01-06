@@ -1,7 +1,6 @@
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import timezone
-from django.contrib.gis.geos import GEOSGeometry
 
 import json
 import datetime
@@ -412,13 +411,14 @@ class TestReportMixin(TestCase):
     def setUp(self):
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
-        clinic = factories.Clinic.create(code=5)
+        self.clinic = factories.Clinic.create(code=5)
 
         self.q1 = factories.SurveyQuestion.create(
             label='One',
             survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             start_date=timezone.make_aware(timezone.datetime(2014, 8, 30), timezone.utc),
+            categories='Yes\nNo',
             report_order=10)
         self.q2 = factories.SurveyQuestion.create(
             label='two',
@@ -429,41 +429,45 @@ class TestReportMixin(TestCase):
             label='Three',
             survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
+            categories='Yes\nNo',
             report_order=30)
         self.q4 = factories.SurveyQuestion.create(
             label='Four',
             survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             end_date=timezone.make_aware(timezone.datetime(2014, 8, 10), timezone.utc),
+            categories='Yes\nNo',
             report_order=40)
         self.q5 = factories.SurveyQuestion.create(
             label='Five',
             survey=self.survey,
             question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
             start_date=timezone.now(),
+            categories='Yes\nNo',
             report_order=50)
 
-        p1 = factories.Patient.create(clinic=clinic, serial=111)
-        p2 = factories.Patient.create(clinic=clinic, serial=222)
-        p3 = factories.Patient.create(clinic=clinic, serial=333)
+        self.p1 = factories.Patient.create(clinic=self.clinic, serial=111)
+        self.p2 = factories.Patient.create(clinic=self.clinic, serial=222)
+        self.p3 = factories.Patient.create(clinic=self.clinic, serial=333)
 
-        s1 = factories.Service.create(code=1)
-        s2 = factories.Service.create(code=2)
-        s3 = factories.Service.create(code=3)
+        self.s1 = factories.Service.create(code=1)
+        self.s2 = factories.Service.create(code=2)
+        self.s3 = factories.Service.create(code=3)
 
-        v1 = factories.Visit.create(service=s1, patient=p1)
-        v2 = factories.Visit.create(service=s2, patient=p2)
-        v3 = factories.Visit.create(service=s3, patient=p3)
-        v4 = factories.Visit.create(service=s1, patient=p1)
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        self.v1 = factories.Visit.create(service=self.s1, patient=self.p1, survey_sent=sent)
+        self.v2 = factories.Visit.create(service=self.s2, patient=self.p2, survey_sent=sent)
+        self.v3 = factories.Visit.create(service=self.s3, patient=self.p3, survey_sent=sent)
+        self.v4 = factories.Visit.create(service=self.s1, patient=self.p1, survey_sent=sent)
 
         self.r1 = factories.SurveyQuestionResponse.create(
-            question=self.q1, visit=v1, clinic=clinic)
+            question=self.q1, visit=self.v1, clinic=self.clinic, response='Yes')
         self.r2 = factories.SurveyQuestionResponse.create(
-            question=self.q2, visit=v2, clinic=clinic)
+            question=self.q2, visit=self.v2, clinic=self.clinic)
         self.r3 = factories.SurveyQuestionResponse.create(
-            question=self.q3, visit=v3, clinic=clinic)
+            question=self.q3, visit=self.v3, clinic=self.clinic, response='No')
         self.r4 = factories.SurveyQuestionResponse.create(
-            question=self.q2, visit=v4, clinic=clinic)
+            question=self.q2, visit=self.v4, clinic=self.clinic)
 
     def test_get_start_end_dates(self):
         """Test that we can break down a start and end dates
@@ -572,6 +576,197 @@ class TestReportMixin(TestCase):
         self.assertEqual(self.q1, questions[0])
         self.assertEqual(self.q3, questions[1])
 
+    def test_get_feedback_participation(self):
+        """Test that get_feedback_participation returns % of surveys responded
+        to and total visit count."""
+        mixin = clinics.ReportMixin()
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        v5 = factories.Visit.create(service=self.s1, patient=self.p2, survey_sent=sent)
+        visits = models.Visit.objects.filter(
+            pk__in=[self.v1.pk, self.v2.pk, self.v3.pk, v5.pk])
+        percent, total_started = mixin.get_feedback_participation(visits)
+
+        self.assertEqual(75, percent)
+        self.assertEqual(3, total_started)
+
+    def test_get_feedback_statistics(self):
+        """Test get_feedback_statistics.
+
+        Takes a list of clinics
+        Returns 3 lists of surveys sent, started and completed
+        in order of clinics passed in."""
+        lga = factories.LGA.create(name='one')
+        cl1 = factories.Clinic.create(code=1, lga=lga)
+        cl2 = factories.Clinic.create(code=2, lga=lga)
+
+        p1 = factories.Patient.create(clinic=cl1, serial=444)
+        p2 = factories.Patient.create(clinic=cl2, serial=555)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        factories.Visit.create(
+            service=self.s1,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=False,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 5), timezone.utc))
+        factories.Visit.create(
+            service=self.s3,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 11, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+
+        mixin = clinics.ReportMixin()
+        start = timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc)
+        end = timezone.make_aware(timezone.datetime(2014, 12, 31), timezone.utc)
+        stats = mixin.get_feedback_statistics([cl1, cl2], start, end)
+
+        self.assertEqual(3, len(stats))
+        self.assertEqual([100, 50], stats['sent'])
+        self.assertEqual([100, 50], stats['started'])
+        self.assertEqual([50, 50], stats['completed'])
+
+    def test_get_feedback_statistics_no_dates(self):
+        """Test get_feedback_statistics with no start/end dates passed in takes all the visits
+        """
+
+        lga = factories.LGA.create(name='one')
+        cl1 = factories.Clinic.create(code=1, lga=lga)
+        cl2 = factories.Clinic.create(code=2, lga=lga)
+
+        p1 = factories.Patient.create(clinic=cl1, serial=444)
+        p2 = factories.Patient.create(clinic=cl2, serial=555)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        factories.Visit.create(
+            service=self.s1,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=False,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 5), timezone.utc))
+        factories.Visit.create(
+            service=self.s3,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 11, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+
+        mixin = clinics.ReportMixin()
+        stats = mixin.get_feedback_statistics([cl1, cl2])
+
+        self.assertEqual(3, len(stats))
+        self.assertEqual([100, 50], stats['sent'])
+        self.assertEqual([100, 50], stats['started'])
+        self.assertEqual([67, 50], stats['completed'])
+
+    def test_feedback_response_statistics(self):
+        """Test get_response_statistics.
+
+        Takes list of clinics, survey questions, responses
+        Returns list of:
+          (Count of positive responses, %age of positive responses)
+        """
+        clinic = factories.Clinic.create(code=6)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        p1 = factories.Patient.create(clinic=clinic, serial=111)
+        v1 = factories.Visit.create(service=self.s1, patient=p1, survey_sent=sent)
+        v2 = factories.Visit.create(service=self.s2, patient=p1, survey_sent=sent)
+        v3 = factories.Visit.create(service=self.s3, patient=p1, survey_sent=sent)
+
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v1, clinic=clinic, response='Yes')
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v3, clinic=clinic, response='No')
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v2, clinic=clinic, response='Yes')
+
+        mixin = clinics.ReportMixin()
+        questions = [self.q1, self.q4]
+        stats = mixin.get_response_statistics([self.clinic, clinic], questions)
+
+        self.assertEqual(1, stats[0][0])
+        self.assertEqual('100.0%', stats[0][1])
+        self.assertEqual(2, stats[1][0])
+        self.assertEqual('67.0%', stats[1][1])
+
+    def test_feedback_response_statistics_daterange(self):
+        """Test get_response_statistics respects date ranges.
+
+        Takes list of clinics, survey questions, responses, start and end dates
+        Returns list of:
+          (Count of positive responses, %age of positive responses)
+        """
+        clinic = factories.Clinic.create(code=6)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        time1 = timezone.make_aware(timezone.datetime(2014, 8, 5), timezone.utc)
+        time2 = timezone.make_aware(timezone.datetime(2014, 8, 15), timezone.utc)
+        time3 = timezone.make_aware(timezone.datetime(2014, 8, 25), timezone.utc)
+        p1 = factories.Patient.create(clinic=clinic, serial=111)
+        v1 = factories.Visit.create(
+            service=self.s1, patient=p1, survey_sent=sent, visit_time=time1)
+        v2 = factories.Visit.create(
+            service=self.s2, patient=p1, survey_sent=sent, visit_time=time2)
+        v3 = factories.Visit.create(
+            service=self.s3, patient=p1, survey_sent=sent, visit_time=time3)
+
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v1, clinic=clinic, response='Yes')
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v2, clinic=clinic, response='No')
+        factories.SurveyQuestionResponse.create(
+            question=self.q4, visit=v3, clinic=clinic, response='Yes')
+
+        mixin = clinics.ReportMixin()
+        questions = [self.q1, self.q4]
+        stats = mixin.get_response_statistics([clinic], questions, time1, time2)
+
+        self.assertEqual(0, stats[0][0])
+        self.assertIsNone(stats[0][1])
+        self.assertEqual(1, stats[1][0])
+        self.assertEqual('50.0%', stats[1][1])
+
 
 class TestClinicReportView(TestCase):
 
@@ -623,13 +818,6 @@ class TestClinicReportView(TestCase):
         response = self.make_request()
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render()))
-
-    def _test_check_assumptions(self):
-        """Test that if hard-coded assumptions are not met, exception is raised.
-        """
-        # Removed hard-coded assumptions
-        survey_models.SurveyQuestion.objects.filter(label='Open Facility').delete()
-        self.assertRaises(Exception, self.make_request)
 
     def test_get_detailed_comments(self):
         """Test that generic feedback is combined with open-ended survey responses."""
@@ -1079,12 +1267,11 @@ class TestFeedbackFilterView(TestCase):
         self.assertEqual(200, response.status_code)
 
 
-class TestRegionReportView(TestCase):
+class TestLGAReportView(TestCase):
 
     def setUp(self):
-        geom = GEOSGeometry('MULTIPOLYGON((( 1 1, 1 2, 2 2, 1 1)))')
         self.factory = RequestFactory()
-        self.region = factories.Region.create(pk=599, name='Wamba', type='lga', boundary=geom)
+        self.lga = factories.LGA.create(pk=1, name='Wamba')
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
 
         self.open = factories.SurveyQuestion.create(
@@ -1121,7 +1308,7 @@ class TestRegionReportView(TestCase):
             for_satisfaction=True,
             report_order=50)
 
-        self.clinic = factories.Clinic.create(code=1, lga='Wamba', name='TEST1')
+        self.clinic = factories.Clinic.create(code=1, lga=self.lga, name='TEST1')
 
         self.service = factories.Service.create(code=2)
 
@@ -1160,11 +1347,11 @@ class TestRegionReportView(TestCase):
         """Make Test request with POST data."""
         if data is None:
             data = {}
-        url = '/reports/region/599/'
+        url = '/reports/region/1/'
         request = self.factory.get(url, data=data)
-        return clinics.RegionReport.as_view()(request, pk=599)
+        return clinics.LGAReport.as_view()(request, pk=1)
 
-    def test_region_report_page_loads(self):
+    def test_lga_report_page_loads(self):
         """Smoke test to make sure page loads and returns some context."""
         response = self.make_request()
         self.assertEqual(response.status_code, 200)
@@ -1186,9 +1373,9 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        url = '/reports/region/599/'
+        url = '/reports/region/1/'
         request = self.factory.get(url)
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.request = request
         report.get(request)
 
@@ -1209,9 +1396,9 @@ class TestRegionReportView(TestCase):
             visit=v2,
             clinic=self.clinic, response='No')
 
-        url = '/reports/region/599/?day=x&month=7&year=2014'
+        url = '/reports/region/1/?day=x&month=7&year=2014'
         request = self.factory.get(url)
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.request = request
         report.get(request)
         self.assertIsNone(report.curr_date)
@@ -1219,13 +1406,14 @@ class TestRegionReportView(TestCase):
         self.assertEqual(4, report.responses.count())
 
     def test_feedback_participation(self):
+        # FIXME: Should this not be in the ReportMixin test?
         factories.Visit.create(
             service=self.service,
             visit_time=timezone.now(),
             survey_sent=timezone.now(),
             patient=factories.Patient.create(clinic=self.clinic, serial=311)
         )
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
         visits = models.Visit.objects.filter(
             patient__clinic=self.clinic, survey_sent__isnull=False)
@@ -1235,7 +1423,7 @@ class TestRegionReportView(TestCase):
 
     def test_get_satisfaction_counts(self):
         """Test number of visits that patient was not unsatisfied."""
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         p1 = factories.Patient.create(serial=1111, clinic=self.clinic)
         p2 = factories.Patient.create(serial=2222, clinic=self.clinic)
 
@@ -1247,24 +1435,24 @@ class TestRegionReportView(TestCase):
         v4 = factories.Visit.create(patient=p2, service=service)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v1)
+            question=self.respect, response='Yes', visit=v1, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v1)
+            question=self.wait, response='<1 hour', visit=v1, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='No', visit=v2)
+            question=self.respect, response='No', visit=v2, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='1-2 hours', visit=v2)
+            question=self.wait, response='1-2 hours', visit=v2, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v3)
+            question=self.respect, response='Yes', visit=v3, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v3)
+            question=self.wait, response='<1 hour', visit=v3, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.fair, response='Yes', visit=v4)
+            question=self.fair, response='Yes', visit=v4, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v4)
+            question=self.wait, response='<1 hour', visit=v4, clinic=self.clinic)
 
         report.get_object()
 
@@ -1275,7 +1463,7 @@ class TestRegionReportView(TestCase):
 
     def test_get_satisfaction_counts_waittime(self):
         """Test number of visits that patient was not unsatisfied because of Wait Time."""
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         p1 = factories.Patient.create(serial=1111, clinic=self.clinic)
         p2 = factories.Patient.create(serial=2222, clinic=self.clinic)
 
@@ -1287,24 +1475,24 @@ class TestRegionReportView(TestCase):
         v4 = factories.Visit.create(patient=p2, service=service)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v1)
+            question=self.respect, response='Yes', visit=v1, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v1)
+            question=self.wait, response='<1 hour', visit=v1, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v2)
+            question=self.respect, response='Yes', visit=v2, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='1-2 hours', visit=v2)
+            question=self.wait, response='1-2 hours', visit=v2, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.respect, response='Yes', visit=v3)
+            question=self.respect, response='Yes', visit=v3, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='<1 hour', visit=v3)
+            question=self.wait, response='<1 hour', visit=v3, clinic=self.clinic)
 
         factories.SurveyQuestionResponse.create(
-            question=self.fair, response='Yes', visit=v4)
+            question=self.fair, response='Yes', visit=v4, clinic=self.clinic)
         factories.SurveyQuestionResponse.create(
-            question=self.wait, response='4+ hours', visit=v4)
+            question=self.wait, response='4+ hours', visit=v4, clinic=self.clinic)
         report.get_object()
 
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
@@ -1314,9 +1502,9 @@ class TestRegionReportView(TestCase):
 
     def test_get_satisfaction_counts_no_responses(self):
         """Test get satisfaction counts with no responses."""
-        clinic = factories.Clinic.create(code=3, lga='Wamba1', name='TEST2')
+        clinic = factories.Clinic.create(code=3, lga=self.lga, name='TEST2')
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=clinic)
@@ -1338,7 +1526,7 @@ class TestRegionReportView(TestCase):
             visit=self.v2,
             clinic=self.clinic, response='Not Clean')
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
         target_questions = survey_models.SurveyQuestion.objects.filter(
@@ -1369,7 +1557,7 @@ class TestRegionReportView(TestCase):
             datetime=timezone.now(),
             visit=v3,
             clinic=self.clinic, response='1-2 hours')
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
         responses = survey_models.SurveyQuestionResponse.objects.filter(clinic=self.clinic)
         mode, mode_len = report.get_wait_mode(responses)
@@ -1392,7 +1580,7 @@ class TestRegionReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 6, 30))
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         d1 = timezone.datetime(2014, 5, 1)
@@ -1415,7 +1603,7 @@ class TestRegionReportView(TestCase):
             start_date=timezone.datetime(2014, 7, 1),
             end_date=timezone.now().date())
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         score = report.get_clinic_score(self.clinic)
@@ -1437,7 +1625,7 @@ class TestRegionReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 8, 30))
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         dt = timezone.datetime(2014, 8, 20)
@@ -1460,7 +1648,7 @@ class TestRegionReportView(TestCase):
             start_date=timezone.datetime(2014, 4, 1),
             end_date=timezone.datetime(2014, 8, 30))
 
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
 
         dt = timezone.datetime(2014, 1, 20)
@@ -1470,7 +1658,7 @@ class TestRegionReportView(TestCase):
 
     def test_get_feedback_by_clinic(self):
         """Test get feedback by clinic."""
-        report = clinics.RegionReport(kwargs={'pk': self.region.pk})
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
         feedback = report.get_feedback_by_clinic()
         self.assertEqual('TEST1', feedback[0][1])
@@ -1684,7 +1872,7 @@ class TestLGAReportFilterByClinic(TestCase):
         start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
         end_date = timezone.make_aware(timezone.datetime(2014, 8, 8), timezone.utc)
         obj = clinics.LGAReportFilterByClinic()
-        report = clinics.RegionReport()
+        report = clinics.LGAReport()
         data = obj.get_feedback_data(report, start_date, end_date)
 
         self.assertEqual('Clinic 1', data[0][1])
