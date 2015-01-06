@@ -909,7 +909,7 @@ class LGAReportAjax(View):
         service_feedback = report.get_feedback_by_service()
         clinic_feedback = report.get_feedback_by_clinic(clinics, start_date, end_date)
         question_labels = report.format_chart_labels(report.questions, ajax=True)
-        question_labels = [i.question_label for i in report.questions]
+        question_labels = [i.report_label for i in report.questions]
 
         # Render html templates
         data = {

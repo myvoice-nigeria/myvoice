@@ -118,6 +118,9 @@ class SurveyQuestion(models.Model):
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
 
+    # Report display is shown on reports
+    report_text = models.CharField(max_length=255, blank=True)
+
     class Meta:
         verbose_name = 'TextIt Survey Question'
         unique_together = [('survey', 'label')]
@@ -144,6 +147,13 @@ class SurveyQuestion(models.Model):
         """
         if self.display_label:
             return self.display_label.name
+        else:
+            return self.label
+
+    @property
+    def report_label(self):
+        if self.report_text:
+            return self.report_text
         else:
             return self.label
 
