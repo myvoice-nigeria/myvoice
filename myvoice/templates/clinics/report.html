@@ -72,7 +72,7 @@
   var buildChart = function(labels, sentData, startedData, completedData){
       var chart = $('#facility-chart')[0].getContext('2d');
       var chartData = prepareChartData(labels, sentData, startedData, completedData);
-      var chartObject = new Chart(chart)
+      var chartObject = new Chart(chart);
       chartObject.Bar(chartData, barOptions);
   }
   
@@ -248,7 +248,7 @@ $(function() {
 
   <!-- .container#feedback-chart -->
 
-  <div id="feedback-chart" class="container print-break">
+  <div id="feedback-chart" class="container">
       <div class="col-xs-12 section-heading web-only">
           <h2>PARTICIPATION BY FACILITY</h2>
       </div>
@@ -269,7 +269,7 @@ $(function() {
 <!-- .container#feedback-chart -->
 
 <!-- .container#patient-feedback-responses -->
-<div id="feedback-on-responses" class="container print-break">
+<div id="feedback-on-responses" class="container">
       <div class="col-xs-12 section-heading web-only">
           <h2>PATIENT FEEDBACK RESPONSES</h2>
       </div>
@@ -538,16 +538,16 @@ $(function() {
 
 
 });
-    
+
   function filter_feedback_by_week() {
-    
+
     // Completion Rate Table - Get Dates from Selected option.
     var start_date = $("#service-feedback-weeks").val().split(" - ")[0];
     var end_date = $("#service-feedback-weeks").val().split(" - ")[1];
 
     // Send dates via Ajax to our Filter and parse the results.
     $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date, 'clinic_id':{{object.id}} }, function(data, status){
-      
+
       // Update the Participation Summary on the top
       $("#num_registered").text(data.num_registered);
       $("#num_started").text(data.num_started);
@@ -573,7 +573,7 @@ $(function() {
 
       // Update Feedback of Services Chart
       $.each(data.fos, function(num, results){
-      
+
         service_name = results[0];
         core_data = results[1];
         label_counter=0;
@@ -629,8 +629,6 @@ $(function() {
     // Hide Entire Comment Sections if all the comments within are hidden, replace with text stating no comments.
     hidden_comments_num = $("table#comments-table tbody tr.comment:hidden").length
     visible_comments_num = $("table#comments-table tbody tr.comment:visible").length
-    //console.log("Visible comments: " + visible_comments_num);
-    //console.log("Hidden comments: " + hidden_comments_num);
 
     // Add the no comments message
     if(visible_comments_num == 0) {

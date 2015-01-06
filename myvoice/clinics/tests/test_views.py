@@ -726,9 +726,9 @@ class TestReportMixin(TestCase):
         stats = mixin.get_response_statistics([self.clinic, clinic], questions)
 
         self.assertEqual(1, stats[0][0])
-        self.assertEqual('100.0%', stats[0][1])
+        self.assertEqual(100, stats[0][1])
         self.assertEqual(2, stats[1][0])
-        self.assertEqual('67.0%', stats[1][1])
+        self.assertEqual(67, stats[1][1])
 
     def test_feedback_response_statistics_daterange(self):
         """Test get_response_statistics respects date ranges.
@@ -765,7 +765,7 @@ class TestReportMixin(TestCase):
         self.assertEqual(0, stats[0][0])
         self.assertIsNone(stats[0][1])
         self.assertEqual(1, stats[1][0])
-        self.assertEqual('50.0%', stats[1][1])
+        self.assertEqual(50, stats[1][1])
 
 
 class TestClinicReportView(TestCase):
@@ -1534,9 +1534,9 @@ class TestLGAReportView(TestCase):
         indices = [i for i in report.get_indices(target_questions, responses)]
         self.assertEqual(4, len(indices))
 
-        self.assertEqual(('Open Facility', '100.0%', 1), indices[0])
-        self.assertEqual(('Respectful Staff Treatment', '0.0%', 0), indices[1])
-        self.assertEqual(('Clean Hospital Materials', '50.0%', 1), indices[2])
+        self.assertEqual(('Open Facility', 100, 1), indices[0])
+        self.assertEqual(('Respectful Staff Treatment', 0, 0), indices[1])
+        self.assertEqual(('Clean Hospital Materials', 50, 1), indices[2])
         self.assertEqual(('Charged Fairly', None, 0), indices[3])
 
     def test_get_wait_time_mode(self):
@@ -1660,130 +1660,59 @@ class TestLGAReportView(TestCase):
         """Test get feedback by clinic."""
         report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
         report.get_object()
-        feedback = report.get_feedback_by_clinic()
+        feedback = report.get_feedback_by_clinic((self.clinic, ))
         self.assertEqual('TEST1', feedback[0][1])
         self.assertEqual(('Participation', '100.0%', 2), feedback[0][2][0])
         self.assertEqual(('Patient Satisfaction', '0.0%', 0), feedback[0][2][1])
 
+    def test_get_main_comments(self):
+        """Test that we get comments from GeneralFeedback that are marked to show on summary
+        reports."""
+        clinic1 = factories.Clinic.create()
+        clinic2 = factories.Clinic.create()
+        clinic3 = factories.Clinic.create()
 
-class TestLGAReportFilterByService(TestCase):
+        factories.GenericFeedback.create(
+            clinic=clinic1,
+            message="Test1",
+            message_date=timezone.now(),
+            display_on_summary=True,
+            report_count=1)
+        factories.GenericFeedback.create(
+            clinic=clinic1,
+            message="Test2",
+            message_date=timezone.now(),
+            display_on_summary=False)
+        factories.GenericFeedback.create(
+            clinic=clinic2,
+            message="Test3",
+            message_date=timezone.now(),
+            display_on_summary=True,
+            report_count=3)
+        factories.GenericFeedback.create(
+            clinic=clinic3,
+            message="Test4",
+            message_date=timezone.now(),
+            display_on_summary=True,
+            report_count=1)
 
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
-        self.clinic = factories.Clinic.create(code=1)
-        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
+        report = clinics.LGAReport(kwargs={'pk': self.lga.pk})
+        report.get_object()
+        comments = report.get_main_comments([clinic1, clinic2])
 
-        self.facility = factories.SurveyQuestion.create(
-            label='Open Facility',
-            survey=self.survey,
-            categories='Open\nClosed',
-            primary_answer='Open',
-            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
-            report_order=10)
-
-        self.respect = factories.SurveyQuestion.create(
-            label='Respectful Staff Treatment',
-            survey=self.survey,
-            categories='Yes\nNo',
-            primary_answer='Yes',
-            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
-            report_order=20)
-
-        # Unfortunately, 'Wait Time' is compulsory so far...
-        self.wait = factories.SurveyQuestion.create(
-            label='Wait Time',
-            survey=self.survey,
-            categories='<1 hour\n1-2 hours\n2-4 hours\n>4 hours',
-            question_type=survey_models.SurveyQuestion.MULTIPLE_CHOICE,
-            report_order=30)
-
-        service1 = factories.Service.create(code=1, name='Service 1')
-        service2 = factories.Service.create(code=2, name='Service 2')
-
-        v1 = factories.Visit.create(
-            service=service1,
-            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
-            survey_sent=timezone.now(),
-            patient=factories.Patient.create(clinic=self.clinic, serial=221)
-        )
-        v2 = factories.Visit.create(
-            service=service2,
-            visit_time=timezone.make_aware(timezone.datetime(2014, 8, 6), timezone.utc),
-            survey_sent=timezone.now(),
-            patient=factories.Patient.create(clinic=self.clinic, serial=111)
-        )
-
-        factories.SurveyQuestionResponse.create(
-            question=self.respect,
-            datetime=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
-            visit=v1,
-            clinic=self.clinic, response='Yes')
-
-        factories.SurveyQuestionResponse.create(
-            question=self.facility,
-            datetime=timezone.make_aware(timezone.datetime(2014, 8, 8), timezone.utc),
-            visit=v2,
-            clinic=self.clinic, response='Open')
-
-        factories.SurveyQuestionResponse.create(
-            question=self.respect,
-            datetime=timezone.make_aware(timezone.datetime(2014, 8, 6), timezone.utc),
-            visit=v2,
-            clinic=self.clinic, response='Yes')
-
-        self.wait_response = factories.SurveyQuestionResponse.create(
-            question=self.wait,
-            datetime=timezone.make_aware(timezone.datetime(2014, 8, 3), timezone.utc),
-            visit=v2,
-            clinic=self.clinic, response='<1 hour')
-
-    def make_request(self, data=None):
-        if data is None:
-            data = {}
-        url = '/lga_filter_feedback_by_service/'
-        request = self.factory.get(url, data=data)
-        return clinics.LGAReportFilterByService.as_view()(request)
-
-    def test_request(self):
-        data = {
-            'start_date': 'August 01, 2014',
-            'end_date': 'August 08, 2014'
-        }
-        response = self.make_request(data)
-        self.assertEqual(response.status_code, 200)
-
-    def test_get_feedback_data(self):
-        start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
-        end_date = timezone.make_aware(timezone.datetime(2014, 8, 8), timezone.utc)
-        obj = clinics.LGAReportFilterByService()
-        report = clinics.ReportMixin()
-        data = obj.get_feedback_data(report, start_date, end_date)
-
-        self.assertEqual('Service 1', data[0][0].name)
-        self.assertEqual(
-            [
-                (u'Open Facility', None, 0),
-                (u'Respectful Staff Treatment', None, 0),
-                (u'Wait Time', None, 0)], data[0][1]
-        )
-
-        self.assertEqual('Service 2', data[1][0].name)
-        self.assertEqual(
-            [
-                (u'Open Facility', '100.0%', 1),
-                (u'Respectful Staff Treatment', '100.0%', 1),
-                (u'Wait Time', u'<1 hr', 1)], data[1][1]
-        )
+        self.assertEqual(2, len(comments))
+        self.assertTrue(('Test1', 1) in comments)
+        self.assertTrue(('Test3', 3) in comments)
 
 
-class TestLGAReportFilterByClinic(TestCase):
+class TestLGAReportAjax(TestCase):
 
     def setUp(self):
         self.factory = RequestFactory()
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
-        self.clinic1 = factories.Clinic.create(code=1, name='Clinic 1')
-        self.clinic2 = factories.Clinic.create(code=2, name='Clinic 2')
+        self.lga = factories.LGA.create(name='test_lga')
+        self.clinic1 = factories.Clinic.create(code=1, name='Clinic 1', lga=self.lga)
+        self.clinic2 = factories.Clinic.create(code=2, name='Clinic 2', lga=self.lga)
         self.patient1 = factories.Patient.create(serial='1111', clinic=self.clinic1)
         self.patient2 = factories.Patient.create(serial='2222', clinic=self.clinic2)
 
@@ -1856,19 +1785,48 @@ class TestLGAReportFilterByClinic(TestCase):
     def make_request(self, data=None):
         if data is None:
             data = {}
-        url = '/lga_filter_feedback_by_clinic/'
+        url = '/lga_async/'
         request = self.factory.get(url, data=data)
-        return clinics.LGAReportFilterByClinic.as_view()(request)
+        return clinics.LGAReportAjax.as_view()(request)
 
     def test_request(self):
         data = {
             'start_date': 'August 01, 2014',
-            'end_date': 'August 08, 2014'
+            'end_date': 'August 08, 2014',
+            'lga': self.lga.pk
         }
         response = self.make_request(data)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(200, response.status_code)
 
-    def test_get_feedback_data(self):
+    def test_incomplete_params(self):
+        data = {}
+        response = self.make_request(data)
+        self.assertEqual(400, response.status_code)
+
+    def test_bad_lga(self):
+        data = {
+            'start_date': 'August 01, 2014',
+            'end_date': 'August 08, 2014',
+            'lga': self.lga.pk+1
+        }
+        response = self.make_request(data)
+        self.assertEqual(400, response.status_code)
+
+    def test_context(self):
+        start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        end_date = timezone.make_aware(timezone.datetime(2014, 8, 8), timezone.utc)
+        report = clinics.LGAReportAjax()
+        data = report.get_data(start_date, end_date, self.lga)
+
+        self.assertEqual(6, len(data))
+        self.assertTrue('facilities_html' in data)
+        self.assertTrue('services_html' in data)
+        self.assertTrue('feedback_stats' in data)
+        self.assertTrue('feedback_clinics' in data)
+        self.assertTrue('response_stats' in data)
+        self.assertTrue('question_labels' in data)
+
+    def _test_get_feedback_data(self):
         start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
         end_date = timezone.make_aware(timezone.datetime(2014, 8, 8), timezone.utc)
         obj = clinics.LGAReportFilterByClinic()

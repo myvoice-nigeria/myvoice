@@ -213,6 +213,12 @@ class GenericFeedback(models.Model):
     display_on_dashboard = models.BooleanField(
         default=True,
         help_text="Whether or not this response is displayed on the dashboard.")
+    display_on_summary = models.BooleanField(
+        default=False,
+        help_text="Whether or not this response is displayed on summary pages.")
+    report_count = models.PositiveIntegerField(
+        default=1,
+        help_text="How many times this kind of feedback was received.")
 
     class Meta:
         verbose_name = 'General Feedback'
