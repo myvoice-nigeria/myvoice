@@ -92,6 +92,11 @@ var buildFacilityChart = function(labels, sent, started, completed){
 }
 
 $(function() {
+    {% for label in question_labels %}
+      var lab = "{{ label }}";
+      console.log(lab);
+      console.log("{{ label }}");
+    {% endfor %}
     var labels = [
     {% for label in question_labels %}
       "{{ label }}"{% if not forloop.last %}, {% endif %}
@@ -103,6 +108,7 @@ $(function() {
     {% endfor %}
     ];
 
+    console.log(labels);
     buildFeedbackChart(labels, data);
 
     var labels = [
@@ -365,6 +371,7 @@ $(function() {
             data.feedback_stats.completed);
 
         //Feedback Chart
+        console.log(data.question_labels);
         $("#feedback-chart-container").html('<canvas id="feedback-chart" width=310 height=310></canvas>');
         buildFeedbackChart(
             data.question_labels,

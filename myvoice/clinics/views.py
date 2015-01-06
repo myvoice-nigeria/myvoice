@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 from django.utils import timezone
 from django.db.models.aggregates import Max, Min
-from django.template.loader import get_template
+from django.template.loader import get_template, get_template_from_string
 from django.template import Context
 from django.core.serializers.json import DjangoJSONEncoder
 
@@ -326,6 +326,13 @@ class ReportMixin(object):
         question_labels = [i.question_label for i in self.questions]
         return default_labels + question_labels
 
+    def format_chart_labels(self, labels, ajax=False):
+        """Replaces space with new-line."""
+        out_labels = [str(label).replace(' ', '\\n') for label in labels]
+        if ajax:
+            return [str(label).replace(' ', '\n') for label in labels]
+        return out_labels
+
 
 class ClinicReport(ReportMixin, DetailView):
     template_name = 'clinics/report.html'
@@ -437,7 +444,8 @@ class ClinicReport(ReportMixin, DetailView):
         # Feedback stats for chart
         lga_clinics = models.Clinic.objects.filter(lga=self.clinic.lga)
         kwargs['feedback_stats'] = self.get_feedback_statistics(lga_clinics)
-        kwargs['feedback_clinics'] = [clinic.name for clinic in lga_clinics]
+        kwargs['feedback_clinics'] = self.format_chart_labels(lga_clinics)
+        #kwargs['feedback_clinics'] = [clinic.name for clinic in lga_clinics]
 
         # Patient feedback responses
         other_clinics = lga_clinics.exclude(pk=self.clinic.pk)
@@ -776,6 +784,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             (clinic, ), questions, start_date, end_date)
         other_stats = report.get_response_statistics(
             other_clinics, questions, start_date, end_date)
+        questions = self.format_chart_labels(questions)
         response_ctxt = Context(
             {
                 'clinic_name': clinic.name,
@@ -855,7 +864,7 @@ class LGAReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic(clinics)
         kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
-        kwargs['question_labels'] = self.questions
+        kwargs['question_labels'] = self.format_chart_labels(self.questions)
         kwargs['lga'] = self.lga
 
         if self.responses:
@@ -876,7 +885,7 @@ class LGAReport(ReportMixin, DetailView):
 
         # Feedback stats for chart
         kwargs['feedback_stats'] = self.get_feedback_statistics(clinics)
-        kwargs['feedback_clinics'] = [clinic.name for clinic in clinics]
+        kwargs['feedback_clinics'] = self.format_chart_labels([cl.name for cl in clinics])
 
         kwargs['week_ranges'] = [
             (self.start_day(start), self.start_day(end)) for start, end in
@@ -900,6 +909,7 @@ class LGAReportAjax(View):
 
         service_feedback = report.get_feedback_by_service()
         clinic_feedback = report.get_feedback_by_clinic(clinics, start_date, end_date)
+        question_labels = report.format_chart_labels(report.questions, ajax=True)
         question_labels = [i.question_label for i in report.questions]
 
         # Render html templates
@@ -931,7 +941,7 @@ class LGAReportAjax(View):
             'feedback_stats': chart_stats,
             'feedback_clinics': [clnc.name for clnc in clinics],
             'response_stats': [i[1] for i in response_stats],
-            'question_labels': question_labels,
+            'question_labels': report.format_chart_labels(question_labels, ajax=True),
         }
 
     def get(self, request, *args, **kwargs):
