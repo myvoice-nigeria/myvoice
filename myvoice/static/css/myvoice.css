@@ -331,7 +331,7 @@ select::-ms-expand {
 
 .dropdown-menu {
   background-color: #8ac43f;
-  padding-top:20px;
+  padding-top: 3px;
   box-shadow: none;
   border: none;
   text-transform: none;
@@ -360,18 +360,27 @@ select::-ms-expand {
   top: 0;
   left: 100%;
   margin-top: -6px;
-  margin-left: 1px;
+  margin-left: 2px;
   padding-top: 3px;
 }
 
+.dropdown-submenu > a .glyphicon-play {
+  display: none;
+  opacity: 0.7;
+}
+
+.dropdown-submenu:hover > a .glyphicon-play {
+  display: inline-block;
+}
+
 .dropdown-submenu:hover > a {
-	background: #fff;
-	color: #000;
+  background: #F5F5F5;
+  color: #000;
 }
 
 .dropdown:hover > .dropdown-menu,
 .dropdown-submenu:hover > .dropdown-menu {
-    display: block;
+  display: block;
 }
 
 /*.dropdown-submenu > a:after {
@@ -388,20 +397,6 @@ select::-ms-expand {
 .dropdown-submenu.toggle-left > .dropdown-menu {
   left: -100%;
 }*/
- 
-.caret-right {
-  display: inline-block;
-  width: 0px;
-  height: 0px;
-  vertical-align: middle;
-  border-top: none;
-  border-left: 4px solid #FFFFFF;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  border-right-width: 0px;
-  border-right-style: dotted;
-  content: "";
-}
 
  canvas#weekChart {
   /*margin-top:20px;*/

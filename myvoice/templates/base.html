@@ -67,7 +67,7 @@
               <li>
                 <a href="{% url 'home' %}">About</a>
               </li>
- 
+              {% comment %}
               <li class="dropdown">
                 <a href="#" data-toggle="dropdown"
                    class="dropdown-toggle" style="border:none;">summary reports<b class="caret"></b></a>
@@ -80,9 +80,11 @@
                   </li>
                 </ul>
               </li>
+              {% endcomment %}
               <li class="dropdown">
                 <a href="#" data-toggle="dropdown"
                    class="dropdown-toggle" style="border:none;">
+                  <span class="glyphicon glyphicon-map-marker" aria-hidden="true"></span>
                   feedback by location<b class="caret"></b>
                 </a>
                 <ul class="dropdown-menu">
@@ -90,13 +92,13 @@
                     {% for state, list_by_state in grouped_facilities %}
                     <li class="dropdown-submenu">
                       <a href="" data-toggle="dropdown" class="dropdown-toggle">{{ state.name }}
-                        <b class="caret-right pull-right"></b></a>
+                        <!--b class="glyphicon glyphicon-play pull-right"></b--></a>
                       <ul class="dropdown-menu">
                         <li role="presentation" class="dropdown-header">select an LGA</li>
                         {% for lga, list_by_lga in list_by_state %}
                         <li class="dropdown-submenu">
                           <a href="" class="dropdown-toggle">{{ lga.name }}
-                            <b class="caret-right pull-right"></b></a>
+                            <!--b class="caret-right pull-right"></b--></a>
                           <ul class="dropdown-menu">
                             <li role="presentation" class="dropdown-header">select a facility</li>
                             {% for facility in list_by_lga %}
@@ -112,15 +114,16 @@
                     {% endfor %}
                 </ul>
               </li>
+              <li class="print-action">
+                <a href="javascript:window.print()">
+                  <img src="{% static 'img/print-icon.png' %}">print</a>
+              </li>
               <li>
                 {% if request.user.is_authenticated %}
                   <a href="{% url 'logout' %}">logout</a>
                 {% else %}
                   <a href="{% url 'login' %}">login</a>
                 {% endif %}
-              </li>
-              <li class="print-action">
-                <a href="javascript:window.print()"><img src="{% static 'img/print-icon.png' %}">print</a>
               </li>
             </ul>
           </div>
