@@ -339,13 +339,69 @@ select::-ms-expand {
 }
 
 .dropdown-menu > li > a {
+  padding: 3px 8px;
   color:#fff;
   font-size: 9px;
 }
 
-.dropdown:hover .dropdown-menu {
+.dropdown-header {
+  padding: 3px 8px;
+  color: #fff;
+  opacity: 0.7;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu > .dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: 1px;
+  padding-top: 3px;
+}
+
+.dropdown-submenu:hover > a {
+	background: #fff;
+	color: #000;
+}
+
+.dropdown:hover > .dropdown-menu,
+.dropdown-submenu:hover > .dropdown-menu {
     display: block;
- }
+}
+
+/*.dropdown-submenu > a:after {
+  display: block;
+  float: right;
+  width: 0;
+  height: 0;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu.toggle-left {
+  float: none;
+}
+.dropdown-submenu.toggle-left > .dropdown-menu {
+  left: -100%;
+}*/
+ 
+.caret-right {
+  display: inline-block;
+  width: 0px;
+  height: 0px;
+  vertical-align: middle;
+  border-top: none;
+  border-left: 4px solid #FFFFFF;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-right-width: 0px;
+  border-right-style: dotted;
+  content: "";
+}
 
  canvas#weekChart {
   /*margin-top:20px;*/
@@ -588,51 +644,3 @@ body {
 
 .footer  .navbar-nav li a {color: #808184;}
 .footer  .navbar-nav li a:hover {color: #808184;}
-
-.caret-right {
-  display: inline-block;
-  width: 0px;
-  height: 0px;
-  margin-left: 5px;
-  vertical-align: middle;
-  border-top: none;
-  border-left: 4px solid #FFFFFF;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
-  border-right-width: 0px;
-  border-right-style: dotted;
-  content: "";
-}
-
-.dropdown-submenu {
-  position: relative;
-}
-.dropdown-submenu > .dropdown-menu {
-  top: 0;
-  left: 100%;
-  margin-top: -6px;
-  margin-left: 2px;
-}
-/*.dropdown-submenu:hover > .dropdown-menu {
-  display: block;
-}
-.dropdown-submenu:hover > a:after {
-  border-left-color: white;
-}
-.dropdown-submenu > a:after {
-  display: block;
-  float: right;
-  width: 0;
-  height: 0;
-  margin-top: 5px;
-  margin-right: -10px;
-}
-.dropdown-submenu.toggle-left {
-  float: none;
-}
-.dropdown-submenu.toggle-left > .dropdown-menu {
-  left: -100%;
-  -webkit-border-radius: 6px 6px 6px 6px;
-  -moz-border-radius: 6px 6px 6px 6px;
-  border-radius: 6px 6px 6px 6px;
-}*/

@@ -68,7 +68,7 @@
                 <a href="{% url 'home' %}">About</a>
               </li>
  
-               <li class="dropdown">
+              <li class="dropdown">
                 <a href="#" data-toggle="dropdown"
                    class="dropdown-toggle" style="border:none;">summary reports<b class="caret"></b></a>
                 <ul class="dropdown-menu">
@@ -83,14 +83,33 @@
               <li class="dropdown">
                 <a href="#" data-toggle="dropdown"
                    class="dropdown-toggle" style="border:none;">
-                  facility report<b class="caret"></b>
+                  feedback by location<b class="caret"></b>
                 </a>
                 <ul class="dropdown-menu">
-                  {% for facility in all_facilities %}
-                    <li>
-                      <a href="{% url 'clinic_report' facility.slug %}">{{ facility.name }}</a>
+                    <li role="presentation" class="dropdown-header">select a state</li>
+                    {% for state, list_by_state in grouped_facilities %}
+                    <li class="dropdown-submenu">
+                      <a href="" data-toggle="dropdown" class="dropdown-toggle">{{ state.name }}
+                        <b class="caret-right pull-right"></b></a>
+                      <ul class="dropdown-menu">
+                        <li role="presentation" class="dropdown-header">select an LGA</li>
+                        {% for lga, list_by_lga in list_by_state %}
+                        <li class="dropdown-submenu">
+                          <a href="" class="dropdown-toggle">{{ lga.name }}
+                            <b class="caret-right pull-right"></b></a>
+                          <ul class="dropdown-menu">
+                            <li role="presentation" class="dropdown-header">select a facility</li>
+                            {% for facility in list_by_lga %}
+                            <li>
+                              <a href="{% url 'clinic_report' facility.slug %}">{{ facility.name }}</a>
+                            </li>
+                            {% endfor %}
+                          </ul>
+                        </li>
+                        {% endfor %}
+                      </ul>
                     </li>
-                  {% endfor %}
+                    {% endfor %}
                 </ul>
               </li>
               <li>
