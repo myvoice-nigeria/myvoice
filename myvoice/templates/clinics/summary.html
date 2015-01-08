@@ -13,8 +13,8 @@
         // scale
         scaleOverride: true,
         scaleStartValue: 0,
-        scaleSteps: 4,
-        scaleStepWidth: 25,
+        scaleSteps: 5,
+        scaleStepWidth: 20,
         scaleFontSize: 10,
         scaleFontFamily: "'Source Sans Pro', sans-serif",
 
@@ -58,8 +58,7 @@ var buildFeedbackChart = function(labels, data){
     chartObject.Bar(chartData, barOptions);
 }
 
-var buildFacilityChart = function(labels, sent, started, completed){
-
+var buildFacilityChart = function(labels, sent, started, completed, max_val){
       var barData = {
         labels: labels,
         datasets: [
@@ -86,9 +85,10 @@ var buildFacilityChart = function(labels, sent, started, completed){
 
       var opts = barOptions;
       opts['legend'] = true;
+      opts['scaleStepWidth'] = max_val/5;
       var chart = $('#facility-chart')[0].getContext('2d');
       var chartObject = new Chart(chart);
-      chartObject.Bar(barData, barOptions);
+      chartObject.Bar(barData, opts);
 }
 
 $(function() {
@@ -103,9 +103,9 @@ $(function() {
     {% endfor %}
     ];
 
-    console.log(labels);
     buildFeedbackChart(labels, data);
 
+    var max_val = Math.ceil({{ max_chart_value }}/100)*100;
     var labels = [
         {% for label in feedback_clinics %}
             "{{ label }}"{% if not forloop.last %}, {% endif %}
@@ -127,7 +127,7 @@ $(function() {
         {% endfor %}
     ];
 
-    buildFacilityChart(labels, sent, started, completed);
+    buildFacilityChart(labels, sent, started, completed, max_val);
 
     //Set select-box to first option
     $('#weeks_filter').val($('#weeks_filter option:first').val());
@@ -224,8 +224,8 @@ $(function() {
   
         <p>Summary of patients reports on {{ lga.name }} facility experience.</p>
      <div id="patient-feedback">
-      <div id="feedback-chart-container" class="two-col-div">
-          <canvas id="feedback-chart" width=310 height=310></canvas>
+      <div id="feedback-chart-container">
+          <canvas id="feedback-chart" width=600 height=310></canvas>
       </div>
       <div id="patient-feedback-comments" class="two-col-div">
           <table class="table table-striped">
@@ -309,6 +309,7 @@ $(function() {
       <div class="col-xs-12 section-heading web-only">
           <h2>PARTICIPATION BY FACILITY</h2>
       </div>
+      <p>Number of patients who received, started, and completed surveys across Wamba LGA.</p>
 
     <div class="col-xs-12 section-heading print-only" style="padding: 0px">
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
@@ -366,7 +367,6 @@ $(function() {
             data.feedback_stats.completed);
 
         //Feedback Chart
-        console.log(data.question_labels);
         $("#feedback-chart-container").html('<canvas id="feedback-chart" width=310 height=310></canvas>');
         buildFeedbackChart(
             data.question_labels,

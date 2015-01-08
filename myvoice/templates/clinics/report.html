@@ -12,7 +12,7 @@
         // scale
         scaleOverride: true,
         scaleStartValue: 0,
-        scaleSteps: 4,
+        scaleSteps: 5,
         scaleStepWidth: 25,
         scaleFontSize: 10,
         scaleFontFamily: "'Source Sans Pro', sans-serif",
@@ -69,11 +69,13 @@
 
   }
 
-  var buildChart = function(labels, sentData, startedData, completedData){
+  var buildChart = function(labels, sentData, startedData, completedData, max_val){
       var chart = $('#facility-chart')[0].getContext('2d');
       var chartData = prepareChartData(labels, sentData, startedData, completedData);
       var chartObject = new Chart(chart);
-      chartObject.Bar(chartData, barOptions);
+      var opts = barOptions;
+      opts['scaleStepWidth'] = max_val/5;
+      chartObject.Bar(chartData, opts);
   }
   
   var updateChartData = function(labels, sentData, startedData, completedData){
@@ -82,6 +84,7 @@
   }
 
 $(function() {
+    var max_val = Math.ceil({{ max_chart_value }}/100)*100;
     var labels = [
         {% for label in feedback_clinics %}
             "{{ label }}"{% if not forloop.last %}, {% endif %}
@@ -103,7 +106,7 @@ $(function() {
         {% endfor %}
     ];
 
-    buildChart(labels, sent, started, completed);
+    buildChart(labels, sent, started, completed, max_val);
 });
 /*  $(function() {
       var barData = {
@@ -252,6 +255,7 @@ $(function() {
       <div class="col-xs-12 section-heading web-only">
           <h2>PARTICIPATION BY FACILITY</h2>
       </div>
+      <p>Number of patients who received, started, and completed surveys across Wamba LGA.</p>
 
     <div class="col-xs-12 section-heading print-only" style="padding: 0px">
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
@@ -273,6 +277,7 @@ $(function() {
       <div class="col-xs-12 section-heading web-only">
           <h2>PATIENT FEEDBACK RESPONSES</h2>
       </div>
+      <p>Summary of patient feedback responses compared to LGA-wide averages.</p>
 
     <div class="col-xs-12 section-heading print-only" style="padding: 0px">
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
@@ -546,7 +551,7 @@ $(function() {
     var end_date = $("#service-feedback-weeks").val().split(" - ")[1];
 
     // Send dates via Ajax to our Filter and parse the results.
-    $.get("/report_filter_feedback_by_week", {'start_date':start_date, 'end_date':end_date, 'clinic_id':{{object.id}} }, function(data, status){
+    $.get("/report_filter_feedback_by_week", {"start_date":start_date, "end_date":end_date, "clinic_id":{{object.id}} }, function(data, status){
 
       // Update the Participation Summary on the top
       $("#num_registered").text(data.num_registered);
@@ -560,11 +565,14 @@ $(function() {
       //$("#facility-participation-chart").html(data.chart_html);
 
       $("#chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
+      var max_val = Math.ceil(data.max_chart_value/100)*100;
+      console.log(max_val);
       buildChart(
           data.feedback_clinics,
           data.feedback_stats.sent,
           data.feedback_stats.started,
-          data.feedback_stats.completed);
+          data.feedback_stats.completed,
+          max_val);
 
       // patient responses
       $("#feedback-on-responses").html(data.responses_html);

@@ -642,9 +642,9 @@ class TestReportMixin(TestCase):
         stats = mixin.get_feedback_statistics([cl1, cl2], start, end)
 
         self.assertEqual(3, len(stats))
-        self.assertEqual([100, 50], stats['sent'])
-        self.assertEqual([100, 50], stats['started'])
-        self.assertEqual([50, 50], stats['completed'])
+        self.assertEqual([2, 1], stats['sent'])
+        self.assertEqual([2, 1], stats['started'])
+        self.assertEqual([1, 1], stats['completed'])
 
     def test_get_feedback_statistics_no_dates(self):
         """Test get_feedback_statistics with no start/end dates passed in takes all the visits
@@ -695,9 +695,9 @@ class TestReportMixin(TestCase):
         stats = mixin.get_feedback_statistics([cl1, cl2])
 
         self.assertEqual(3, len(stats))
-        self.assertEqual([100, 50], stats['sent'])
-        self.assertEqual([100, 50], stats['started'])
-        self.assertEqual([67, 50], stats['completed'])
+        self.assertEqual([3, 1], stats['sent'])
+        self.assertEqual([3, 1], stats['started'])
+        self.assertEqual([2, 1], stats['completed'])
 
     def test_feedback_response_statistics(self):
         """Test get_response_statistics.

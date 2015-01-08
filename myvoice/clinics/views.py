@@ -201,6 +201,12 @@ class ReportMixin(object):
         _completed = [completed.count(clinic.pk) for clinic in clinics]
         _total = [visits.filter(patient__clinic=clinic).count() for clinic in clinics]
         return {
+            'sent': _sent,
+            'started': _started,
+            'completed': _completed,
+            }
+
+        return {
             'sent': [make_percentage(s, t) for s, t in zip(_sent, _total)],
             'started': [make_percentage(s, t) for s, t in zip(_started, _total)],
             'completed': [make_percentage(s, t) for s, t in zip(_completed, _total)],
@@ -443,7 +449,9 @@ class ClinicReport(ReportMixin, DetailView):
 
         # Feedback stats for chart
         lga_clinics = models.Clinic.objects.filter(lga=self.clinic.lga)
-        kwargs['feedback_stats'] = self.get_feedback_statistics(lga_clinics)
+        feedback_stats = self.get_feedback_statistics(lga_clinics)
+        kwargs['feedback_stats'] = feedback_stats
+        kwargs['max_chart_value'] = max(feedback_stats['sent'])
         kwargs['feedback_clinics'] = self.format_chart_labels(lga_clinics)
 
         # Patient feedback responses
@@ -774,7 +782,9 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         # Calculate feedback stats for chart
         lga_clinics = models.Clinic.objects.filter(lga=clinic.lga)
         chart_stats = report.get_feedback_statistics(lga_clinics, start_date, end_date)
+        max_chart_value = max(chart_stats['sent'])
         chart_clinics = [clnc.name for clnc in lga_clinics]
+        chart_clinics = self.format_chart_labels(chart_clinics, ajax=True)
 
         # Calculate and render template for patient feedback responses
         response_tmpl = get_template('clinics/report_responses.html')
@@ -783,7 +793,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             (clinic, ), questions, start_date, end_date)
         other_stats = report.get_response_statistics(
             other_clinics, questions, start_date, end_date)
-        questions = self.format_chart_labels(questions)
+        questions = [qtn.report_label for qtn in questions]
         response_ctxt = Context(
             {
                 'clinic_name': clinic.name,
@@ -801,7 +811,8 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             'fos_html': html,
             'feedback_stats': chart_stats,
             'feedback_clinics': chart_clinics,
-            'responses_html': response_html
+            'responses_html': response_html,
+            'max_chart_value': max_chart_value
         }
 
     def get(self, request, *args, **kwargs):
@@ -863,7 +874,7 @@ class LGAReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic(clinics)
         kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
-        kwargs['question_labels'] = self.format_chart_labels(self.questions)
+        kwargs['question_labels'] = self.questions
         kwargs['lga'] = self.lga
 
         if self.responses:
@@ -883,7 +894,9 @@ class LGAReport(ReportMixin, DetailView):
         kwargs['main_comments'] = self.get_main_comments(clinics)
 
         # Feedback stats for chart
-        kwargs['feedback_stats'] = self.get_feedback_statistics(clinics)
+        feedback_stats = self.get_feedback_statistics(clinics)
+        kwargs['feedback_stats'] = feedback_stats
+        kwargs['max_chart_value'] = max(feedback_stats['sent'])
         kwargs['feedback_clinics'] = self.format_chart_labels([cl.name for cl in clinics])
 
         kwargs['week_ranges'] = [
