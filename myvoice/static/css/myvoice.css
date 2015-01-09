@@ -170,6 +170,13 @@ select::-ms-expand {
 	padding-right:0;
 }
 
+.about-pilot-intro {
+	margin: 0px;
+	padding: 6px 15px;
+	background-color: #F5F5F5;
+	width: 533px;
+}
+
 .participation-module {
 	padding-top: 31px;
 	color: #929497;
