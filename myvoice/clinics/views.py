@@ -269,11 +269,11 @@ class ReportMixin(object):
                 ('Participation', part_total, part_percent))
 
             # Get patient satisfaction
-            #satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
-            #if satis_percent is not None:
-            #    satis_percent = '{}%'.format(satis_percent)
-            #clinic_data.append(
-            #    ('Patient Satisfaction', satis_total, satis_percent))
+            # satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
+            # if satis_percent is not None:
+            #     satis_percent = '{}%'.format(satis_percent)
+            # clinic_data.append(
+            #     ('Patient Satisfaction', satis_total, satis_percent))
 
             # Quality and quantity scores
             score_date = start_date if start_date else None
