@@ -266,14 +266,14 @@ class ReportMixin(object):
             if part_percent is not None:
                 part_percent = '{}%'.format(part_percent)
             clinic_data.append(
-                ('Participation', part_percent, part_total))
+                ('Participation', part_total, part_percent))
 
             # Get patient satisfaction
-            satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
-            if satis_percent is not None:
-                satis_percent = '{}%'.format(satis_percent)
-            clinic_data.append(
-                ('Patient Satisfaction', satis_percent, satis_total))
+            #satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
+            #if satis_percent is not None:
+            #    satis_percent = '{}%'.format(satis_percent)
+            #clinic_data.append(
+            #    ('Patient Satisfaction', satis_total, satis_percent))
 
             # Quality and quantity scores
             score_date = start_date if start_date else None
@@ -290,7 +290,7 @@ class ReportMixin(object):
             for label, perc, val in self.get_indices(target_questions, clinic_responses):
                 if perc or perc == 0:
                     perc = '{}%'.format(perc)
-                clinic_data.append((label, perc, val))
+                clinic_data.append((label, val, perc))
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(clinic_responses)
@@ -326,7 +326,6 @@ class ReportMixin(object):
     def get_clinic_labels(self):
         default_labels = [
             'Feedback Participation',
-            'Patient Satisfaction',
             'Quality - Q2 2014 (%)',
             'Quantity - Q2 2014 (N)']
         question_labels = [i.question_label for i in self.questions]
