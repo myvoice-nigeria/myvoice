@@ -13,7 +13,7 @@
         <tr id="service{{ service.id }}">
             <td id="service_name">{{ service.name }}</td>
             {% for label, result, total_respondents in service_data %}
-              {% if result == None %}
+              {% if result == None or total_respondents == None %}
                 <td class="{{ label }}">N/A (0)</td>
               {% else %}
                 <td class="{{ label }}">{{ result }} ({{ total_respondents }})</td>

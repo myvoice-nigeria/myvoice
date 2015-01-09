@@ -347,7 +347,7 @@ $(function() {
           <tr id="service{{service.name}}">
             <td>{{ service.name }}</td>
             {% for label, result, total_respondents in service_data %}
-              {% if result == None %}
+              {% if total_respondents == None or result == None %}
                 <td>N/A (0)</td>
               {% else %}
                 <td class="label{{ forloop.counter }}">{{ result }} ({{ total_respondents }})</td>

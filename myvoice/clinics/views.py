@@ -233,7 +233,7 @@ class ReportMixin(object):
             for label, perc, val in self.get_indices(target_questions, service_responses):
                 if perc or perc == 0:
                     perc = '{}%'.format(perc)
-                service_data.append((label, perc, val))
+                service_data.append((label, val, perc))
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(service_responses)
