@@ -9,7 +9,7 @@ def groupbylist(*args, **kwargs):
 def group_facilities(facilities):
     """
     Groups an iterable of Facilities, first by State, then by LGA.
-    
+
     Note that we assume the list is already sorted.
     """
     by_lga = groupbylist(facilities, lambda x: x.lga)
