@@ -566,7 +566,6 @@ $(function() {
 
       $("#chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
       var max_val = Math.ceil(data.max_chart_value/100)*100;
-      console.log(max_val);
       buildChart(
           data.feedback_clinics,
           data.feedback_stats.sent,

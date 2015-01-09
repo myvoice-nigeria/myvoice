@@ -224,8 +224,8 @@ $(function() {
   
         <p>Summary of patients reports on {{ lga.name }} facility experience.</p>
      <div id="patient-feedback">
-      <div id="feedback-chart-container">
-          <canvas id="feedback-chart" width=600 height=310></canvas>
+      <div id="feedback-chart-container" class="two-col-div">
+          <canvas id="feedback-chart" width=350 height=210></canvas>
       </div>
       <div id="patient-feedback-comments" class="two-col-div">
           <table class="table table-striped">
@@ -360,14 +360,17 @@ $(function() {
 
         //Facility Chart
         $("#facility-chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
+        var max_val = Math.ceil(data.max_chart_value/100)*100;
+        console.log(max_val);
         buildFacilityChart(
             data.feedback_clinics,
             data.feedback_stats.sent,
             data.feedback_stats.started,
-            data.feedback_stats.completed);
+            data.feedback_stats.completed,
+            max_val);
 
         //Feedback Chart
-        $("#feedback-chart-container").html('<canvas id="feedback-chart" width=310 height=310></canvas>');
+        $("#feedback-chart-container").html('<canvas id="feedback-chart" width=350 height=210></canvas>');
         buildFeedbackChart(
             data.question_labels,
             data.response_stats);

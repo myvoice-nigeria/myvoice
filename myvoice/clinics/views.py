@@ -332,10 +332,10 @@ class ReportMixin(object):
         question_labels = [i.question_label for i in self.questions]
         return default_labels + question_labels
 
-    def format_chart_labels(self, labels, ajax=False):
+    def format_chart_labels(self, labels, async=False):
         """Replaces space with new-line."""
         out_labels = [str(label).replace(' ', '\\n') for label in labels]
-        if ajax:
+        if async:
             return [str(label).replace(' ', '\n') for label in labels]
         return out_labels
 
@@ -784,7 +784,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         chart_stats = report.get_feedback_statistics(lga_clinics, start_date, end_date)
         max_chart_value = max(chart_stats['sent'])
         chart_clinics = [clnc.name for clnc in lga_clinics]
-        chart_clinics = self.format_chart_labels(chart_clinics, ajax=True)
+        chart_clinics = self.format_chart_labels(chart_clinics, async=True)
 
         # Calculate and render template for patient feedback responses
         response_tmpl = get_template('clinics/report_responses.html')
@@ -874,7 +874,7 @@ class LGAReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic(clinics)
         kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
-        kwargs['question_labels'] = self.questions
+        kwargs['question_labels'] = self.format_chart_labels(self.questions)
         kwargs['lga'] = self.lga
 
         if self.responses:
@@ -921,8 +921,7 @@ class LGAReportAjax(View):
 
         service_feedback = report.get_feedback_by_service()
         clinic_feedback = report.get_feedback_by_clinic(clinics, start_date, end_date)
-        question_labels = report.format_chart_labels(report.questions, ajax=True)
-        question_labels = [i.report_label for i in report.questions]
+        question_labels = report.format_chart_labels(report.questions, async=True)
 
         # Render html templates
         data = {
@@ -942,6 +941,7 @@ class LGAReportAjax(View):
 
         # Calculate stats for feedback chart
         chart_stats = report.get_feedback_statistics(clinics, start_date, end_date)
+        max_chart_value = max(chart_stats['sent'])
 
         # Calculate and render template for patient feedback responses
         response_stats = report.get_response_statistics(
@@ -951,9 +951,10 @@ class LGAReportAjax(View):
             'facilities_html': clinic_html,
             'services_html': service_html,
             'feedback_stats': chart_stats,
-            'feedback_clinics': [clnc.name for clnc in clinics],
+            'feedback_clinics': report.format_chart_labels(clinics, async=True),
             'response_stats': [i[1] for i in response_stats],
-            'question_labels': report.format_chart_labels(question_labels, ajax=True),
+            'question_labels': report.format_chart_labels(question_labels, async=True),
+            'max_chart_value': max_chart_value,
         }
 
     def get(self, request, *args, **kwargs):
