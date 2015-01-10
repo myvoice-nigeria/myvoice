@@ -20,8 +20,8 @@ class Home(TemplateView):
     def get_progress_to_date(self):
         """Returns a dictionary used to populate the "Progress to Date" view on the home page."""
         # Assumption: since patients are registered by clinic staff, the number of unique senders
-        #  in the Visit table, should be roughly equal to the number of staff. I'm doing this, 'cause
-        #  presently there's no data in the ClinicStaff table.
+        #  in the Visit table, should be roughly equal to the number of staff. I'm doing this,
+        #  'cause presently there's no data in the ClinicStaff table.
         staff = Visit.objects.values('sender').distinct()
         sent = Visit.objects.values('mobile').distinct()
         started = Visit.objects.filter(mobile__in=sent, survey_started=True)
@@ -32,4 +32,4 @@ class Home(TemplateView):
                 'lga_count': facility_counts['lga'],
                 'patient_count': Patient.objects.count(),
                 'survey_sent_count': sent.count(),
-                'survey_started_count': started.count(),}
+                'survey_started_count': started.count()}
