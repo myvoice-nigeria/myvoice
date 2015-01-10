@@ -46,8 +46,13 @@ class LGA(models.Model):
 
 class Clinic(models.Model):
     """A health clinic."""
+    TYPE_CHIOCES = (
+        ('primary', 'Primary Healthcare Facility'),
+        ('general', 'General Hospital'),
+    )
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
+    type = models.CharField(max_length=16, null=True, choices=TYPE_CHIOCES, default='primary')
 
     # These might later become location-based models. LGA should be
     # easily accessible (not multiple foreign keys away) since it is the
