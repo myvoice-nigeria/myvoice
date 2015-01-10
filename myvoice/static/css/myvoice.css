@@ -177,6 +177,66 @@ select::-ms-expand {
 	width: 533px;
 }
 
+.progress-to-date .section-heading.web-only {
+	padding-left: 15px;
+	width: 533px;
+}
+
+.progress-to-date .content {
+	margin: 0px auto;
+	position: relative;
+	background: url(/static/img/myvoice-progress-to-date.png) 0 0 no-repeat;
+	width: 533px;
+	height: 662px;
+}
+
+.progress-to-date .content > div {
+	position: absolute;
+	padding: 5px;
+	font-size: 13px;
+}
+
+.progress-to-date .content strong {
+	color: #8dc441;
+}
+
+.progress-to-date .participant-stats {
+	top: 28px;
+	left: 140px;
+	width: 138px;
+}
+
+.progress-to-date .facilities-stats {
+	top: 115px;
+	left: 322px;
+	width: 138px;
+}
+
+.progress-to-date .registration-stats {
+	top: 276px;
+	left: 73px;
+	width: 140px;
+}
+
+.progress-to-date .survey-stats {
+	top: 496px;
+	left: 302px;
+	width: 134px;
+}
+
+.progress-to-date div.contact {
+	top: 595px;
+	left: 38px;
+	font-size: 10px;
+}
+
+.progress-to-date .contact h5 {
+	margin: 3px 0px;
+	text-transform: lowercase;
+	font-size: 10px;
+	font-weight: bold;
+}
+
 .participation-module {
 	padding-top: 31px;
 	color: #929497;
@@ -232,9 +292,13 @@ select::-ms-expand {
 }
 
 .section-heading h2 {
-    height: 30px;
+    /*height: 30px;*/
     margin:0;
     width: 120%;
+}
+
+.section-heading.web-only h2 {
+	text-transform: uppercase;
 }
 
 .section-heading2 {
