@@ -32,19 +32,32 @@
         <h2>Progress to Date</h2>
       </div>
       <div class="content">
-        <div class="participant-stats">Over <strong>100</strong> health staff have participated.</div>
-        <div class="facilities-stats">From <strong>10</strong> primary health care facilities, and <strong>1</strong> general hospital in <strong>1</strong> LGA.</div>
-        <div class="registration-stats">Who registered <strong>2000</strong> patients.</div>
-        <div class="survey-stats">Of <strong>1400</strong> mobile owners, <strong>300</strong> submitted answers to surveys.</div>
-        <div class="contact">
-          <h5>Contact</h5>
-          <div>
-            If you have any questions or<br />
-            comments about My Voice,<br />
-            please contact Nonso Jideofor<br />
-            at <span class="tel">+234 818 332 7178</span>
+        {% with stats=view.get_progress_to_date %}
+          <div class="participant-stats">
+            Over <strong>{{ stats.staff_count }}</strong> health staff have participated.
           </div>
-        </div>
+          <div class="facilities-stats">
+            From <strong>{{ stats.primary_facilities_count }}</strong> primary health care facilit{{ stats.primary_facilities_count|pluralize:"y,ies" }},
+            and <strong>{{ stats.general_hospitals_count }}</strong> general hospital{{ stats.general_hospitals_count|pluralize }}
+            in <strong>{{ stats.lga_count }}</strong> LGA{{ stats.lga_count|pluralize }}.
+          </div>
+          <div class="registration-stats">
+            Who registered <strong>{{ stats.patient_count }}</strong> patient{{ stats.patient_count|pluralize }}.
+          </div>
+          <div class="survey-stats">
+            Of <strong>{{ stats.survey_sent_count }}</strong> mobile owners,
+            <strong>{{ stats.survey_started_count }}</strong> submitted answers to surveys.
+          </div>
+          <div class="contact">
+            <h5>Contact</h5>
+            <div>
+              If you have any questions or<br />
+              comments about My Voice,<br />
+              please contact Nonso Jideofor<br />
+              at <span class="tel">+234 818 332 7178</span>
+            </div>
+          </div>
+        {% endwith %}
       </div>
     </div>
   </div><!-- /.container -->
