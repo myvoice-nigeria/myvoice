@@ -8,6 +8,7 @@ class Home(TemplateView):
     template_name = 'core/home.html'
 
     def get_facility_counts(self):
+        """Returns the total count of facilities, grouped by type, and the count of LGAs."""
         lgas = set()
         counts = Counter()
         for row in Clinic.objects.values('lga', 'type').annotate(facilities=Count('id')):
@@ -17,6 +18,7 @@ class Home(TemplateView):
         return counts
 
     def get_progress_to_date(self):
+        """Returns a dictionary used to populate the "Progress to Date" view on the home page."""
         # Assumption: since patients are registered by clinic staff, the number of unique senders
         #  in the Visit table, should be roughly equal to the number of staff. I'm doing this, 'cause
         #  presently there's no data in the ClinicStaff table.
