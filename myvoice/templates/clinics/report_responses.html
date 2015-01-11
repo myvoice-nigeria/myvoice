@@ -22,10 +22,10 @@
       <tbody>
         {% for question, clinic_stat, other_stat in response_stats %}
          <tr>
-             <td>{{ clinic_stat.0 }} ({{ clinic_stat.1 }})</td>
-             <td>{{ question.display_label }}</td>
-             <td>{{ other_stat.0 }} ({{ other_stat.1 }})</td>
-             <td>{{ question.display_label }}</td>
+             <td>{{ clinic_stat.0 }} ({{ clinic_stat.1 }}%)</td>
+             <td>{{ question }}</td>
+             <td>{{ other_stat.0 }} ({{ other_stat.1 }}%)</td>
+             <td>{{ question }}</td>
          </tr>
         {% endfor %}
       </tbody>

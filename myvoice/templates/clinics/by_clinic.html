@@ -16,7 +16,7 @@
         <tr id="clinic{{clinic_id}}">
             <td class="clinic_name">{{ clinic }}</td>
             {% for label, result, total_respondents in clinic_data %}
-            {% if result == None %}
+            {% if result == None or total_respondents == None %}
               <td class="{{label}}">N/A (0)</td>
             {% else %}
               <td class="{{label}}">{{ result }} ({{ total_respondents }})</td>

@@ -642,9 +642,9 @@ class TestReportMixin(TestCase):
         stats = mixin.get_feedback_statistics([cl1, cl2], start, end)
 
         self.assertEqual(3, len(stats))
-        self.assertEqual([100, 50], stats['sent'])
-        self.assertEqual([100, 50], stats['started'])
-        self.assertEqual([50, 50], stats['completed'])
+        self.assertEqual([2, 1], stats['sent'])
+        self.assertEqual([2, 1], stats['started'])
+        self.assertEqual([1, 1], stats['completed'])
 
     def test_get_feedback_statistics_no_dates(self):
         """Test get_feedback_statistics with no start/end dates passed in takes all the visits
@@ -695,9 +695,9 @@ class TestReportMixin(TestCase):
         stats = mixin.get_feedback_statistics([cl1, cl2])
 
         self.assertEqual(3, len(stats))
-        self.assertEqual([100, 50], stats['sent'])
-        self.assertEqual([100, 50], stats['started'])
-        self.assertEqual([67, 50], stats['completed'])
+        self.assertEqual([3, 1], stats['sent'])
+        self.assertEqual([3, 1], stats['started'])
+        self.assertEqual([2, 1], stats['completed'])
 
     def test_feedback_response_statistics(self):
         """Test get_response_statistics.
@@ -1059,14 +1059,14 @@ class TestClinicReportFilterByWeek(TestCase):
         self.assertEqual(2, len(data['fos']))
         self.assertEqual(
             [
-                (u'Open Facility', '0.0%', 0),
-                (u'Respectful Staff Treatment', None, 0),
+                (u'Open Facility', 0, '0.0%'),
+                (u'Respectful Staff Treatment', 0, None),
                 (u'Wait Time', None, 0)
                 ], data_dict[service1.name])
         self.assertEqual(
             [
-                (u'Open Facility', None, 0),
-                (u'Respectful Staff Treatment', '100.0%', 1),
+                (u'Open Facility', 0, None),
+                (u'Respectful Staff Treatment', 1, '100.0%'),
                 (u'Wait Time', '<1 hr', 1)
                 ], data_dict[service2.name])
 
@@ -1662,8 +1662,8 @@ class TestLGAReportView(TestCase):
         report.get_object()
         feedback = report.get_feedback_by_clinic((self.clinic, ))
         self.assertEqual('TEST1', feedback[0][1])
-        self.assertEqual(('Participation', '100.0%', 2), feedback[0][2][0])
-        self.assertEqual(('Patient Satisfaction', '0.0%', 0), feedback[0][2][1])
+        self.assertEqual(('Participation', 2, '100.0%'), feedback[0][2][0])
+        self.assertEqual(('Quality', None, 0), feedback[0][2][1])
 
     def test_get_main_comments(self):
         """Test that we get comments from GeneralFeedback that are marked to show on summary
@@ -1818,13 +1818,14 @@ class TestLGAReportAjax(TestCase):
         report = clinics.LGAReportAjax()
         data = report.get_data(start_date, end_date, self.lga)
 
-        self.assertEqual(6, len(data))
+        self.assertEqual(7, len(data))
         self.assertTrue('facilities_html' in data)
         self.assertTrue('services_html' in data)
         self.assertTrue('feedback_stats' in data)
         self.assertTrue('feedback_clinics' in data)
         self.assertTrue('response_stats' in data)
         self.assertTrue('question_labels' in data)
+        self.assertTrue('max_chart_value' in data)
 
     def _test_get_feedback_data(self):
         start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)

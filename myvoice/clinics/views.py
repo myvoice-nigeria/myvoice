@@ -199,11 +199,10 @@ class ReportMixin(object):
         _sent = [sent.count(clinic.pk) for clinic in clinics]
         _started = [started.count(clinic.pk) for clinic in clinics]
         _completed = [completed.count(clinic.pk) for clinic in clinics]
-        _total = [visits.filter(patient__clinic=clinic).count() for clinic in clinics]
         return {
-            'sent': [make_percentage(s, t) for s, t in zip(_sent, _total)],
-            'started': [make_percentage(s, t) for s, t in zip(_started, _total)],
-            'completed': [make_percentage(s, t) for s, t in zip(_completed, _total)],
+            'sent': _sent,
+            'started': _started,
+            'completed': _completed,
             }
 
     def get_response_statistics(self, clinics, questions, start_date=None, end_date=None):
@@ -227,7 +226,7 @@ class ReportMixin(object):
             for label, perc, val in self.get_indices(target_questions, service_responses):
                 if perc or perc == 0:
                     perc = '{}%'.format(perc)
-                service_data.append((label, perc, val))
+                service_data.append((label, val, perc))
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(service_responses)
@@ -260,14 +259,14 @@ class ReportMixin(object):
             if part_percent is not None:
                 part_percent = '{}%'.format(part_percent)
             clinic_data.append(
-                ('Participation', part_percent, part_total))
+                ('Participation', part_total, part_percent))
 
             # Get patient satisfaction
-            satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
-            if satis_percent is not None:
-                satis_percent = '{}%'.format(satis_percent)
-            clinic_data.append(
-                ('Patient Satisfaction', satis_percent, satis_total))
+            # satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
+            # if satis_percent is not None:
+            #     satis_percent = '{}%'.format(satis_percent)
+            # clinic_data.append(
+            #     ('Patient Satisfaction', satis_total, satis_percent))
 
             # Quality and quantity scores
             score_date = start_date if start_date else None
@@ -284,7 +283,7 @@ class ReportMixin(object):
             for label, perc, val in self.get_indices(target_questions, clinic_responses):
                 if perc or perc == 0:
                     perc = '{}%'.format(perc)
-                clinic_data.append((label, perc, val))
+                clinic_data.append((label, val, perc))
 
             # Wait Time
             mode, mode_len = self.get_wait_mode(clinic_responses)
@@ -320,16 +319,15 @@ class ReportMixin(object):
     def get_clinic_labels(self):
         default_labels = [
             'Feedback Participation',
-            'Patient Satisfaction',
             'Quality - Q2 2014 (%)',
             'Quantity - Q2 2014 (N)']
         question_labels = [i.question_label for i in self.questions]
         return default_labels + question_labels
 
-    def format_chart_labels(self, labels, ajax=False):
+    def format_chart_labels(self, labels, async=False):
         """Replaces space with new-line."""
         out_labels = [str(label).replace(' ', '\\n') for label in labels]
-        if ajax:
+        if async:
             return [str(label).replace(' ', '\n') for label in labels]
         return out_labels
 
@@ -443,7 +441,9 @@ class ClinicReport(ReportMixin, DetailView):
 
         # Feedback stats for chart
         lga_clinics = models.Clinic.objects.filter(lga=self.clinic.lga)
-        kwargs['feedback_stats'] = self.get_feedback_statistics(lga_clinics)
+        feedback_stats = self.get_feedback_statistics(lga_clinics)
+        kwargs['feedback_stats'] = feedback_stats
+        kwargs['max_chart_value'] = max(feedback_stats['sent'])
         kwargs['feedback_clinics'] = self.format_chart_labels(lga_clinics)
 
         # Patient feedback responses
@@ -774,7 +774,9 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
         # Calculate feedback stats for chart
         lga_clinics = models.Clinic.objects.filter(lga=clinic.lga)
         chart_stats = report.get_feedback_statistics(lga_clinics, start_date, end_date)
+        max_chart_value = max(chart_stats['sent'])
         chart_clinics = [clnc.name for clnc in lga_clinics]
+        chart_clinics = self.format_chart_labels(chart_clinics, async=True)
 
         # Calculate and render template for patient feedback responses
         response_tmpl = get_template('clinics/report_responses.html')
@@ -783,7 +785,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             (clinic, ), questions, start_date, end_date)
         other_stats = report.get_response_statistics(
             other_clinics, questions, start_date, end_date)
-        questions = self.format_chart_labels(questions)
+        questions = [qtn.report_label for qtn in questions]
         response_ctxt = Context(
             {
                 'clinic_name': clinic.name,
@@ -801,7 +803,8 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             'fos_html': html,
             'feedback_stats': chart_stats,
             'feedback_clinics': chart_clinics,
-            'responses_html': response_html
+            'responses_html': response_html,
+            'max_chart_value': max_chart_value
         }
 
     def get(self, request, *args, **kwargs):
@@ -883,7 +886,9 @@ class LGAReport(ReportMixin, DetailView):
         kwargs['main_comments'] = self.get_main_comments(clinics)
 
         # Feedback stats for chart
-        kwargs['feedback_stats'] = self.get_feedback_statistics(clinics)
+        feedback_stats = self.get_feedback_statistics(clinics)
+        kwargs['feedback_stats'] = feedback_stats
+        kwargs['max_chart_value'] = max(feedback_stats['sent'])
         kwargs['feedback_clinics'] = self.format_chart_labels([cl.name for cl in clinics])
 
         kwargs['week_ranges'] = [
@@ -908,8 +913,7 @@ class LGAReportAjax(View):
 
         service_feedback = report.get_feedback_by_service()
         clinic_feedback = report.get_feedback_by_clinic(clinics, start_date, end_date)
-        question_labels = report.format_chart_labels(report.questions, ajax=True)
-        question_labels = [i.question_label for i in report.questions]
+        question_labels = report.format_chart_labels(report.questions, async=True)
 
         # Render html templates
         data = {
@@ -929,6 +933,7 @@ class LGAReportAjax(View):
 
         # Calculate stats for feedback chart
         chart_stats = report.get_feedback_statistics(clinics, start_date, end_date)
+        max_chart_value = max(chart_stats['sent'])
 
         # Calculate and render template for patient feedback responses
         response_stats = report.get_response_statistics(
@@ -938,9 +943,10 @@ class LGAReportAjax(View):
             'facilities_html': clinic_html,
             'services_html': service_html,
             'feedback_stats': chart_stats,
-            'feedback_clinics': [clnc.name for clnc in clinics],
+            'feedback_clinics': report.format_chart_labels(clinics, async=True),
             'response_stats': [i[1] for i in response_stats],
-            'question_labels': report.format_chart_labels(question_labels, ajax=True),
+            'question_labels': report.format_chart_labels(question_labels, async=True),
+            'max_chart_value': max_chart_value,
         }
 
     def get(self, request, *args, **kwargs):
