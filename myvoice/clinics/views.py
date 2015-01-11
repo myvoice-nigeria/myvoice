@@ -199,17 +199,10 @@ class ReportMixin(object):
         _sent = [sent.count(clinic.pk) for clinic in clinics]
         _started = [started.count(clinic.pk) for clinic in clinics]
         _completed = [completed.count(clinic.pk) for clinic in clinics]
-        _total = [visits.filter(patient__clinic=clinic).count() for clinic in clinics]
         return {
             'sent': _sent,
             'started': _started,
             'completed': _completed,
-            }
-
-        return {
-            'sent': [make_percentage(s, t) for s, t in zip(_sent, _total)],
-            'started': [make_percentage(s, t) for s, t in zip(_started, _total)],
-            'completed': [make_percentage(s, t) for s, t in zip(_completed, _total)],
             }
 
     def get_response_statistics(self, clinics, questions, start_date=None, end_date=None):
