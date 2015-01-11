@@ -8,17 +8,21 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Patient.temp_serial'
-        db.add_column(u'clinics_patient', 'temp_serial',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(default=0),
-                      keep_default=False)
-
-
-    def backwards(self, orm):
         # Deleting field 'Patient.temp_serial'
         db.delete_column(u'clinics_patient', 'temp_serial')
 
-        # db.create_unique(u'clinics_patient', ['clinic_id', 'serial'])
+        # Adding unique constraint on 'Patient', fields ['clinic', 'serial']
+        db.create_unique(u'clinics_patient', ['clinic_id', 'serial'])
+
+
+    def backwards(self, orm):
+        # Removing unique constraint on 'Patient', fields ['clinic', 'serial']
+        db.delete_unique(u'clinics_patient', ['clinic_id', 'serial'])
+
+        # Adding field 'Patient.temp_serial'
+        db.add_column(u'clinics_patient', 'temp_serial',
+                      self.gf('django.db.models.fields.CharField')(max_length=14, null=True, blank=True),
+                      keep_default=False)
 
 
     models = {
@@ -112,8 +116,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'mobile': ('django.db.models.fields.CharField', [], {'max_length': '11', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
-            'serial': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'temp_serial': ('django.db.models.fields.PositiveIntegerField', [], {})
+            'serial': ('django.db.models.fields.CharField', [], {'max_length': '14', 'blank': 'True'})
         },
         u'clinics.region': {
             'Meta': {'unique_together': "(('external_id', 'type'),)", 'object_name': 'Region'},

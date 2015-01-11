@@ -8,29 +8,21 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Removing unique constraint on 'Patient', fields ['clinic', 'temp_serial']
-        # No need to delete this constraint
-        # db.delete_unique(u'clinics_patient', ['clinic_id', 'temp_serial'])
-
-        # Deleting field 'Patient.temp_serial'
-        db.delete_column(u'clinics_patient', 'temp_serial')
-
-        # Adding unique constraint on 'Patient', fields ['clinic', 'serial']
-        db.create_unique(u'clinics_patient', ['clinic_id', 'serial'])
-
-
-    def backwards(self, orm):
         # Removing unique constraint on 'Patient', fields ['clinic', 'serial']
         db.delete_unique(u'clinics_patient', ['clinic_id', 'serial'])
 
         # Adding field 'Patient.temp_serial'
         db.add_column(u'clinics_patient', 'temp_serial',
-                      self.gf('django.db.models.fields.PositiveIntegerField')(default=0),
+                      self.gf('django.db.models.fields.CharField')(max_length=14, null=True, blank=True),
                       keep_default=False)
 
-        # Adding unique constraint on 'Patient', fields ['clinic', 'temp_serial']
-        # Removing constraint to allow backward migration (default is 0)
-        # db.create_unique(u'clinics_patient', ['clinic_id', 'temp_serial'])
+
+    def backwards(self, orm):
+        # Deleting field 'Patient.temp_serial'
+        db.delete_column(u'clinics_patient', 'temp_serial')
+
+        # Adding unique constraint on 'Patient', fields ['clinic', 'serial']
+        db.create_unique(u'clinics_patient', ['clinic_id', 'serial'])
 
 
     models = {
@@ -119,12 +111,13 @@ class Migration(SchemaMigration):
             'state': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.State']"})
         },
         u'clinics.patient': {
-            'Meta': {'unique_together': "[('clinic', 'serial')]", 'object_name': 'Patient'},
+            'Meta': {'object_name': 'Patient'},
             'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'mobile': ('django.db.models.fields.CharField', [], {'max_length': '11', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
-            'serial': ('django.db.models.fields.CharField', [], {'max_length': '14', 'blank': 'True'})
+            'serial': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'temp_serial': ('django.db.models.fields.CharField', [], {'max_length': '14', 'null': 'True', 'blank': 'True'})
         },
         u'clinics.region': {
             'Meta': {'unique_together': "(('external_id', 'type'),)", 'object_name': 'Region'},

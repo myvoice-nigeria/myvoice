@@ -11,13 +11,11 @@ class Migration(DataMigration):
         # Note: Don't use "from appname.models import ModelName".
         # Use orm.ModelName to refer to models in this application,
         # and orm['appname.ModelName'] for models in other applications.
-        for patient in orm.Patient.objects.all():
-            patient.serial = str(patient.temp_serial)
-            patient.save()
+        orm.Patient.objects.update(serial=models.F('temp_serial'))
 
     def backwards(self, orm):
         "Write your backwards methods here."
-        orm.Patient.objects.all().update(serial='')
+        orm.Patient.objects.update(temp_serial=models.F('serial'))
 
     models = {
         u'auth.group': {
@@ -105,13 +103,13 @@ class Migration(DataMigration):
             'state': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.State']"})
         },
         u'clinics.patient': {
-            'Meta': {'unique_together': "[('clinic', 'temp_serial')]", 'object_name': 'Patient'},
+            'Meta': {'object_name': 'Patient'},
             'clinic': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['clinics.Clinic']", 'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'mobile': ('django.db.models.fields.CharField', [], {'max_length': '11', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'serial': ('django.db.models.fields.CharField', [], {'max_length': '14', 'blank': 'True'}),
-            'temp_serial': ('django.db.models.fields.PositiveIntegerField', [], {})
+            'temp_serial': ('django.db.models.fields.CharField', [], {'max_length': '14', 'null': 'True', 'blank': 'True'})
         },
         u'clinics.region': {
             'Meta': {'unique_together': "(('external_id', 'type'),)", 'object_name': 'Region'},
