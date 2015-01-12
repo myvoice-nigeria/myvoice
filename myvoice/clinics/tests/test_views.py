@@ -192,11 +192,34 @@ class TestVisitView(TestCase):
         # Test error is not logged.
         self.assertEqual(0, models.VisitRegistrationErrorLog.objects.count())
 
-    def test_invalid_serial(self):
-        """Test that invalid serial gives correct message and is not registered."""
-        reg_data = {'text': '1 08122233301 40 5', 'phone': '+2348022112211'}
+    def test_1digit_serial(self):
+        """Test that 1-digit serial is valid."""
+        reg_data = {'text': '1 08122233301 4 5', 'phone': '+2348022112211'}
         response = self.make_request(reg_data)
-        msg = self.error_msg % (40, 'SERIAL')
+        msg = self.success_msg % 4
+        self.assertEqual(response.content, msg)
+
+        # Test that it is registered.
+        self.assertEqual(1, models.Visit.objects.count())
+
+        # Test error is not logged.
+        self.assertEqual(0, models.VisitRegistrationErrorLog.objects.count())
+
+    def test_zero_prefix_serial(self):
+        """Test that 0-prefix serials keep the prefix."""
+        reg_data = {'text': '1 08122233301 004 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        msg = self.success_msg % "004"
+        self.assertEqual(response.content, msg)
+
+        patient = models.Visit.objects.all()[0].patient
+        self.assertEqual("004", patient.serial)
+
+    def test_toolong_serial(self):
+        """Test that invalid serial gives correct message and is not registered."""
+        reg_data = {'text': '1 08122233301 4000000 5', 'phone': '+2348022112211'}
+        response = self.make_request(reg_data)
+        msg = self.error_msg % (4000000, 'SERIAL')
         self.assertEqual(response.content, msg)
 
         # Test that it is not registered.
@@ -283,7 +306,7 @@ class TestVisitView(TestCase):
         obj = models.Visit.objects.all()[0]
         self.assertEqual(obj.patient.clinic, self.clinic)
         self.assertEqual('08122233301', obj.mobile)
-        self.assertEqual(401, obj.patient.serial)
+        self.assertEqual('401', obj.patient.serial)
 
         # Test that correct mobile is saved
         obj = models.Visit.objects.all()[0]

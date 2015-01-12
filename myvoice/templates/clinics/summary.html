@@ -53,6 +53,9 @@ var buildFeedbackChart = function(labels, data){
 
     var opts = barOptions;
     opts['legend'] = false;
+    opts['scaleSteps'] = 6;
+    opts['inGraphDataTmpl'] = "<%=v3 + '%' %>";
+    opts['annotateLabel'] = "<%=v2 + '(' + v3 + '%)' %>";
     var chart = $('#feedback-chart')[0].getContext('2d');
     var chartObject = new Chart(chart);
     chartObject.Bar(chartData, barOptions);
@@ -86,6 +89,8 @@ var buildFacilityChart = function(labels, sent, started, completed, max_val){
       var opts = barOptions;
       opts['legend'] = true;
       opts['scaleStepWidth'] = max_val/5;
+      opts['inGraphDataTmpl'] = "<%=v3%>";
+      opts['annotateLabel'] = "<%=v2 + '(' + v3 + ')' %>";
       var chart = $('#facility-chart')[0].getContext('2d');
       var chartObject = new Chart(chart);
       chartObject.Bar(barData, opts);

@@ -35,7 +35,7 @@ class VisitForm(forms.Form):
         'invalid': '1 or more parts of your entry are missing, please check and '
         'enter the registration again.'})
 
-    serial_min = 3
+    serial_min = 1
     serial_max = 6
     min_wait_time = 1800  # Minimum time between visits by same patient in seconds
 
@@ -113,7 +113,7 @@ class VisitForm(forms.Form):
                 seconds=self.min_wait_time)
             if models.Visit.objects.filter(
                     mobile=mobile,
-                    patient__serial=int(serial),  # FIXME: serial will change to text
+                    patient__serial=serial,
                     patient__clinic=clinic,
                     visit_time__gt=min_wait_time).count():
                 raise forms.ValidationError("Registration for patient with serial {} was"

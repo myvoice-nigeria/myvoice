@@ -40,11 +40,11 @@ class RegionAdmin(LeafletGeoAdmin):
 
 
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ['serial', 'clinic', 'mobile']
+    list_display = ['clinic', 'mobile']
     list_filter = ['clinic']
     list_select_related = True
     order_by = ['mobile']
-    search_fields = ['name', 'mobile', 'serial']
+    search_fields = ['name', 'mobile']
 
 
 class VisitAdmin(admin.ModelAdmin):
