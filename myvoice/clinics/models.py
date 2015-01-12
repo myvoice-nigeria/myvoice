@@ -76,6 +76,9 @@ class Clinic(models.Model):
 
     objects = gis.GeoManager()
 
+    class Meta:
+        ordering = ['name']
+
     def __unicode__(self):
         return self.name
 
