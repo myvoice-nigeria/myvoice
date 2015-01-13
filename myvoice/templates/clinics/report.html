@@ -279,30 +279,56 @@ $(function() {
       </div>
       <p>Summary of patient feedback responses compared to LGA-wide averages.</p>
 
-    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
+    <!--div class="col-xs-12 section-heading print-only" style="padding: 0px">
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
       <h2 style="position: absolute; top: 7px; left: 15px;">PATIENT FEEDBACK RESPONSES</h2>
     </div>
-    <p>&nbsp;</p>
+    <p>&nbsp;</p-->
     <!-- body div -->
 
     <div id="patient-feedback-container">
-    <table class="table" id="feedback_responses">
+    <table class="feedback table" id="feedback_responses">
       <thead>
         <tr>
-            <th colspan=2>Patients from {{ clinic.name }} said:</th>
-            <th colspan=2>Patients from other facilities said:</th>
+            <th scope="col" colspan="3">Patients from {{ clinic.name }} said:</th>
+            <th scope="col" colspan="3">Patients from other facilities said:</th>
         </tr>
       </thead>
       <tbody>
-        {% for question, clinic_stat, other_stat in response_stats %}
+        {% for question, clinic_stat, other_stat, margin in response_stats %}
          <tr>
-             <td>{{ clinic_stat.0 }} ({{ clinic_stat.1 }}%)</td>
+             <th scope="row">{{ clinic_stat.0 }} <span class="percentage">({{ clinic_stat.1 }}%)</span></th>
              <td>{{ question.report_label }}</td>
-             <td>{{ other_stat.0 }} ({{ other_stat.1 }}%)</td>
+             <td>
+              {% if clinic_stat.1 < 60 %}
+                <span class="glyphicon glyphicon-warning-sign" title="Problem area; requires attention"></span>
+              {% endif %}
+             </td>
+             <th scope="row">{{ other_stat.0 }} <span class="percentage">({{ other_stat.1 }}%)</span></td>
              <td>{{ question.report_label }}</td>
+             <td>
+              {% if margin >= 5 %}
+                <span class="glyphicon glyphicon-ok" title="Better than average"></span>
+              {% elif margin <= -5 %}
+                <span class="glyphicon glyphicon-remove" title="Worse than average"></span>
+              {% endif %}
+             </td>
          </tr>
         {% endfor %}
+      </tbody>
+    </table>
+    
+    <h6>KEY</h6>
+    <table class="legend table">
+      <tbody>
+        <tr>
+          <td><span class="glyphicon glyphicon-warning-sign"></span></td>
+          <td class="description">Problem area; requires attention</td>
+          <td><span class="glyphicon glyphicon-remove"></span></td>
+          <td class="description">{{ clinic.name }} performed worse than the LGA average</td>
+          <td><span class="glyphicon glyphicon-ok"></span></td>
+          <td class="description">{{ clinic.name }} performed better than the LGA average</td>
+        </tr>
       </tbody>
     </table>
     </div>

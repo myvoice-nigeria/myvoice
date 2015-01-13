@@ -452,8 +452,10 @@ class ClinicReport(ReportMixin, DetailView):
             (self.clinic, ), self.questions)
         other_stats = self.get_response_statistics(
             other_clinics, self.questions)
+        margins = [(clinic[1] - other[1]) for clinic, other
+            in zip(current_clinic_stats, other_stats)]
         # Now combine questions, current and othere clinic stats
-        kwargs['response_stats'] = zip(self.questions, current_clinic_stats, other_stats)
+        kwargs['response_stats'] = zip(self.questions, current_clinic_stats, other_stats, margins)
 
         num_registered = self.visits.count()
         num_started = self.visits.filter(survey_started=True).count()
