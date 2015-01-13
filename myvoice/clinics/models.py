@@ -76,6 +76,9 @@ class Clinic(models.Model):
 
     objects = gis.GeoManager()
 
+    class Meta:
+        ordering = ['name']
+
     def __unicode__(self):
         return self.name
 
@@ -140,7 +143,7 @@ class Patient(models.Model):
     name = models.CharField(max_length=50, blank=True)
     clinic = models.ForeignKey('Clinic', blank=True, null=True)
     mobile = models.CharField(max_length=11, blank=True)
-    serial = models.PositiveIntegerField()
+    serial = models.CharField(max_length=14, blank=True)
 
     class Meta:
         unique_together = [('clinic', 'serial')]

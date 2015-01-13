@@ -868,7 +868,8 @@ class LGAReport(ReportMixin, DetailView):
         kwargs['feedback_by_clinic'] = self.get_feedback_by_clinic(clinics)
         kwargs['service_labels'] = [i.question_label for i in self.questions]
         kwargs['clinic_labels'] = self.get_clinic_labels()
-        kwargs['question_labels'] = self.format_chart_labels(self.questions)
+        kwargs['question_labels'] = self.format_chart_labels(
+            [qtn.question_label for qtn in self.questions])
         kwargs['lga'] = self.lga
 
         if self.responses:
@@ -915,7 +916,8 @@ class LGAReportAjax(View):
 
         service_feedback = report.get_feedback_by_service()
         clinic_feedback = report.get_feedback_by_clinic(clinics, start_date, end_date)
-        question_labels = report.format_chart_labels(report.questions, async=True)
+        question_labels = report.format_chart_labels(
+            [qtn.question_label for qtn in report.questions], async=True)
 
         # Render html templates
         data = {

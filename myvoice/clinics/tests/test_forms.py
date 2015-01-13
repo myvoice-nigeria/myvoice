@@ -150,14 +150,20 @@ class TestVisitForm(TestCase):
         form = forms.VisitForm(data)
         self.assertFalse(form.is_valid())
 
-    def test_wrong_serial(self):
-        """Test that invalid serial does not validate."""
+    def test_short_serial(self):
+        """Test that 1-digit serial does validates."""
         data = {'text': '1 08122233301 4 5', 'phone': '+2348022112211'}
+        form = forms.VisitForm(data)
+        self.assertTrue(form.is_valid())
+
+    def test_wrong_serial(self):
+        """Test that wrong serial does not validate."""
+        data = {'text': '1 08122233301 X 5', 'phone': '+2348022112211'}
         form = forms.VisitForm(data)
         self.assertFalse(form.is_valid())
 
-        # Check error message
-        error_msg = self.error_msg.format(4, 'SERIAL')
+        error_msg = '1 or more parts of your entry are missing, please check '\
+                    'and enter the registration again.'
         self.assertEqual(error_msg, form.errors['text'][0])
 
     def test_wrong_service(self):
