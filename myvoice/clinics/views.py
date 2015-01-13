@@ -452,9 +452,13 @@ class ClinicReport(ReportMixin, DetailView):
             (self.clinic, ), self.questions)
         other_stats = self.get_response_statistics(
             other_clinics, self.questions)
-        margins = [(clinic[1] - other[1]) for clinic, other
-            in zip(current_clinic_stats, other_stats)]
-        # Now combine questions, current and othere clinic stats
+        try:
+            margins = [(clinic[1] - other[1]) for clinic, other
+                       in zip(current_clinic_stats, other_stats)]
+        except TypeError:
+            # This really shouldn't happen, except in tests.
+            margins = [0] * len(current_clinic_stats)
+        # Now combine questions, current clinic stats, other clinics stats, and performance margins:
         kwargs['response_stats'] = zip(self.questions, current_clinic_stats, other_stats, margins)
 
         num_registered = self.visits.count()
