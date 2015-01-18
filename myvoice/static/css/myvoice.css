@@ -637,6 +637,43 @@ td {
     border: 0;
 }
 
+.feedback.table th {
+  padding: 8px 0;
+  border: none;
+  font-size: 11px;
+}
+
+.feedback.table th[scope=row] {
+  padding: 4px 6px 4px 12px;
+  border-bottom: 4px solid #fff;
+  background-color: #E5E6E7;
+  font-weight: bold;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.feedback.table th[scope=row] .percentage {
+  font-weight: normal;
+}
+
+.feedback.table td {
+  border: none;
+  font-size: 11px;
+}
+
+.feedback.table .glyphicon-ok,
+.legend.table .glyphicon-ok {
+  color: #3AA816;
+}
+
+.legend.table {
+  width: 70%;
+}
+
+.legend.table .description {
+  font-size: 8px;
+}
+
 .form-signin {
   max-width: 330px;
   padding: 15px;
