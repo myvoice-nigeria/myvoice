@@ -75,7 +75,7 @@
       var chartObject = new Chart(chart);
       var opts = barOptions;
       opts['scaleStepWidth'] = max_val/5;
-      chartObject.Bar(chartData, opts);
+      chartObject.HorizontalBar(chartData, opts);
   }
   
   var updateChartData = function(labels, sentData, startedData, completedData){
@@ -105,53 +105,11 @@ $(function() {
             {{ completed }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
     ];
+    var chart_height = labels.length * 45;
+    $("#facility-chart").attr("height", chart_height);
 
     buildChart(labels, sent, started, completed, max_val);
 });
-/*  $(function() {
-      var barData = {
-        labels: [
-          {% for label in feedback_clinics %}
-            "{{ label }}"{% if not forloop.last %}, {% endif %}
-          {% endfor %}
-        ],
-        datasets: [
-          {
-            fillColor: '#6d6e71',
-            strokeColor: '#6d6e71',
-            data: [
-              {% for sent in feedback_stats.sent %}
-                {{ sent }}{% if not forloop.last %}, {% endif %}
-              {% endfor %}
-            ],
-            title: 'Surveys sent'
-          },
-          {
-            fillColor: '#929497',
-            strokeColor: '#929497',
-            data: [
-              {% for started in feedback_stats.started %}
-                {{ started }}{% if not forloop.last %}, {% endif %}
-              {% endfor %}
-            ],
-            title: 'Surveys started'
-          },
-          {
-            fillColor: '#a6a8ab',
-            strokeColor: '#a6a8ab',
-            data: [
-              {% for completed in feedback_stats.completed %}
-                {{ completed }}{% if not forloop.last %}, {% endif %}
-              {% endfor %}
-            ],
-            title: 'Surveys completed'
-          }
-        ]
-      }
-      var chart = $('#facility-chart')[0].getContext('2d');
-      return new Chart(chart).Bar(barData, barOptions);
-  });
-  */
 </script>
 {% endblock extra-js %}
 
@@ -565,6 +523,8 @@ $(function() {
       //$("#facility-participation-chart").html(data.chart_html);
 
       $("#chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
+      var chart_height = data.feedback_clinics.length * 45;
+      $("#facility-chart").attr("height", chart_height);
       var max_val = Math.ceil(data.max_chart_value/100)*100;
       buildChart(
           data.feedback_clinics,
