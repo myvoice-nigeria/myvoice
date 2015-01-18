@@ -39,7 +39,11 @@
         //barValueSpacing: 3,
     };
 
-var buildFeedbackChart = function(labels, data){
+var getChartHeight = function(item_count) {
+    return item_count * 45;
+};
+
+var buildFeedbackChart = function(labels, data) {
     var chartData = {
         labels: labels,
         datasets: [
@@ -132,8 +136,7 @@ $(function() {
         {% endfor %}
     ];
 
-    var chart_height = labels.length * 45;
-    $("#facility-chart").attr("height", chart_height);
+    $("#facility-chart").attr("height", getChartHeight(labels.length));
     buildFacilityChart(labels, sent, started, completed, max_val);
 
     //Set select-box to first option
@@ -368,8 +371,7 @@ $(function() {
         //Facility Chart
         $("#facility-chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
         var max_val = Math.ceil(data.max_chart_value/100)*100;
-        var chart_height = data.feedback_clinics.length * 45;
-        $("#facility-chart").attr("height", chart_height);
+        $("#facility-chart").attr("height", getChartHeight(data.feedback_clinics.length));
         buildFacilityChart(
             data.feedback_clinics,
             data.feedback_stats.sent,

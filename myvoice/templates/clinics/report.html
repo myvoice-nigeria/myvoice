@@ -40,6 +40,9 @@
 
   // Keep chart in global scope to make it available for updates
 
+  var getChartHeight = function(item_count) {
+      return item_count * 45;
+  };
   var prepareChartData = function(labels, sentData, startedData, completedData){
       var barData = {
         labels: labels,
@@ -105,8 +108,7 @@ $(function() {
             {{ completed }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
     ];
-    var chart_height = labels.length * 45;
-    $("#facility-chart").attr("height", chart_height);
+    $("#facility-chart").attr("height", getChartHeight(labels.length));
 
     buildChart(labels, sent, started, completed, max_val);
 });
@@ -523,8 +525,7 @@ $(function() {
       //$("#facility-participation-chart").html(data.chart_html);
 
       $("#chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
-      var chart_height = data.feedback_clinics.length * 45;
-      $("#facility-chart").attr("height", chart_height);
+      $("#facility-chart").attr("height", getChartHeight(data.feedback_clinics.length));
       var max_val = Math.ceil(data.max_chart_value/100)*100;
       buildChart(
           data.feedback_clinics,
