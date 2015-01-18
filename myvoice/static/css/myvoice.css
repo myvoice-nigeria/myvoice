@@ -661,6 +661,11 @@ td {
   font-size: 11px;
 }
 
+.feedback.table .glyphicon-ok,
+.legend.table .glyphicon-ok {
+  color: #3AA816;
+}
+
 .legend.table {
   width: 70%;
 }
