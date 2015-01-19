@@ -329,7 +329,7 @@ $(function() {
     <div class="col-xs-6 chart-container" id="facility-participation-chart">
         <div class="col-xs-12"></div>
         <div id="facility-chart-container">
-            <canvas id="facility-chart" width=615 height=310></canvas>
+            <canvas id="facility-chart" width=585 height=310></canvas>
         </div>
     </div>
     <!-- chart div -->
@@ -369,7 +369,7 @@ $(function() {
         $("#facilities-table").html(data.facilities_html);
 
         //Facility Chart
-        $("#facility-chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
+        $("#facility-chart-container").html('<canvas id="facility-chart" width=585 height=310></canvas>');
         var max_val = Math.ceil(data.max_chart_value/100)*100;
         $("#facility-chart").attr("height", getChartHeight(data.feedback_clinics.length));
         buildFacilityChart(
