@@ -86,7 +86,6 @@ class VisitAdmin(admin.ModelAdmin):
 
 class ManualRegistrationAdmin(admin.ModelAdmin):
     list_display = ['clinic', 'visit_count', 'entry_date']
-    ordering = ['entry_date']
     date_hierarchy = 'entry_date'
     list_filter = ['clinic']
 

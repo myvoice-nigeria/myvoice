@@ -226,7 +226,7 @@ class ManualRegistration(models.Model):
         unique_together = ('entry_date', 'clinic')
 
     def __unicode__(self):
-        return self.entry_date
+        return unicode(self.clinic)
 
 
 class GenericFeedback(models.Model):

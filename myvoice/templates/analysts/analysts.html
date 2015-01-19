@@ -8,7 +8,7 @@
 
 {% block extra-header-js %}
     <script src="{% static 'lib/jquery-1.10.2/jquery.min.js' %}"></script>
-    <script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/js/jquery.dataTables.js' %}"></script>
+    <!--script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/js/jquery.dataTables.js' %}"></script-->
 {% endblock extra-header-js %}
 
 {% block content %}
@@ -41,7 +41,8 @@
 
     </div>
     <div id="completion"><!-- completion-table container -->
-        {% include "analysts/_completion.html" %}
+        <p> &nbsp;</p>
+        {% include "analysts/_facility.html" %}
     </div><!-- End of container of completion-table -->
     </br>
   </div><!-- / #feedback-on-services .container -->
@@ -122,6 +123,7 @@
             });
             
             // DataTable
+            /*
             var table = $('.table').DataTable( {
               bFilter: false,
               bInfo : false, 
@@ -145,6 +147,7 @@
                         .draw();
                 } );
             } );            
+            */
           } );
         </script>
       

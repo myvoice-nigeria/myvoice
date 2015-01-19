@@ -662,7 +662,7 @@ class TestReportMixin(TestCase):
         mixin = clinics.ReportMixin()
         start = timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc)
         end = timezone.make_aware(timezone.datetime(2014, 12, 31), timezone.utc)
-        stats = mixin.get_feedback_statistics([cl1, cl2], start, end)
+        stats = mixin.get_feedback_statistics([cl1, cl2], start_date=start, end_date=end)
 
         self.assertEqual(3, len(stats))
         self.assertEqual([2, 1], stats['sent'])
@@ -721,6 +721,57 @@ class TestReportMixin(TestCase):
         self.assertEqual([3, 1], stats['sent'])
         self.assertEqual([3, 1], stats['started'])
         self.assertEqual([2, 1], stats['completed'])
+
+    def test_feedback_statistics_service(self):
+        """Test get_feedback_statistics filters by service."""
+        lga = factories.LGA.create(name='one')
+        cl1 = factories.Clinic.create(code=1, lga=lga)
+        cl2 = factories.Clinic.create(code=2, lga=lga)
+
+        p1 = factories.Patient.create(clinic=cl1, serial=444)
+        p2 = factories.Patient.create(clinic=cl2, serial=555)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        factories.Visit.create(
+            service=self.s1,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=False,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 5), timezone.utc))
+        factories.Visit.create(
+            service=self.s3,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 11, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s1,
+            patient=p2,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+
+        mixin = clinics.ReportMixin()
+        stats = mixin.get_feedback_statistics([cl1, cl2], service=self.s1)
+
+        self.assertEqual(3, len(stats))
+        self.assertEqual([1, 1], stats['sent'])
+        self.assertEqual([1, 1], stats['started'])
+        self.assertEqual([1, 1], stats['completed'])
 
     def test_feedback_response_statistics(self):
         """Test get_response_statistics.
@@ -789,6 +840,42 @@ class TestReportMixin(TestCase):
         self.assertIsNone(stats[0][1])
         self.assertEqual(1, stats[1][0])
         self.assertEqual(50, stats[1][1])
+
+    def test_get_manual_registrations(self):
+        """Check that get_manual_registrations gets total
+        registrations in correct order."""
+        clinic1 = factories.Clinic.create(code=11, name='1')
+        clinic2 = factories.Clinic.create(code=12, name='2')
+        clinic3 = factories.Clinic.create(code=13, name='3')
+
+        factories.ManualRegistration.create(clinic=clinic1, visit_count=10)
+        factories.ManualRegistration.create(clinic=clinic1, visit_count=10)
+        factories.ManualRegistration.create(clinic=clinic2, visit_count=10)
+
+        mixin = clinics.ReportMixin()
+        regs = mixin.get_manual_registrations([clinic1, clinic2, clinic3])
+
+        self.assertEqual(3, len(regs))
+        self.assertEqual(20, regs[0])
+        self.assertEqual(10, regs[1])
+        self.assertEqual(0, regs[2])
+
+    def test_get_manual_registrations_daterange(self):
+        """Check that get_manual_registrations filter date ranges."""
+        clinic1 = factories.Clinic.create(code=11, name='1')
+
+        factories.ManualRegistration.create(
+            clinic=clinic1, visit_count=10, entry_date=datetime.date(2015, 1, 10))
+        factories.ManualRegistration.create(
+            clinic=clinic1, visit_count=10, entry_date=datetime.date(2015, 1, 15))
+
+        mixin = clinics.ReportMixin()
+        start = datetime.date(2015, 1, 1)
+        end = datetime.date(2015, 1, 10)
+        regs = mixin.get_manual_registrations([clinic1], start_date=start, end_date=end)
+
+        self.assertEqual(1, len(regs))
+        self.assertEqual(10, regs[0])
 
 
 class TestClinicReportView(TestCase):
@@ -1155,7 +1242,7 @@ class TestAnalystDashboardView(TestCase):
 
     def make_request(self, data=None):
         """Make test request."""
-        request = self.factory.get('/analyst_summary/')
+        request = self.factory.get('/participation_analysis/')
         return clinics.AnalystSummary.as_view()(request)
 
     def test_clinic_report_page_loads(self):

@@ -1,0 +1,22 @@
+<table class="table completion_table table-bordered table-striped" style="width:100%">
+    <thead>
+    <tr>
+        <th class="w200">Clinic</th>
+        <th>Registration<br />Compliance</th>
+        <th>Number of Surveys<br/> Triggered</th>
+        <th>Number of Surveys<br/> Started</th>
+        <th>Number of Surveys<br/> Completed</th>
+    </tr>
+  </thead>
+    <tbody>
+    {% for item in participation %} 
+        <tr id="{{ item.0 }}">
+            <td class="clinic_name">{{ item.0 }}</td>
+            <td class="compliance">{{ item.1|floatformat:0 }}%</td>
+            <td class="center clinic_st">{{ item.2 }}</td>
+            <td class="center clinic_ss">{{ item.3 }} ({{ item.4|floatformat:0 }}%)</td>
+            <td class="center clinic_sc">{{ item.5 }} ({{ item.6|floatformat:0 }}%)</td>
+        </tr>
+    {% endfor %}
+   </tbody>
+</table>

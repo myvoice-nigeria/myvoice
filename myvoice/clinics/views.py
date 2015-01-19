@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 from django.utils import timezone
-from django.db.models.aggregates import Max, Min
+from django.db.models.aggregates import Max, Min, Sum
 from django.template.loader import get_template
 from django.template import Context
 from django.core.serializers.json import DjangoJSONEncoder
@@ -183,11 +183,16 @@ class ReportMixin(object):
             survey_percent = None
         return survey_percent, survey_started
 
-    def get_feedback_statistics(self, clinics, start_date=None, end_date=None):
-        """Return dict of surveys_sent, surveys_started and surveys_completed."""
+    def get_feedback_statistics(self, clinics, **kwargs):
+        """Return dict of surveys_sent, surveys_started and surveys_completed.
+
+        kwargs are service, start_date, end_date."""
         visits = models.Visit.objects.filter(patient__clinic__in=clinics)
-        if start_date and end_date:
-            visits = visits.filter(visit_time__range=(start_date, end_date))
+        if 'start_date' in kwargs and 'end_date' in kwargs:
+            visits = visits.filter(
+                visit_time__range=(kwargs['start_date'], kwargs['end_date']))
+        if 'service' in kwargs:
+            visits = visits.filter(service=kwargs['service'])
 
         sent = list(visits.filter(survey_sent__isnull=False).values_list(
             'patient__clinic', flat=True))
@@ -261,13 +266,6 @@ class ReportMixin(object):
             clinic_data.append(
                 ('Participation', part_total, part_percent))
 
-            # Get patient satisfaction
-            # satis_percent, satis_total = self.get_satisfaction_counts(clinic_responses)
-            # if satis_percent is not None:
-            #     satis_percent = '{}%'.format(satis_percent)
-            # clinic_data.append(
-            #     ('Patient Satisfaction', satis_total, satis_percent))
-
             # Quality and quantity scores
             score_date = start_date if start_date else None
             score = self.get_clinic_score(clinic, score_date)
@@ -330,6 +328,18 @@ class ReportMixin(object):
         if async:
             return [str(label).replace(' ', '\n') for label in labels]
         return out_labels
+
+    def get_manual_registrations(self, clinics, **kwargs):
+        """Get the total of manual registrations by clinics between date range."""
+        manual_regs = models.ManualRegistration.objects.filter(clinic__in=clinics)
+        if 'start_date' in kwargs and 'end_date' in kwargs:
+            manual_regs = manual_regs.filter(
+                entry_date__gte=kwargs['start_date'],
+                entry_date__lte=kwargs['end_date'])
+
+        return [manual_regs.filter(clinic=clinic).aggregate(
+            Sum('visit_count'))['visit_count__sum'] or 0
+            for clinic in clinics]
 
 
 class ClinicReport(ReportMixin, DetailView):
@@ -481,7 +491,7 @@ class ClinicReport(ReportMixin, DetailView):
         return super(ClinicReport, self).get_context_data(**kwargs)
 
 
-class AnalystSummary(TemplateView):
+class AnalystSummary(TemplateView, ReportMixin):
     template_name = 'analysts/analysts.html'
     allowed_methods = ['get', 'post', 'put', 'delete', 'options']
 
@@ -489,6 +499,24 @@ class AnalystSummary(TemplateView):
         response = HttpResponse()
         response['allow'] = ','.join([self.allowed_methods])
         return response
+
+    def get_facility_participation(self, clinics, **kwargs):
+        """Get the sent, started and completed survey counts for
+        clinics, service, dates."""
+        stats = self.get_feedback_statistics(clinics, **kwargs)
+        sent, started, completed = stats['sent'], stats['started'], stats['completed']
+
+        manual_reg = self.get_manual_registrations(clinics, **kwargs)
+        sent.append(sum(sent))
+        started.append(sum(started))
+        completed.append(sum(completed))
+
+        manual_perc = [make_percentage(num, den) for num, den in zip(sent, manual_reg)]
+        start_perc = [make_percentage(num, den) for num, den in zip(started, sent)]
+        comp_perc = [make_percentage(num, den) for num, den in zip(completed, sent)]
+        names = [clinic.name for clinic in clinics] + ['Total']
+
+        return zip(names, manual_perc, sent, started, start_perc, completed, comp_perc)
 
     @classmethod
     def get_survey_counts(cls, qset, clinics, **kwargs):
@@ -620,11 +648,14 @@ class AnalystSummary(TemplateView):
         context = super(AnalystSummary, self).\
             get_context_data(**kwargs)
 
-        the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+        clinics = Clinic.objects.all()
+        context['participation'] = self.get_facility_participation(clinics)
 
-        context['completion_table'] = self.get_completion_table(
-            start_date=the_start_date, end_date=the_end_date)
+        # the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
+        # the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
+
+        # context['completion_table'] = self.get_completion_table(
+        #     start_date=the_start_date, end_date=the_end_date)
 
         context['responses'] = self.get_survey_question_responses()
 #        context['completion_table'] = self.get_completion_table()
@@ -657,7 +688,7 @@ class AnalystSummary(TemplateView):
         first_date = Visit.objects.aggregate(Min('visit_time'))['visit_time__min'].date()
         last_date = Visit.objects.aggregate(Max('visit_time'))['visit_time__max'].date()
         context['date_range'] = self.get_date_range(first_date, last_date)
-        context['clinics'] = Clinic.objects.all().order_by("name")
+        context['clinics'] = clinics
         context['gfb_count'] = GenericFeedback.objects.all().count()
         return context
 
@@ -773,7 +804,8 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
         # Calculate feedback stats for chart
         lga_clinics = models.Clinic.objects.filter(lga=clinic.lga)
-        chart_stats = report.get_feedback_statistics(lga_clinics, start_date, end_date)
+        chart_stats = report.get_feedback_statistics(
+            lga_clinics, start_date=start_date, end_date=end_date)
         max_chart_value = max(chart_stats['sent'])
         chart_clinics = [clnc.name for clnc in lga_clinics]
         chart_clinics = self.format_chart_labels(chart_clinics, async=True)
@@ -934,7 +966,8 @@ class LGAReportAjax(View):
         clinic_html = clinic_tmpl.render(context)
 
         # Calculate stats for feedback chart
-        chart_stats = report.get_feedback_statistics(clinics, start_date, end_date)
+        chart_stats = report.get_feedback_statistics(
+            clinics, start_date=start_date, end_date=end_date)
         max_chart_value = max(chart_stats['sent'])
 
         # Calculate and render template for patient feedback responses
