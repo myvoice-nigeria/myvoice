@@ -40,6 +40,9 @@
 
   // Keep chart in global scope to make it available for updates
 
+  var getChartHeight = function(item_count) {
+      return item_count * 45;
+  };
   var prepareChartData = function(labels, sentData, startedData, completedData){
       var barData = {
         labels: labels,
@@ -75,7 +78,7 @@
       var chartObject = new Chart(chart);
       var opts = barOptions;
       opts['scaleStepWidth'] = max_val/5;
-      chartObject.Bar(chartData, opts);
+      chartObject.HorizontalBar(chartData, opts);
   }
   
   var updateChartData = function(labels, sentData, startedData, completedData){
@@ -105,53 +108,10 @@ $(function() {
             {{ completed }}{% if not forloop.last %}, {% endif %}
         {% endfor %}
     ];
+    $("#facility-chart").attr("height", getChartHeight(labels.length));
 
     buildChart(labels, sent, started, completed, max_val);
 });
-/*  $(function() {
-      var barData = {
-        labels: [
-          {% for label in feedback_clinics %}
-            "{{ label }}"{% if not forloop.last %}, {% endif %}
-          {% endfor %}
-        ],
-        datasets: [
-          {
-            fillColor: '#6d6e71',
-            strokeColor: '#6d6e71',
-            data: [
-              {% for sent in feedback_stats.sent %}
-                {{ sent }}{% if not forloop.last %}, {% endif %}
-              {% endfor %}
-            ],
-            title: 'Surveys sent'
-          },
-          {
-            fillColor: '#929497',
-            strokeColor: '#929497',
-            data: [
-              {% for started in feedback_stats.started %}
-                {{ started }}{% if not forloop.last %}, {% endif %}
-              {% endfor %}
-            ],
-            title: 'Surveys started'
-          },
-          {
-            fillColor: '#a6a8ab',
-            strokeColor: '#a6a8ab',
-            data: [
-              {% for completed in feedback_stats.completed %}
-                {{ completed }}{% if not forloop.last %}, {% endif %}
-              {% endfor %}
-            ],
-            title: 'Surveys completed'
-          }
-        ]
-      }
-      var chart = $('#facility-chart')[0].getContext('2d');
-      return new Chart(chart).Bar(barData, barOptions);
-  });
-  */
 </script>
 {% endblock extra-js %}
 
@@ -265,7 +225,7 @@ $(function() {
     <div class="col-xs-6 chart-container" id="facility-participation-chart">
         <div class="col-xs-12"></div>
         <div id="chart-container">
-            <canvas id="facility-chart" width=615 height=310></canvas>
+            <canvas id="facility-chart" width=585 height=310></canvas>
         </div>
     </div>
     <!-- chart div -->
@@ -274,39 +234,7 @@ $(function() {
 
 <!-- .container#patient-feedback-responses -->
 <div id="feedback-on-responses" class="container">
-      <div class="col-xs-12 section-heading web-only">
-          <h2>PATIENT FEEDBACK RESPONSES</h2>
-      </div>
-      <p>Summary of patient feedback responses compared to LGA-wide averages.</p>
-
-    <div class="col-xs-12 section-heading print-only" style="padding: 0px">
-      <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
-      <h2 style="position: absolute; top: 7px; left: 15px;">PATIENT FEEDBACK RESPONSES</h2>
-    </div>
-    <p>&nbsp;</p>
-    <!-- body div -->
-
-    <div id="patient-feedback-container">
-    <table class="table" id="feedback_responses">
-      <thead>
-        <tr>
-            <th colspan=2>Patients from {{ clinic.name }} said:</th>
-            <th colspan=2>Patients from other facilities said:</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for question, clinic_stat, other_stat in response_stats %}
-         <tr>
-             <td>{{ clinic_stat.0 }} ({{ clinic_stat.1 }}%)</td>
-             <td>{{ question.report_label }}</td>
-             <td>{{ other_stat.0 }} ({{ other_stat.1 }}%)</td>
-             <td>{{ question.report_label }}</td>
-         </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    </div>
-    <!-- body div -->
+    {% include 'clinics/report_responses.html' %}
 </div>
 <!-- .container#patient-feedback-responses -->
 
@@ -564,7 +492,8 @@ $(function() {
 
       //$("#facility-participation-chart").html(data.chart_html);
 
-      $("#chart-container").html('<canvas id="facility-chart" width=615 height=310></canvas>');
+      $("#chart-container").html('<canvas id="facility-chart" width=585 height=310></canvas>');
+      $("#facility-chart").attr("height", getChartHeight(data.feedback_clinics.length));
       var max_val = Math.ceil(data.max_chart_value/100)*100;
       buildChart(
           data.feedback_clinics,
