@@ -684,6 +684,17 @@ td {
     color: #fff;
 }
 
+.btn-search {
+    background-color: #428bca;
+    border: medium none;
+    border-radius: 0;
+    color: #fff;
+}
+
+.search-box {
+    padding-top: 2px;
+    float: right;
+}
 
 /* Sticky footer styles
 -------------------------------------------------- */

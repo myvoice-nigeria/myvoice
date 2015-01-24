@@ -1,6 +1,8 @@
 import json
 from dateutil.parser import parse
 import logging
+from datetime import timedelta
+from collections import Counter
 
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect
@@ -21,7 +23,6 @@ from myvoice.clinics.models import Clinic, Service, Visit, GenericFeedback
 from . import forms
 from . import models
 
-from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -502,7 +503,9 @@ class AnalystSummary(TemplateView, ReportMixin):
 
     def get_facility_participation(self, clinics, **kwargs):
         """Get the sent, started and completed survey counts for
-        clinics, service, dates."""
+        clinics, service, dates.
+
+        kwargs = start_date, end_date, service"""
         stats = self.get_feedback_statistics(clinics, **kwargs)
         sent, started, completed = stats['sent'], stats['started'], stats['completed']
 
@@ -518,104 +521,72 @@ class AnalystSummary(TemplateView, ReportMixin):
 
         return zip(names, manual_perc, sent, started, start_perc, completed, comp_perc)
 
-    @classmethod
-    def get_survey_counts(cls, qset, clinics, **kwargs):
-        """Get the count of surveys for each clinic for service,
-        and between start_date and end_date.
+    def count_by_date(self, qset, dates, datetime_fld):
+        """Counts the objects in qset per date using the date_field.
 
-        Return dict of clinic: count_of_started survey."""
-        counts = {}
+        qset is a queryset
+        dates is a list of datetime.date
+        datetime_fld is the datetime field in the obj to use in aggregating.
+        """
+        counted = Counter(tm.date() for tm in qset.values_list(datetime_fld, flat=True))
+        return [counted.get(dt, 0) for dt in dates]
 
-        start_date = kwargs.get('start_date', None)
-        end_date = kwargs.get('end_date', None)
-        service = kwargs.get('service', None)
+    def get_feedback_by_date(self, **kwargs):
+        """Returns dict of surveys sent, surveys started, generic feedback by date.
 
-        # Build filter params and apply to qset
-        params = {}
-        if service:
-            params.update({'service': service})
-        if start_date:
-            params.update({'visit__visit_time__gte': start_date})
-        if end_date:
-            params.update({'visit__visit_time__lte': end_date})
+        kwargs are clinics, service, start_date, end_date."""
+        #import pdb;pdb.set_trace()
+        today = timezone.now()
+        week_ago = today - timedelta(6)
+        end_date = kwargs.get('end_date', today).date()
+        start_date = kwargs.get('start_date', week_ago).date()
+        date_range = [
+            (start_date + timedelta(idx))
+            for idx in range((end_date-start_date).days + 1)]
 
-        qset = qset.filter(**params)
+        # Add 1 to end_date so it captures visits of today
+        end_plus = end_date + timedelta(1)
 
-        for clinic in clinics:
-            counts.update({clinic: qset.filter(clinic=clinic).count()})
-        return counts
+        visits = models.Visit.objects.filter(survey_sent__isnull=False)
+        generic_feedback = models.GenericFeedback.objects.filter(
+            message_date__gte=start_date, message_date__lt=end_plus)
+        if 'clinic' in kwargs:
+            visits = visits.filter(patient__clinic__name=kwargs['clinic'])
+            generic_feedback = generic_feedback.filter(clinic__name=kwargs['clinic'])
+        if 'service' in kwargs:
+            visits = visits.filter(service__name=kwargs['service'])
 
-    def get_completion_table(self, start_date=None, end_date=None, service=None):
-        completion_table = []
-        st_total = 0            # Surveys Triggered
-        ss_total = 0            # Surveys Started
-        sc_total = 0            # Surveys Completed
+        visits = visits.filter(visit_time__gte=start_date, visit_time__lt=end_plus)
+        generic_feedback = generic_feedback.filter(
+            message_date__gte=start_date, message_date__lt=end_plus)
+        started_visits = visits.filter(survey_started=True)
 
-        # All Clinics to Loop Through, build our own dict of data
-        all_clinics = Clinic.objects.all().order_by("name")
+        _sent = self.count_by_date(visits, date_range, 'visit_time')
+        _started = self.count_by_date(started_visits, date_range, 'visit_time')
+        _generic = self.count_by_date(generic_feedback, date_range, 'message_date')
+        return {
+            'dates': [dt.strftime('%d %b') for dt in date_range],
+            'sent': _sent,
+            'started': _started,
+            'generic': _generic,
+            'max_sent': max(_sent),
+            'max_started': max(_started),
+            'max_generic': max(_generic)
+        }
 
-        # Build params for to filter by start_date, end_date and service
-        visit_params = {'survey_sent__isnull': False}
-        if start_date and isinstance(start_date, basestring):
-            visit_params.update(
-                {'visit_time__gte': timezone.make_aware(parse(start_date), timezone.utc)}
-            )
-        if end_date and isinstance(end_date, basestring):
-            visit_params.update(
-                {'visit_time__lte': timezone.make_aware(parse(end_date), timezone.utc)}
-            )
-        if service and isinstance(service, basestring):
-            visit_params.update({'service__name': service})
+    def extract_request_params(self, request_obj):
+        """Process request parameters and return a dict.
 
-        # Loop through the Clinics, summating the data required.
-        for a_clinic in all_clinics:
-            visit_qset = models.Visit.objects.filter(**visit_params).filter(
-                patient__clinic=a_clinic)
-            st_count = visit_qset.count()
-            st_total += st_count
-
-            ss_count = visit_qset.filter(survey_started=True).count()
-            ss_total += ss_count
-
-            sc_count = visit_qset.filter(survey_completed=True).count()
-            sc_total += sc_count
-
-            # Survey Percentages
-            if st_count:
-                ss_st_percent = 100*ss_count/st_count
-                sc_st_percent = 100*sc_count/st_count
-            else:
-                ss_st_percent = 0
-                sc_st_percent = 0
-
-            completion_table.append({
-                "clinic_id": a_clinic.id,
-                "clinic_name": a_clinic.name,
-                "st_count": st_count,
-                "ss_count": ss_count,
-                "ss_st_percent": ss_st_percent,
-                "sc_count": sc_count,
-                "sc_st_percent": sc_st_percent
-            })
-
-        if st_total:
-            ss_st_percent_total = 100*ss_total/st_total
-            sc_st_percent_total = 100*sc_total/st_total
-        else:
-            ss_st_percent_total = 0
-            sc_st_percent_total = 0
-
-        completion_table.append({
-            "clinic_id": -1,
-            "clinic_name": "Total",
-            "st_count": st_total,
-            "ss_count": ss_total,
-            "ss_st_percent": ss_st_percent_total,
-            "sc_count": sc_total,
-            "sc_st_percent": sc_st_percent_total,
-        })
-
-        return completion_table
+        kwargs include clinic, service, start_date, end_date."""
+        out = {}
+        for param in ['clinic', 'service', 'start_date', 'end_date']:
+            val = request_obj.GET.get(param)
+            if val:
+                # Don't forget to parse datetime values
+                if param in ['start_date', 'end_date']:
+                    val = parse(val)
+                out.update({param: val})
+        return out
 
     # Returns a list of Datetime Days between two dates
     def get_date_range(self, start_date, end_date):
@@ -628,60 +599,15 @@ class AnalystSummary(TemplateView, ReportMixin):
             return_dates.append(single_date)
         return return_dates
 
-    def get_survey_question_responses(self):
-        return SurveyQuestionResponse.objects.all()
-
-    def get_surveys_triggered_summary(self):
-        """Total number of Surveys Triggered."""
-        return Visit.objects.filter(survey_sent__isnull=False)
-
-    def get_surveys_started_summary(self):
-        return SurveyQuestionResponse.objects.filter(
-            question__question_type__iexact="open-ended")
-
-    def get_surveys_completed_summary(self):
-        """Total number of Surveys Completed."""
-        return SurveyQuestionResponse.objects.filter(question__label__iexact="Wait Time")
-
     def get_context_data(self, **kwargs):
 
-        context = super(AnalystSummary, self).\
-            get_context_data(**kwargs)
+        context = super(AnalystSummary, self).get_context_data(**kwargs)
 
+        # FIXME: Need to filter by LGA
         clinics = Clinic.objects.all()
         context['participation'] = self.get_facility_participation(clinics)
 
-        # the_start_date = Visit.objects.all().order_by("visit_time")[0].visit_time.date()
-        # the_end_date = Visit.objects.all().order_by("-visit_time")[0].visit_time.date()
-
-        # context['completion_table'] = self.get_completion_table(
-        #     start_date=the_start_date, end_date=the_end_date)
-
-        context['responses'] = self.get_survey_question_responses()
-#        context['completion_table'] = self.get_completion_table()
-
-        context['st'] = self.get_surveys_triggered_summary()
-        context['st_count'] = context['st'].count()
-
-        # context['ss'] = self.get_surveys_started_summary()
-        # context['ss_count'] = survey_utils.get_started_count(survey_responses)
-        context['ss'] = Visit.objects.all().filter(survey_started=True)
-        context["ss_count"] = context["ss"].count()
-
-        # context['sc'] = self.get_surveys_completed_summary()
-        # context['sc_count'] = context['sc'].count()
-        context['sc'] = Visit.objects.all().filter(survey_completed=True)
-        context['sc_count'] = context['sc'].count()
-
-        if context['ss_count']:
-            context['ss_st_percent'] = 100*context['ss_count']/context['st_count']
-        else:
-            context['ss_st_percent'] = 0
-
-        if context['st_count']:
-            context['sc_st_percent'] = 100*context['sc_count']/context['st_count']
-        else:
-            context['sc_st_percent'] = 0
+        [context.update({k: v}) for k, v in self.get_feedback_by_date().iteritems()]
 
         # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
@@ -693,65 +619,37 @@ class AnalystSummary(TemplateView, ReportMixin):
         return context
 
 
-class CompletionFilter(View):
+class ParticipationAsync(View):
 
     def get(self, request):
 
-        service = request.GET.get('service')
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
-
-        params = {}
-        if service:
-            params.update({'service': service})
-        if start_date:
-            params.update({'start_date': start_date})
-        if end_date:
-            params.update({'end_date': end_date})
-
-        a = AnalystSummary()
-        data = a.get_completion_table(**params)
-        content = {"clinic_data": {}}
-        for a_clinic in data:
-            content["clinic_data"][a_clinic["clinic_id"]] = {
-                "name": a_clinic["clinic_name"],
-                "st": a_clinic["st_count"],
-                "ss": a_clinic["ss_count"],
-                "ssp": a_clinic['ss_st_percent'],
-                "sc": a_clinic["sc_count"],
-                "scp": a_clinic["sc_st_percent"]
-            }
-
-        return HttpResponse(json.dumps(content), content_type="text/json")
-
-
-class FeedbackFilter(View):
-
-    def get(self, request):
-        clinic = request.GET.get('clinic')
-        service = request.GET.get('service')
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
-
-        params = {}
-        if clinic:
-            params.update({'clinic__name__iexact': clinic})
-        if service:
-            params.update({'service__name__iexact': service})
-        if start_date:
-            start_date = timezone.make_aware(parse(start_date), timezone.utc)
-            params.update({'visit__visit_time__gte': start_date})
-        if end_date:
-            end_date = timezone.make_aware(parse(end_date), timezone.utc)
-            params.update({'visit__visit_time__lte': end_date})
-
-        qset = SurveyQuestionResponse.objects.filter(**params)
+        summary = AnalystSummary()
+        params = summary.extract_request_params(request)
+        if 'clinic' in params:
+            clinic = params.pop('clinic')
+            clinics = [clinic]
+        else:
+            # FIXME: Need to filter by LGA
+            clinics = Clinic.objects.all()
+        participation = summary.get_facility_participation(clinics, **params)
 
         # Render template with responses as context
-        tmpl = get_template('analysts/_rates.html')
-        ctx = Context({'responses': qset})
+        tmpl = get_template('analysts/_facility.html')
+        ctx = Context({'participation': participation})
         html = tmpl.render(ctx)
         return HttpResponse(html, content_type='text/html')
+
+
+class ParticipationCharts(View):
+
+    def get(self, request):
+
+        summary = AnalystSummary()
+        params = summary.extract_request_params(request)
+        feedback = summary.get_feedback_by_date(**params)
+
+        return HttpResponse(
+            json.dumps(feedback, cls=DjangoJSONEncoder), content_type='text/json')
 
 
 class ClinicReportFilterByWeek(ReportMixin, DetailView):

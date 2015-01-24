@@ -1181,64 +1181,73 @@ class TestClinicReportFilterByWeek(TestCase):
                 ], data_dict[service2.name])
 
 
-class TestAnalystDashboardView(TestCase):
+class TestParticipationAnalysisView(TestCase):
 
     def setUp(self):
-        now = timezone.now()
         self.factory = RequestFactory()
         self.survey = factories.Survey.create(role=survey_models.Survey.PATIENT_FEEDBACK)
-        self.clinic = factories.Clinic.create(code=1)
-        self.service = factories.Service.create(code=5)
-        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
-        self.visit = factories.Visit.create(
-            patient=self.patient, service=self.service, survey_sent=now, visit_time=timezone.now())
-        self.question = factories.SurveyQuestion.create(
-            survey=self.survey, label="Wait Time", question_type="open-ended")
-        self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
-            question=self.question, clinic=self.clinic, visit=self.visit)
 
-        self.clinic1 = factories.Clinic.create(code=2)
-        self.clinic2 = factories.Clinic.create(code=3)
-        self.clinics = clinics.Clinic.objects.filter(code__in=[2, 3])
+        lga = factories.LGA.create(name='one')
+        self.cl1 = factories.Clinic.create(code=1, lga=lga, name="cl1")
+        self.cl2 = factories.Clinic.create(code=2, lga=lga, name="cl2")
 
-        self.patient1 = factories.Patient.create(serial='2111', clinic=self.clinic1)
-        self.patient2 = factories.Patient.create(serial='2222', clinic=self.clinic2)
-        visit_time = timezone.make_aware(timezone.datetime(2014, 7, 1), timezone.utc)
+        self.s1 = factories.Service.create(code=1, name="s1")
+        self.s2 = factories.Service.create(code=2, name="s2")
+        self.s3 = factories.Service.create(code=3, name="s3")
 
+        self.p1 = factories.Patient.create(clinic=self.cl1, serial=444)
+        self.p2 = factories.Patient.create(clinic=self.cl2, serial=555)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
         factories.Visit.create(
-            patient=self.patient1,
-            survey_sent=now,
-            service=self.service,
-            visit_time=visit_time)
-
+            service=self.s1,
+            patient=self.p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc))
         factories.Visit.create(
-            patient=self.patient1, survey_sent=now, service=self.service)
+            service=self.s2,
+            patient=self.p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=False,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 5), timezone.utc))
         factories.Visit.create(
-            patient=self.patient2, survey_sent=now, service=self.service)
+            service=self.s3,
+            patient=self.p2,
+            survey_sent=sent,
+            survey_started=False,
+            survey_completed=False,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc))
         factories.Visit.create(
-            patient=self.patient1, survey_sent=None, service=self.service)
+            service=self.s3,
+            patient=self.p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 11, 1), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=self.p2,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
+        factories.Visit.create(
+            service=self.s2,
+            patient=self.p2,
+            visit_time=timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc))
 
-        q1 = factories.SurveyQuestion.create(
-            survey=self.survey, label='Open Facility', question_type='multiple-choice')
-
-        factories.SurveyQuestionResponse(
-            question=q1,
-            clinic=self.clinic1,
-            visit=factories.Visit.create(
-                patient=self.patient1, service=self.service)
-        )
-        factories.SurveyQuestionResponse(
-            question=q1,
-            clinic=self.clinic1,
-            visit=factories.Visit.create(
-                patient=self.patient1, service=self.service)
-        )
-        factories.SurveyQuestionResponse(
-            question=q1,
-            clinic=self.clinic2,
-            visit=factories.Visit.create(
-                patient=self.patient2, service=self.service)
-        )
+        tm1 = timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc)
+        tm2 = timezone.make_aware(timezone.datetime(2014, 12, 2), timezone.utc)
+        tm5 = timezone.make_aware(timezone.datetime(2014, 12, 5), timezone.utc)
+        factories.GenericFeedback.create(clinic=self.cl1, message_date=tm1)
+        factories.GenericFeedback.create(clinic=self.cl2, message_date=tm1)
+        factories.GenericFeedback.create(clinic=self.cl1, message_date=tm1)
+        factories.GenericFeedback.create(clinic=self.cl2, message_date=tm2)
+        factories.GenericFeedback.create(clinic=self.cl1, message_date=tm5)
+        factories.GenericFeedback.create(clinic=self.cl2, message_date=tm5)
 
     def make_request(self, data=None):
         """Make test request."""
@@ -1251,112 +1260,203 @@ class TestAnalystDashboardView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(bool(response.render()))
 
-    def test_st_count(self):
-        """ Tests how many Surveys have been 'triggered' """
-        st_query = clinics.Visit.objects.filter(
-            survey_sent__isnull=False, patient__clinic=self.clinic)
-        self.assertEqual(st_query.count(), 1)
+    def test_get_feedback_by_date(self):
+        """Test we can get surveys sent, started wrt dates.
 
-        now = datetime.datetime.now(pytz.utc)
+        Return a dict of {date: (sent_count, started_count)}"""
+        analysis = clinics.AnalystSummary()
+        start_date = timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc)
+        end_date = timezone.make_aware(timezone.datetime(2014, 12, 10), timezone.utc)
+
+        fb = analysis.get_feedback_by_date(start_date=start_date, end_date=end_date)
+
+        self.assertEqual(
+            [
+                '01 Dec',
+                '02 Dec',
+                '03 Dec',
+                '04 Dec',
+                '05 Dec',
+                '06 Dec',
+                '07 Dec',
+                '08 Dec',
+                '09 Dec',
+                '10 Dec',
+            ], fb['dates'])
+        self.assertEqual([2, 0, 0, 0, 1, 0, 0, 0, 0, 1], fb['sent'])
+        self.assertEqual([1, 0, 0, 0, 1, 0, 0, 0, 0, 1], fb['started'])
+        self.assertEqual([3, 1, 0, 0, 2, 0, 0, 0, 0, 0], fb['generic'])
+
+    def test_get_feedback_by_date_default_date(self):
+        """Test we can get surveys sent, started wrt dates with default dates."""
+        analysis = clinics.AnalystSummary()
+
+        today = datetime.date.today()
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
         factories.Visit.create(
-            service=factories.Service.create(code=2),
-            patient=factories.Patient.create(
-                clinic=self.clinic,
-                serial=221),
-            survey_sent=now,
-            visit_time=timezone.now()
-        )
+            service=self.s2,
+            patient=self.p2,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=timezone.now())
 
-        self.assertEqual(st_query.count(), 2)
+        factories.GenericFeedback.create(
+            clinic=self.cl1, message='1', message_date=timezone.now())
 
-    def test_ss_count(self):
-        """ Tests how many Surveys have been 'started' using first question type (open-ended) """
-        ss_query = survey_models.SurveyQuestionResponse.objects\
-            .filter(question__question_type__iexact="open-ended")
+        fb = analysis.get_feedback_by_date()
+        self.assertEqual(7, len(fb['sent']))
+        self.assertEqual(
+            [
+                (today - datetime.timedelta(6)).strftime('%d %b'),
+                (today - datetime.timedelta(5)).strftime('%d %b'),
+                (today - datetime.timedelta(4)).strftime('%d %b'),
+                (today - datetime.timedelta(3)).strftime('%d %b'),
+                (today - datetime.timedelta(2)).strftime('%d %b'),
+                (today - datetime.timedelta(1)).strftime('%d %b'),
+                today.strftime('%d %b')
+            ], fb['dates'])
 
-        # We should have one from the setup
-        self.assertEqual(ss_query.count(), 1)
+        self.assertEqual([0, 0, 0, 0, 0, 0, 1], fb['sent'])
+        self.assertEqual([0, 0, 0, 0, 0, 0, 1], fb['started'])
+        self.assertEqual([0, 0, 0, 0, 0, 0, 1], fb['generic'])
 
-        now = datetime.datetime.now(pytz.utc)
+    def test_get_feedback_by_dates_for_clinics(self):
+        """Test we can get surveys sent, started by date for list of clinics."""
+        analysis = clinics.AnalystSummary()
+        start_date = timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc)
+        end_date = timezone.make_aware(timezone.datetime(2014, 12, 5), timezone.utc)
 
-        visit1 = factories.Visit.create(
-            service=factories.Service.create(code=2),
-            patient=factories.Patient.create(
-                clinic=self.clinic,
-                serial=221),
-            survey_sent=now
-        )
-
-        # Add another and see how we fare
-        factories.SurveyQuestionResponse.create(
-            question=self.question, clinic=self.clinic, visit=visit1)
-
-        # Test the additional
-        self.assertEqual(ss_query.count(), 2)
-
-    def test_sc_count(self):
-        """ Tests how many Surveys have been 'completed' using last question (Wait Time)"""
-
-        sc_query = survey_models.SurveyQuestionResponse.objects\
-            .filter(question__label="Wait Time").filter(clinic=self.clinic)
-
-        # Test the setup materials
-        self.assertEqual(sc_query.count(), 1)
-
-        # Add a few
-        now = datetime.datetime.now(pytz.utc)
-
-        visit1 = factories.Visit.create(
-            service=factories.Service.create(code=2),
-            patient=factories.Patient.create(
-                clinic=self.clinic,
-                serial=223),
-            survey_sent=now
-        )
-
-        factories.SurveyQuestionResponse.create(
-            question=self.question, clinic=self.clinic, visit=visit1)
-
-        # Test we have the right query
-        self.assertEqual(sc_query.count(), 2)
-
-    def test_completion_table(self):
-        """Test that the get_completion_table method returns a list of dicts of calculations."""
-        now = timezone.now()
-
-        dt1 = timezone.make_aware(timezone.datetime(2014, 7, 20), timezone.utc)
-        dt2 = timezone.make_aware(timezone.datetime(2014, 7, 25), timezone.utc)
-        dt3 = timezone.make_aware(timezone.datetime(2014, 7, 27), timezone.utc)
-
+        tm = timezone.make_aware(timezone.datetime(2014, 12, 3), timezone.utc)
         factories.Visit.create(
-            patient=self.patient1, survey_sent=now, visit_time=dt1, service=self.service)
+            service=self.s2,
+            patient=self.p2,
+            survey_sent=tm,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=tm)
         factories.Visit.create(
-            patient=self.patient1, survey_sent=now, visit_time=dt2, service=self.service)
+            service=self.s2,
+            patient=self.p1,
+            survey_sent=tm,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=tm)
+
+        fb = analysis.get_feedback_by_date(
+            clinic="cl1", start_date=start_date, end_date=end_date)
+
+        self.assertEqual(
+            [
+                '01 Dec',
+                '02 Dec',
+                '03 Dec',
+                '04 Dec',
+                '05 Dec',
+            ], fb['dates'])
+        self.assertEqual([1, 0, 1, 0, 1], fb['sent'])
+        self.assertEqual([1, 0, 1, 0, 1], fb['started'])
+        self.assertEqual([2, 0, 0, 0, 1], fb['generic'])
+
+    def test_get_feedback_by_dates_for_service(self):
+        """Test we can get surveys sent, started by date for specific service."""
+        analysis = clinics.AnalystSummary()
+        start_date = timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc)
+        end_date = timezone.make_aware(timezone.datetime(2014, 12, 5), timezone.utc)
+
+        tm = timezone.make_aware(timezone.datetime(2014, 12, 3), timezone.utc)
         factories.Visit.create(
-            patient=self.patient2, survey_sent=now, visit_time=dt2, service=self.service)
+            service=self.s1,
+            patient=self.p2,
+            survey_sent=tm,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=tm)
         factories.Visit.create(
-            patient=self.patient1, survey_sent=now, visit_time=dt3, service=self.service)
+            service=self.s2,
+            patient=self.p1,
+            survey_sent=tm,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=tm)
 
-        start = timezone.datetime(2014, 7, 20).strftime('%Y-%m-%d')
-        end = timezone.datetime(2014, 7, 30).strftime('%Y-%m-%d')
+        fb = analysis.get_feedback_by_date(
+            service="s2", start_date=start_date, end_date=end_date)
 
-        table = clinics.AnalystSummary().get_completion_table(
-            start_date=start, end_date=end, service=self.service)
-        # 3 clinics + total
-        self.assertEqual(4, len(table))
+        self.assertEqual(
+            [
+                '01 Dec',
+                '02 Dec',
+                '03 Dec',
+                '04 Dec',
+                '05 Dec',
+            ], fb['dates'])
+        self.assertEqual([0, 0, 1, 0, 1], fb['sent'])
+        self.assertEqual([0, 0, 1, 0, 1], fb['started'])
+        self.assertEqual([3, 1, 0, 0, 2], fb['generic'])
 
-    def _test_get_survey_started_counts(self):
-        """Test that get_started_survey_counts returns
-        count of all surveys started by clinic."""
-        qset = survey_models.SurveyQuestionResponse.objects.filter()
-        counts = clinics.AnalystSummary.get_survey_counts(qset, self.clinics)
-        self.assertEqual(2, len(counts))
+    def test_extract_request_params(self):
+        """Test that we can extract necessary params from request object."""
+        data = {
+            'start_date': datetime.datetime(2015, 1, 1, 0, 0),
+            'end_date': datetime.datetime(2015, 1, 10, 0, 0),
+            'service': 'ANC',
+            'clinic': 'Arum Chugbu'
+        }
+        request = self.factory.get('/participation_async/', data)
 
-        self.assertEqual(2, counts[self.clinic1])
-        self.assertEqual(1, counts[self.clinic2])
+        participation = clinics.AnalystSummary()
+        params = participation.extract_request_params(request)
+
+        self.assertEqual(4, len(params))
+        self.assertEqual(datetime.datetime(2015, 1, 1, 0, 0), params['start_date'])
+        self.assertEqual(datetime.datetime(2015, 1, 10, 0, 0), params['end_date'])
+        self.assertEqual('ANC', params['service'])
+        self.assertEqual('Arum Chugbu', params['clinic'])
+
+    def test_extract_request_params_missing(self):
+        """Test that we can extract necessary params from request object.
+
+        Taking into consideration only available params."""
+        data = {
+            'start_date': datetime.datetime(2015, 1, 1, 0, 0),
+            'end_date': datetime.datetime(2015, 1, 10, 0, 0),
+            'service': 'ANC',
+        }
+        request = self.factory.get('/participation_async/', data)
+
+        participation = clinics.AnalystSummary()
+        params = participation.extract_request_params(request)
+
+        self.assertEqual(3, len(params))
+        self.assertEqual(datetime.datetime(2015, 1, 1, 0, 0), params['start_date'])
+        self.assertEqual(datetime.datetime(2015, 1, 10, 0, 0), params['end_date'])
+        self.assertEqual('ANC', params['service'])
+        self.assertFalse('Arum Chugbu' in params)
+
+    def test_extract_request_params_extra(self):
+        """Test that we can extract necessary params from request object.
+
+        Ignoring extra params."""
+        data = {
+            'start_date': datetime.datetime(2015, 1, 1, 0, 0),
+            'end_date': datetime.datetime(2015, 1, 10, 0, 0),
+            'service': 'ANC',
+            'service1': 'TEST',
+        }
+        request = self.factory.get('/participation_async/', data)
+
+        participation = clinics.AnalystSummary()
+        params = participation.extract_request_params(request)
+
+        self.assertEqual(3, len(params))
+        self.assertEqual(datetime.datetime(2015, 1, 1, 0, 0), params['start_date'])
+        self.assertEqual(datetime.datetime(2015, 1, 10, 0, 0), params['end_date'])
+        self.assertEqual('ANC', params['service'])
+        self.assertFalse('service1' in params)
 
 
-class TestFeedbackFilterView(TestCase):
+class TestParticipationAsyncView(TestCase):
     def setUp(self):
         now = datetime.datetime.now(pytz.utc)
         self.factory = RequestFactory()
@@ -1371,9 +1471,30 @@ class TestFeedbackFilterView(TestCase):
             question=self.question, clinic=self.clinic, visit=self.visit)
 
     def test_request(self):
-        url = '/clinics/feedback_filter/?clinic=&service=ANC&start_date&end_date='
+        url = '/clinics/participation_async/?clinic=&service=5&start_date&end_date='
         request = self.factory.get(url)
-        response = clinics.FeedbackFilter.as_view()(request)
+        response = clinics.ParticipationAsync.as_view()(request)
+        self.assertEqual(200, response.status_code)
+
+
+class TestParticipationChartView(TestCase):
+    def setUp(self):
+        now = datetime.datetime.now(pytz.utc)
+        self.factory = RequestFactory()
+        self.clinic = factories.Clinic.create(code=1)
+        self.service = factories.Service.create(code=5)
+        self.patient = factories.Patient.create(serial='1111', clinic=self.clinic)
+        self.visit = factories.Visit.create(
+            patient=self.patient, service=self.service, survey_sent=now)
+        self.question = factories.SurveyQuestion.create(
+            label="Wait Time", question_type="open-ended")
+        self.surveyquestionresponse = factories.SurveyQuestionResponse.create(
+            question=self.question, clinic=self.clinic, visit=self.visit)
+
+    def test_request(self):
+        url = '/clinics/participation_charts/?clinic=&service=5&start_date&end_date='
+        request = self.factory.get(url)
+        response = clinics.ParticipationCharts.as_view()(request)
         self.assertEqual(200, response.status_code)
 
 

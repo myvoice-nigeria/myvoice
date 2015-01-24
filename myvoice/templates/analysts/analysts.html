@@ -11,20 +11,120 @@
     <!--script type="text/javascript" charset="utf8" src="{% static 'lib/DataTables-1.10.0/js/jquery.dataTables.js' %}"></script-->
 {% endblock extra-header-js %}
 
+{% block extra-js %}
+<script src="{% static 'lib/chartnew/ChartNew.js' %}"></script>
+<script>
+  var lineOptions = {
+        //barShowStroke: true,
+        // scale
+        scaleOverride: true,
+        scaleStartValue: 0,
+        scaleSteps: 5,
+        scaleStepWidth: 20,
+        scaleFontSize: 10,
+        scaleFontFamily: "'Source Sans Pro', sans-serif",
+
+        // in-graph data
+        inGraphDataShow: true,
+        inGraphDataFontColor: '#6d6e71',
+        inGraphDataFontFamily: "'Source Sans Pro', sans-serif",
+        inGraphDataFontSize: 10,
+
+        //spacing
+        //barDatasetSpacing: 0,
+        //barValueSpacing: 3,
+
+        annotateDisplay: true,
+        pointLabelFontSize: 10,
+
+        // legend
+        legend: true,
+        //legendPosX: 0,
+        //legendPosY: 0,
+        //legendXPadding: -10,
+        //barValueSpacing: 3,
+    };
+
+var buildChart = function(labels, data, max_val, canvas_id){
+      var lineData = {
+        labels: labels,
+        datasets: [
+          {
+            //fillColor: '#6d6e71',
+            strokeColor: '#6d6e71',
+            data: data,
+          }
+        ]
+      };
+
+      var opts = lineOptions;
+      opts['legend'] = false;
+      if (max_val > 5){
+          opts['scaleStepWidth'] = max_val/5;
+          opts['scaleSteps'] = 5;
+      }
+      else {
+          opts['scaleStepWidth'] = 1;
+          opts['scaleSteps'] = 5;
+      }
+      // opts['inGraphDataTmpl'] = "<%=v3%>";
+      // opts['annotateLabel'] = "<%=v2 + '(' + v3 + ')' %>";
+      var chart = $(canvas_id)[0].getContext('2d');
+      var chartObject = new Chart(chart);
+      chartObject.Line(lineData, opts);
+}
+
+$(function() {
+    var labels = [
+    {% for dt in dates %}
+      "{{ dt }}"{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    ];
+
+    var sent_data = [
+    {% for item in sent %}
+      "{{ item }}"{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    ];
+    buildChart(labels, sent_data, {{ max_sent }}, "#chart-clinic-sent");
+
+    var started_data = [
+    {% for item in started %}
+      "{{ item }}"{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    ];
+    buildChart(labels, started_data, {{ max_started }}, "#chart-clinic-started");
+
+    var generic_data = [
+    {% for item in generic %}
+      "{{ item }}"{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    ];
+    buildChart(labels, generic_data, {{ max_generic }}, "#chart-generic-sent");
+
+    return;
+
+});
+
+</script>
+
+{% endblock extra-js %}
+
+
 {% block content %}
   <div class="container main-header">
     <div class="col-xs-9 no-padding-left">
       <h1>
         <br/>
         <span style="font-weight: 700;">{{ object.name }} {{ object.get_type_display }}</span>
-        <span style="font-weight: 700;">Analyst Summary</span>
+        <span style="font-weight: 700;">Participation Analysis</span>
       </h1>
     </div>
   </div><!-- /.container -->
 
   <div id="feedback-on-services" class="container">
     <div class="col-xs-12 section-heading completion_selects">
-      <h2>COMPLETION RATE</h2>
+      <h2>FACILITY PARTICIPATION</h2>
       Select:
       <select id="crt_start_date">
         <option value="">Start Date</option>
@@ -35,40 +135,70 @@
         {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
       </select>
       <select id="crt_service"><option value="">Service</option>
-        {% for service in services %} <option>{{ service.name }}</option> {% endfor %}
+          {% for service in services %} <option value={{ service.pk }}>{{ service.name }}</option> {% endfor %}
       </select>
 
+      <div class="search-box">
+          <input type="button" id="facility-button" class="btn-search" value="Search" />
+      </div>
 
     </div>
     <div id="completion"><!-- completion-table container -->
         <p> &nbsp;</p>
-        {% include "analysts/_facility.html" %}
+        <div id="facility-container">
+            {% include "analysts/_facility.html" %}
+        </div>
     </div><!-- End of container of completion-table -->
     </br>
   </div><!-- / #feedback-on-services .container -->
 
   <div id="feedback-facility" class="container">
     <div class="col-xs-12 section-heading feedback_selects">
-      <h2>FEEDBACK RATES BY QUESTION</h2>
+      <h2>SURVEY PARTICIPATION RATES</h2>
       Select:<br/>
-      <select id="frt_start_date">
-        <option value="">Start Date</option>
-        {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-      </select>
-      <select id="frt_end_date">
-        <option value="">End Date</option>
-        {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-      </select>
-      <select id="frt_clinic"><option value="">Clinic</option>
-        {% for a_clinic in clinics %} <option>{{ a_clinic.name }}</option> {% endfor %}
-      </select>
-      <select id="frt_service"><option value="">Service</option>
-        {% for service in services %} <option>{{ service.name }}</option> {% endfor %}
-      </select>
+      <div class="search-box">
+          <select id="frt_start_date">
+            <option value="">Start Date</option>
+            {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+          </select>
+          <select id="frt_end_date">
+            <option value="">End Date</option>
+            {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+          </select>
+          <select id="frt_clinic"><option value="">Clinic</option>
+            {% for a_clinic in clinics %} <option>{{ a_clinic.name }}</option> {% endfor %}
+          </select>
+          <select id="frt_service"><option value="">Service</option>
+            {% for service in services %} <option>{{ service.name }}</option> {% endfor %}
+          </select>
+      </div>
+      <div class="search-box">
+          <input type="button" id="rates-button" class="btn-search" value="Search" />
+      </div>
     </div>
 
     <div id="id_rates"><!-- rates-table container -->
-        {% include "analysts/_rates.html" %}
+      <div id="rates-chart-topleft" class="two-col-div">
+          <h5><strong>SURVEYS SENT</strong><br />
+          FROM CLINICS (TOTAL)</h5>
+          <div id="sent-chart-container">
+              <canvas id="chart-clinic-sent" width=290 height=210></canvas>
+          </div>
+      </div>
+      <div id="rates-chart-topright" class="two-col-div">
+          <h5><strong>SURVEYS STARTED</strong><br />
+          FROM CLINICS (TOTAL)</h5>
+          <div id="started-chart-container">
+              <canvas id="chart-clinic-started" width=290 height=210></canvas>
+          </div>
+      </div>
+      <div id="rates-chart-bottomright">
+          <h5><strong>SURVEYS SENT</strong><br />
+          FROM COMMUNITIES (TOTAL)</h5>
+          <div id="generic-chart-container">
+              <canvas id="chart-generic-sent" width=290 height=210></canvas>
+          </div>
+      </div>
     </div><!-- end rates-table container -->
   </div><!-- / #feedback-facility .container -->
    {% endblock content %}
@@ -76,80 +206,59 @@
    {% block js %}
 
         <script type="text/javascript">
-          function filter_completion_rate_table() {
-            
-            // Completion Rate Table - Selects
-            var start_date = $("#crt_start_date").val();
-            var end_date = $("#crt_end_date").val();
-            var service = $("#crt_service").val();
 
-            $.get("/completion_filter", {'service':service, 'start_date':start_date, 'end_date':end_date}, function(data,status){
-              $.each(data.clinic_data, function(key, value){
-                $("tr#"+key+" td.clinic_st").text(value.st);
-                $("tr#"+key+" td.clinic_ss").text(value.ss + "("+value.ssp+"%)");
-                $("tr#"+key+" td.clinic_sc").text(value.sc + "("+value.scp+"%)");
+          var getCeiling = function(num) {
+              if (num < 10)
+                  return Math.ceil(num/10)*10;
+              else
+                  return Math.ceil(num/100)*100;
+          }
+
+          var updateFacilityTable = function() {
+              var start_date = $("#crt_start_date").val();
+              var end_date = $("#crt_end_date").val();
+              var service = $("#crt_service").val();
+
+              $.get("/participation_async/", {"service": service, "start_date": start_date, "end_date": end_date}, function(data, status) {
+                  $("#facility-container").html(data);
               });
-            });
           }
+          var updateCharts = function() {
+              var start_date = $("#frt_start_date").val();
+              var end_date = $("#frt_end_date").val();
+              var clinic = $("#frt_clinic").val();
+              var service = $("#frt_service").val();
 
-          function filter_feedback_table() {
-            
-            // Completion Rate Table - Selects
-            var start_date = $("#frt_start_date").val();
-            var end_date = $("#frt_end_date").val();
-            var clinic = $("#frt_clinic").val(); 
-            var service = $("#frt_service").val();
+              $.get("/participation_charts/", {"service": service, "clinic": clinic, "start_date": start_date, "end_date": end_date}, function(data, status){
+                  $("#sent-chart-container").html('<canvas id="chart-clinic-sent" width=290 height=210></canvas>');
+                  var max_sent = getCeiling(data.max_sent);
+                  buildChart(data.dates, data.sent, max_sent, "#chart-clinic-sent");
+                  $("#started-chart-container").html('<canvas id="chart-clinic-started" width=290 height=210></canvas>');
+                  var max_started = getCeiling(data.max_started);
+                  buildChart(data.dates, data.started, max_started, "#chart-clinic-started");
+                  $("#generic-chart-container").html('<canvas id="chart-generic-sent" width=290 height=210></canvas>');
+                  var max_generic = getCeiling(data.max_generic);
+                  buildChart(data.dates, data.generic, max_generic, "#chart-generic-sent");
 
-            $.get("/feedback_filter", {'service':service, 'clinic': clinic, 'start_date':start_date, 'end_date':end_date}, function(data,status){
-              $('#id_rates').html(data);
-              /*$.each(data.feedback_data, function(key, value){
-                $("tr#"+key+" td.feedback_nor").text(value.rsp_num);
-                $("tr#"+key+" td.feedback_prt").text(value.rsp_prt);
-                $("tr#"+key+" td.feedback_srt").text(value.rsp_srt);
-              });*/
-            });
+              });
           }
-
           $(document).ready( function () {
 
-            $( ".completion_selects select" ).change(function() {
-              console.log("Updating Completion Table");
+            /*$( ".completion_selects select" ).change(function() {
               filter_completion_rate_table();
-            });
+            });*/
 
-            $( ".feedback_selects select" ).change(function() {
-              console.log("Updating Feedback Table");
+            /*$( ".feedback_selects select" ).change(function() {
               filter_feedback_table();
+            });*/
+            $("#facility-button").click(function(){
+                updateFacilityTable();
             });
-            
-            // DataTable
-            /*
-            var table = $('.table').DataTable( {
-              bFilter: false,
-              bInfo : false, 
-              paging: false,
-              "autoWidth": false,
-              "columns": [
-              { "width": "200px" },
-              { "width": "40px" },
-              { "width": "40px" },
-              { "width": "40px" },
-            ]
 
+            $("#rates-button").click(function() {
+                updateCharts();
             });
-         
-            // Apply the Data Tables filter
-            table.columns().eq( 0 ).each( function ( colIdx ) {
-                $( 'input', table.column( colIdx ).footer() ).on( 'keyup change', function () {
-                    table
-                        .column( colIdx )
-                        .search( this.value )
-                        .draw();
-                } );
-            } );            
-            */
-          } );
+          });
         </script>
-      
-    
+
   {% endblock %}
