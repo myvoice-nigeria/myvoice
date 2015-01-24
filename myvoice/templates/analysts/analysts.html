@@ -125,22 +125,38 @@ $(function() {
   <div id="feedback-on-services" class="container">
     <div class="col-xs-12 section-heading completion_selects">
       <h2>FACILITY PARTICIPATION</h2>
-      Select:
-      <select id="crt_start_date">
-        <option value="">Start Date</option>
-        {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-      </select>
-      <select id="crt_end_date">
-        <option value="">End Date</option>
-        {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-      </select>
-      <select id="crt_service"><option value="">Service</option>
-          {% for service in services %} <option value={{ service.pk }}>{{ service.name }}</option> {% endfor %}
-      </select>
+    </div>
+    <div class="search-pane" style="display: block;">
+        <table class="search-table">
+            <tr>
+                <td>Select Date</td>
+                <td>Select Service</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                   <select id="crt_start_date">
+                     <option value="">Start Date</option>
+                     {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+                   </select>
+                   <select id="crt_end_date">
+                     <option value="">End Date</option>
+                     {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+                   </select>
+                </td>
+                <td>
+                   <select id="crt_service"><option value="">Service</option>
+                     {% for service in services %}
+                       <option value={{ service.pk }}>{{ service.name }}</option>
+                     {% endfor %}
+                   </select>
+                </td>
+                <td>
+                <input type="button" id="facility-button" class="btn-search" value="Search" />
+                </td>
+            </tr>
+        </table>
 
-      <div class="search-box">
-          <input type="button" id="facility-button" class="btn-search" value="Search" />
-      </div>
 
     </div>
     <div id="completion"><!-- completion-table container -->
@@ -155,27 +171,40 @@ $(function() {
   <div id="feedback-facility" class="container">
     <div class="col-xs-12 section-heading feedback_selects">
       <h2>SURVEY PARTICIPATION RATES</h2>
-      Select:<br/>
-      <div class="search-box">
-          <select id="frt_start_date">
-            <option value="">Start Date</option>
-            {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-          </select>
-          <select id="frt_end_date">
-            <option value="">End Date</option>
-            {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-          </select>
-          <select id="frt_clinic"><option value="">Clinic</option>
-            {% for a_clinic in clinics %} <option>{{ a_clinic.name }}</option> {% endfor %}
-          </select>
-          <select id="frt_service"><option value="">Service</option>
-            {% for service in services %} <option>{{ service.name }}</option> {% endfor %}
-          </select>
-      </div>
-      <div class="search-box">
-          <input type="button" id="rates-button" class="btn-search" value="Search" />
-      </div>
-    </div>
+  </div>
+    <div class="search-pane" style="display: block;">
+        <table class="search-table">
+            <tr>
+                <td>Select Date</td>
+                <td>Select Service</td>
+                <td>Select Clinic</td>
+            </tr>
+            <tr>
+                <td>
+                  <select id="frt_start_date">
+                    <option value="">Start Date</option>
+                    {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+                  </select>
+                  <select id="frt_end_date">
+                    <option value="">End Date</option>
+                    {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
+                  </select>
+                </td>
+                <td align="right">
+                  <select id="frt_service"><option value="">Service</option>
+                    {% for service in services %} <option>{{ service.name }}</option> {% endfor %}
+                  </select>
+                </td>
+                <td align="right">
+                  <select id="frt_clinic" style="margin-right:10px;"><option value="">Clinic</option>
+                    {% for a_clinic in clinics %}<option>{{ a_clinic.name }}</option>{% endfor %}
+                  </select>
+                </td>
+            </tr>
+        </table>
+                  <input type="button" style="float: right; margin-right:10px" id="rates-button" class="btn-search" value="Search" />
+
+</div>
 
     <div id="id_rates"><!-- rates-table container -->
       <div id="rates-chart-topleft" class="two-col-div">
