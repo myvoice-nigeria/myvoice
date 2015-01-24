@@ -234,7 +234,7 @@ class GenericFeedback(models.Model):
     sender = models.CharField(max_length=20)
     clinic = models.ForeignKey('Clinic', null=True, blank=True)
     message = models.TextField(blank=True)
-    message_date = models.DateTimeField(auto_now=True)
+    message_date = models.DateTimeField(default=timezone.now)
     display_on_dashboard = models.BooleanField(
         default=True,
         help_text="Whether or not this response is displayed on the dashboard.")

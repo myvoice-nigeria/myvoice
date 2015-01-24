@@ -109,6 +109,8 @@ class GenericFeedback(factory.django.DjangoModelFactory):
 
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
     sender = factory.fuzzy.FuzzyText()
+    message_date = factory.fuzzy.FuzzyDateTime(
+        datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
 
 
 class ClinicScore(factory.django.DjangoModelFactory):
