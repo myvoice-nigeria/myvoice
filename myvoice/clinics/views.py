@@ -535,7 +535,6 @@ class AnalystSummary(TemplateView, ReportMixin):
         """Returns dict of surveys sent, surveys started, generic feedback by date.
 
         kwargs are clinics, service, start_date, end_date."""
-        #import pdb;pdb.set_trace()
         today = timezone.now()
         week_ago = today - timedelta(6)
         end_date = kwargs.get('end_date', today).date()
