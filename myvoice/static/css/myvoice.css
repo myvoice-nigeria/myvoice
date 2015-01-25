@@ -431,7 +431,7 @@ select::-ms-expand {
   top: 0;
   left: 100%;
   margin-top: -6px;
-  margin-left: 2px;
+  margin-left: -6px;
   padding-top: 3px;
 }
 
