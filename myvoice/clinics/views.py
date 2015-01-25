@@ -478,10 +478,10 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['num_completed'] = num_completed
         kwargs['percent_completed'] = percent_completed
 
-        #kwargs['week_ranges'] = [
+        # kwargs['week_ranges'] = [
         #    (self.start_day(start), self.start_day(end)) for start, end in
         #    self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
-        #kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
+        # kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
 
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
@@ -767,7 +767,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
         # Calculate and render template for feedback on services
         tmpl = get_template('clinics/report_service.html')
-        #questions = report.get_survey_questions(start_date, end_date)
+        # questions = report.get_survey_questions(start_date, end_date)
         questions = report.questions
         cntxt = Context(
             {
@@ -797,7 +797,7 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
                        in zip(current_stats, other_stats)]
         except TypeError:
             margins = [0] * len(current_stats)
-        #questions = [qtn.report_label for qtn in questions]
+        # questions = [qtn.report_label for qtn in questions]
         response_ctxt = Context(
             {
                 'clinic': clinic,
