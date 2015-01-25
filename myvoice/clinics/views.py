@@ -453,7 +453,7 @@ class ClinicReport(ReportMixin, DetailView):
         other_stats = self.get_response_statistics(
             other_clinics, self.questions)
         try:
-            margins = [(clinic[1] - other[1]) for clinic, other
+            margins = [(x[1] - y[1]) for x, y
                        in zip(current_clinic_stats, other_stats)]
         except TypeError:
             # This really shouldn't happen, except in tests.
@@ -767,7 +767,8 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
         # Calculate and render template for feedback on services
         tmpl = get_template('clinics/report_service.html')
-        questions = report.get_survey_questions(start_date, end_date)
+        #questions = report.get_survey_questions(start_date, end_date)
+        questions = report.questions
         cntxt = Context(
             {
                 'feedback_by_service': fos,
@@ -791,11 +792,16 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             (clinic, ), questions, start_date, end_date)
         other_stats = report.get_response_statistics(
             other_clinics, questions, start_date, end_date)
-        questions = [qtn.report_label for qtn in questions]
+        try:
+            margins = [(x[1] - y[1]) for x, y
+                       in zip(current_stats, other_stats)]
+        except TypeError:
+            margins = [0] * len(current_stats)
+        #questions = [qtn.report_label for qtn in questions]
         response_ctxt = Context(
             {
-                'clinic_name': clinic.name,
-                'response_stats': zip(questions, current_stats, other_stats),
+                'clinic': clinic,
+                'response_stats': zip(questions, current_stats, other_stats, margins),
             })
         response_html = response_tmpl.render(response_ctxt)
 

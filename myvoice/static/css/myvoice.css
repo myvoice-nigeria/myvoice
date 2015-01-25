@@ -387,6 +387,7 @@ select::-ms-expand {
 .navbar-nav > li > a {
   margin-right: 20px;
   padding: 10px 0 0;
+  line-height: 16px;
   color: #fff;
 }
 
