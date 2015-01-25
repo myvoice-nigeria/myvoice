@@ -478,10 +478,10 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['num_completed'] = num_completed
         kwargs['percent_completed'] = percent_completed
 
-        kwargs['week_ranges'] = [
-            (self.start_day(start), self.start_day(end)) for start, end in
-            self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
-        kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
+        #kwargs['week_ranges'] = [
+        #    (self.start_day(start), self.start_day(end)) for start, end in
+        #    self.get_week_ranges(kwargs['min_date'], kwargs['max_date'])]
+        #kwargs['week_start'], kwargs['week_end'] = self.get_current_week()
 
         # TODO - participation rank amongst other clinics.
         return super(ClinicReport, self).get_context_data(**kwargs)
