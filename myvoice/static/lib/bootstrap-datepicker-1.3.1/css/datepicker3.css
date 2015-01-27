@@ -731,34 +731,36 @@ fieldset[disabled] .datepicker table tr td span.active.disabled:hover.active {
 }
 .input-daterange {
   margin: 0 0 10px auto;
-  width: 220px;
+  width: 198px;
   border-bottom: 1px solid #333;
   /*width: 282px;*/
   text-align: right;
 }
 .input-daterange input {
+  margin: 0;
+  padding: 2px 4px 2px 2px;
   border: none;
-  border-radius: 0;
+  /*border-radius: 0;*/
   font-size: 15px;
   line-height: 1.2;
   height: 30px;
-  padding: 2px 4px 2px 2px;
-  text-overflow: '';
-  width: 90px;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+  width: 80px;
+  /*-webkit-appearance: none;
+  -moz-appearance: none;*/
 }
 .input-daterange input:first-child {
   text-align: right;
 }
 .input-daterange button {
+  padding-top: 0;
   border: none;
   border-radius: 0;
   background: transparent;
+  font-size: 8px;
   line-height: 1.2;
   vertical-align: middle;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+  /*-webkit-appearance: none;
+  -moz-appearance: none;*/
 }
 /*.input-daterange input:first-child {
   border-radius: 3px 0 0 3px;

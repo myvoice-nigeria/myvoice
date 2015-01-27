@@ -915,7 +915,6 @@ class LGAReport(ReportMixin, DetailView):
 class LGAReportAjax(View):
 
     def get_data(self, start_date, end_date, lga):
-
         clinics = models.Clinic.objects.filter(lga=lga)
         report = ReportMixin()
         report.responses = SurveyQuestionResponse.objects.filter(
