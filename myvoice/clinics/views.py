@@ -190,8 +190,9 @@ class ReportMixin(object):
         kwargs are service, start_date, end_date."""
         visits = models.Visit.objects.filter(patient__clinic__in=clinics)
         if 'start_date' in kwargs and 'end_date' in kwargs:
+            end_date = kwargs['end_date'] + timedelta(1)
             visits = visits.filter(
-                visit_time__range=(kwargs['start_date'], kwargs['end_date']))
+                visit_time__range=(kwargs['start_date'], end_date))
         if 'service' in kwargs:
             visits = visits.filter(service=kwargs['service'])
 
@@ -685,10 +686,14 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
             fos_array.append(new_row)
 
         # Calculate the Survey Participation Data via week filter
-        num_registered = survey_utils.get_registration_count(
-            report.object, report.start_date, report.end_date)
-        num_started = survey_utils.get_started_count(report.responses)
-        num_completed = survey_utils.get_completion_count(report.responses)
+        visits = models.Visit.objects.filter(
+            patient__clinic=clinic,
+            survey_sent__isnull=False,
+            visit_time__gte=start_date,
+            visit_time__lt=(end_date + timedelta(1)))
+        num_registered = visits.count()
+        num_started = visits.filter(survey_started=True).count()
+        num_completed = visits.filter(survey_completed=True).count()
 
         if num_registered:
             percent_started = make_percentage(num_started, num_registered)
