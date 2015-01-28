@@ -15,7 +15,7 @@ from django.template import Context
 from django.core.serializers.json import DjangoJSONEncoder
 
 from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
-from myvoice.core.utils import get_date, hour_to_hr
+from myvoice.core.utils import get_date, hour_to_hr, compress_list
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
 from myvoice.clinics.models import Clinic, Service, Visit, GenericFeedback
@@ -537,10 +537,11 @@ class AnalystSummary(TemplateView, ReportMixin):
         counted = Counter(tm.date() for tm in qset.values_list(datetime_fld, flat=True))
         return [counted.get(dt, 0) for dt in dates]
 
-    def get_feedback_by_date(self, **kwargs):
+    def get_feedback_by_date(self, max_length=10, **kwargs):
         """Returns dict of surveys sent, surveys started, generic feedback by date.
 
-        kwargs are clinics, service, start_date, end_date."""
+        kwargs are clinics, service, start_date, end_date
+        max_length is the maximum number of elements in each list returned."""
         today = timezone.now()
         week_ago = today - timedelta(6)
         end_date = kwargs.get('end_date', today).date()
@@ -566,18 +567,20 @@ class AnalystSummary(TemplateView, ReportMixin):
             message_date__gte=start_date, message_date__lt=end_plus)
         started_visits = visits.filter(survey_started=True)
 
-        _sent = self.count_by_date(visits, date_range, 'visit_time')
-        _started = self.count_by_date(started_visits, date_range, 'visit_time')
-        _generic = self.count_by_date(generic_feedback, date_range, 'message_date')
+        _dates = compress_list(
+            [dt.strftime('%d %b') for dt in date_range], max_length)
+        _sent = compress_list(
+            self.count_by_date(visits, date_range, 'visit_time'), max_length)
+        _started = compress_list(
+            self.count_by_date(started_visits, date_range, 'visit_time'), max_length)
+        _generic = compress_list(
+            self.count_by_date(generic_feedback, date_range, 'message_date'), max_length)
         return {
-            'dates': [dt.strftime('%d %b') for dt in date_range],
+            'dates': _dates,
             'sent': _sent,
             'started': _started,
             'generic': _generic,
             'max_val': max(_sent + _started + _generic),
-            'max_sent': max(_sent),
-            'max_started': max(_started),
-            'max_generic': max(_generic)
         }
 
     def extract_request_params(self, request_obj):
