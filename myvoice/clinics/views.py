@@ -574,6 +574,7 @@ class AnalystSummary(TemplateView, ReportMixin):
             'sent': _sent,
             'started': _started,
             'generic': _generic,
+            'max_val': max(_sent + _started + _generic),
             'max_sent': max(_sent),
             'max_started': max(_started),
             'max_generic': max(_generic)

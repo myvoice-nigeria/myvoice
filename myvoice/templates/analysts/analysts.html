@@ -45,20 +45,36 @@
         //barValueSpacing: 3,
     };
 
-var buildChart = function(labels, data, max_val, canvas_id){
+var buildChart = function(labels, data1, data2, data3, max_val, canvas_id){
       var lineData = {
         labels: labels,
         datasets: [
           {
-            //fillColor: '#6d6e71',
+            //fillColor: "#ffffff",
+            //legendFillColor: "black",
             strokeColor: '#6d6e71',
-            data: data,
+            data: data1,
+            title: 'Sent from Clinic',
+          },
+          {
+            //fillColor: '#6d6e71',
+            //fillColor: '#e6e6e6',
+            fillColor: "#d6ebff",
+            strokeColor: '#99ccff',
+            data: data2,
+            title: 'Started from Clinic',
+          },
+          {
+            fillColor: '#ffcccc',
+            strokeColor: '#ff9999',
+            data: data3,
+            title: 'Sent from Community',
           }
         ]
       };
 
       var opts = lineOptions;
-      opts['legend'] = false;
+      //opts['legend'] = false;
       if (max_val > 5){
           opts['scaleStepWidth'] = max_val/5;
           opts['scaleSteps'] = 5;
@@ -86,21 +102,19 @@ $(function() {
       "{{ item }}"{% if not forloop.last %}, {% endif %}
     {% endfor %}
     ];
-    buildChart(labels, sent_data, {{ max_sent }}, "#chart-clinic-sent");
 
     var started_data = [
     {% for item in started %}
       "{{ item }}"{% if not forloop.last %}, {% endif %}
     {% endfor %}
     ];
-    buildChart(labels, started_data, {{ max_started }}, "#chart-clinic-started");
 
     var generic_data = [
     {% for item in generic %}
       "{{ item }}"{% if not forloop.last %}, {% endif %}
     {% endfor %}
     ];
-    buildChart(labels, generic_data, {{ max_generic }}, "#chart-generic-sent");
+    buildChart(labels, sent_data, started_data, generic_data, {{ max_val }}, "#chart-generic-sent");
 
     return;
 
@@ -207,6 +221,7 @@ $(function() {
 </div>
 
     <div id="id_rates"><!-- rates-table container -->
+        {% comment %}
       <div id="rates-chart-topleft" class="two-col-div">
           <h5><strong>SURVEYS SENT</strong><br />
           FROM CLINICS (TOTAL)</h5>
@@ -221,11 +236,12 @@ $(function() {
               <canvas id="chart-clinic-started" width=290 height=210></canvas>
           </div>
       </div>
+        {% endcomment %}
       <div id="rates-chart-bottomright">
           <h5><strong>SURVEYS SENT</strong><br />
           FROM COMMUNITIES (TOTAL)</h5>
           <div id="generic-chart-container">
-              <canvas id="chart-generic-sent" width=290 height=210></canvas>
+              <canvas id="chart-generic-sent" width=580 height=310></canvas>
           </div>
       </div>
     </div><!-- end rates-table container -->
@@ -259,15 +275,9 @@ $(function() {
               var service = $("#frt_service").val();
 
               $.get("/participation_charts/", {"service": service, "clinic": clinic, "start_date": start_date, "end_date": end_date}, function(data, status){
-                  $("#sent-chart-container").html('<canvas id="chart-clinic-sent" width=290 height=210></canvas>');
-                  var max_sent = getCeiling(data.max_sent);
-                  buildChart(data.dates, data.sent, max_sent, "#chart-clinic-sent");
-                  $("#started-chart-container").html('<canvas id="chart-clinic-started" width=290 height=210></canvas>');
-                  var max_started = getCeiling(data.max_started);
-                  buildChart(data.dates, data.started, max_started, "#chart-clinic-started");
-                  $("#generic-chart-container").html('<canvas id="chart-generic-sent" width=290 height=210></canvas>');
-                  var max_generic = getCeiling(data.max_generic);
-                  buildChart(data.dates, data.generic, max_generic, "#chart-generic-sent");
+                  var max_val = getCeiling(data.max_val);
+                  $("#generic-chart-container").html('<canvas id="chart-generic-sent" width=580 height=310></canvas>');
+                  buildChart(data.dates, data.sent, data.started, data.generic, max_val, "#chart-generic-sent");
 
               });
           }
