@@ -114,11 +114,17 @@
                     {% endfor %}
                 </ul>
               </li>
+              <li>
+                  {% if request.user.is_authenticated %}
+                    <a href="{% url 'participation_analysis' %}">Participation<br />Analysis</a>
+                  {% endif %}
+              </li>
               <li class="print-action">
                 <a href="javascript:window.print()">
                   <img src="{% static 'img/print-icon.png' %}">print</a>
               </li>
               <li>
+
                 {% if request.user.is_authenticated %}
                   <a href="{% url 'logout' %}">logout</a>
                 {% else %}
@@ -150,8 +156,12 @@
               <div class="navbar" role="navigation">
                 <ul class="nav navbar-nav">
                   <li><a href="{% url 'home' %}">about</a></li>
-                  <li><a href="{% url 'region_report' 1 %}">summary reports</a></li>
                   <li><a href="{% url 'select_clinic' %}">facility report</a></li>
+                  <li>
+                    {% if request.user.is_authenticated %}
+                    <a href="{% url 'participation_analysis' %}">Participation<br />Analysis</a>
+                    {% endif %}
+                  </li>
                   <li>
                     {% if request.user.is_authenticated %}
                       <a href="{% url 'logout' %}">logout</a>

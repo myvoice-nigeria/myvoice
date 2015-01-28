@@ -722,6 +722,32 @@ td {
     color: #fff;
 }
 
+.btn-search {
+    background-color: #428bca;
+    border: medium none;
+    border-radius: 0;
+    color: #fff;
+}
+
+.search-box {
+    padding-top: 2px;
+    float: right;
+}
+
+.search-pane {
+    display: block;
+    float:left;
+    width: 100%;
+    margin-top: -10px;
+    background-color: #D1D1D1 !important;
+}
+.search-table {
+    width: 100%;
+    padding-top: 0;
+    border: 1;
+    border-color: #A6A8AB !important;
+}
+
 
 /* Sticky footer styles
 -------------------------------------------------- */
@@ -748,3 +774,4 @@ body {
 
 .footer  .navbar-nav li a {color: #808184;}
 .footer  .navbar-nav li a:hover {color: #808184;}
+

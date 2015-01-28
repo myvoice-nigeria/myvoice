@@ -84,6 +84,12 @@ class VisitAdmin(admin.ModelAdmin):
             return False
 
 
+class ManualRegistrationAdmin(admin.ModelAdmin):
+    list_display = ['clinic', 'visit_count', 'entry_date']
+    date_hierarchy = 'entry_date'
+    list_filter = ['clinic']
+
+
 class ServiceAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'code']
     ordering = ['name']
@@ -106,3 +112,4 @@ admin.site.register(models.Visit, VisitAdmin)
 admin.site.register(models.Service, ServiceAdmin)
 admin.site.register(models.GenericFeedback, GenericFeedbackAdmin)
 admin.site.register(models.ClinicScore, ClinicScoreAdmin)
+admin.site.register(models.ManualRegistration, ManualRegistrationAdmin)

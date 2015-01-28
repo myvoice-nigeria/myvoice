@@ -3,6 +3,20 @@ from dateutil.parser import parse
 from django.utils import timezone
 
 
+def compress_list(input_list, output_len):
+    """Compress list by evenly picking items.
+
+    E.g. input_list is [0, 1, 2, 3, 4], output_len is 3
+    returns [0, 2, 4]"""
+    # Get number of steps
+    input_len = len(input_list)
+    steps = input_len/output_len
+    if input_len % output_len:
+        steps += 1
+    indices = range(0, input_len, steps)
+    return [input_list[idx] for idx in indices]
+
+
 def hour_to_hr(txt):
     return txt.replace('hour', 'hr')
 

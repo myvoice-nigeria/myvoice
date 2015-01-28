@@ -96,11 +96,21 @@ class Visit(factory.django.DjangoModelFactory):
     visit_time = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
 
 
+class ManualRegistration(factory.django.DjangoModelFactory):
+    FACTORY_FOR = clinics.ManualRegistration
+
+    clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
+    entry_date = factory.fuzzy.FuzzyDate(datetime.date(2014, 1, 1))
+    visit_count = factory.fuzzy.FuzzyInteger(0)
+
+
 class GenericFeedback(factory.django.DjangoModelFactory):
     FACTORY_FOR = clinics.GenericFeedback
 
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
     sender = factory.fuzzy.FuzzyText()
+    message_date = factory.fuzzy.FuzzyDateTime(
+        datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
 
 
 class ClinicScore(factory.django.DjangoModelFactory):

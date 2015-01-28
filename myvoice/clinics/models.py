@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.gis.db import models as gis
 from django.db import models
 from django.utils import timezone
@@ -153,7 +155,9 @@ class Patient(models.Model):
 
 
 class Visit(models.Model):
-    """Represents a visit of a Patient to the Clinic."""
+    """Represents a visit of a Patient to the Clinic.
+
+    As registered via myvoice system."""
     patient = models.ForeignKey('Patient')
     service = models.ForeignKey('Service', blank=True, null=True)
     staff = models.ForeignKey('ClinicStaff', blank=True, null=True)
@@ -212,12 +216,25 @@ class VisitRegistrationErrorLog(models.Model):
         return self.sender
 
 
+class ManualRegistration(models.Model):
+    """Count of Registrations of visits made at the clinic outside the myvoice system."""
+    entry_date = models.DateField(default=date.today)
+    visit_count = models.PositiveIntegerField()
+    clinic = models.ForeignKey('Clinic')
+
+    class Meta:
+        unique_together = ('entry_date', 'clinic')
+
+    def __unicode__(self):
+        return unicode(self.clinic)
+
+
 class GenericFeedback(models.Model):
     """Keeps Feedback information sent by patients."""
     sender = models.CharField(max_length=20)
     clinic = models.ForeignKey('Clinic', null=True, blank=True)
     message = models.TextField(blank=True)
-    message_date = models.DateTimeField(auto_now=True)
+    message_date = models.DateTimeField(default=timezone.now)
     display_on_dashboard = models.BooleanField(
         default=True,
         help_text="Whether or not this response is displayed on the dashboard.")

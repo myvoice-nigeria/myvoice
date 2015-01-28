@@ -45,6 +45,26 @@ class TestUtils(TestCase):
         """Test that we can parse date string properly."""
         self.assertEqual(self.dt, utils.get_date('July 07, 2014'))
 
+    def test_compress_list(self):
+        """Test we can pick evenly spaced data points from list of data."""
+        self.assertEqual([0, 2, 4], utils.compress_list([0, 1, 2, 3, 4], 3))
+
+    def test_compress_list_odd_even(self):
+        """Test we can pick evenly spaced data points from list of data."""
+        self.assertEqual([0, 3], utils.compress_list([0, 1, 2, 3, 4], 2))
+
+    def test_compress_list_greater(self):
+        """If we want a greater # than available, should give all available."""
+        self.assertEqual([0, 1, 2, 3, 4], utils.compress_list([0, 1, 2, 3, 4], 10))
+
+    def test_compress_list_greater_not_mod(self):
+        """If we want a greater # than available."""
+        self.assertEqual([0, 1, 2, 3, 4], utils.compress_list([0, 1, 2, 3, 4], 9))
+
+    def test_compress_list_greater_single(self):
+        """If we want a single item, should give first."""
+        self.assertEqual([0], utils.compress_list([0, 1, 2, 3, 4], 1))
+
 
 class TestCSVExport(TestCase):
 
