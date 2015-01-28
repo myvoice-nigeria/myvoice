@@ -1,12 +1,18 @@
 {% extends "base.html" %}
-{% load humanize %}
 
+{% load humanize %}
+{% load compress %}
 {% load static from staticfiles %}
 
 {% block title %}{{ object.name }} {{ object.get_type_display }} Summary Feedback Report{% endblock title %}
 
+{% block extra-css %}
+<link rel="stylesheet" href="{% static 'lib/bootstrap-datepicker-1.3.1/css/datepicker3.css' %}" />
+{% endblock %}
+
 {% block extra-js %}
 <script src="{% static 'lib/chartnew/ChartNew.js' %}"></script>
+<script src="{% static 'lib/bootstrap-datepicker-1.3.1/js/bootstrap-datepicker.js' %}"></script>
 <script>
   var barOptions = {
         //barShowStroke: true,
@@ -59,7 +65,7 @@ var buildFeedbackChart = function(labels, data) {
     opts['legend'] = false;
     opts['scaleSteps'] = 6;
     opts['inGraphDataTmpl'] = "<%=v3 + '%' %>";
-    opts['annotateLabel'] = "<%=v2 + '(' + v3 + '%)' %>";
+    opts['annotateLabel'] = "<%=v2 + ' (' + v3 + '%)' %>";
     var chart = $('#feedback-chart')[0].getContext('2d');
     var chartObject = new Chart(chart);
     chartObject.Bar(chartData, barOptions);
@@ -140,7 +146,15 @@ $(function() {
     buildFacilityChart(labels, sent, started, completed, max_val);
 
     //Set select-box to first option
-    $('#weeks_filter').val($('#weeks_filter option:first').val());
+    //$('#weeks_filter').val($('#weeks_filter option:first').val());
+    
+    $('.input-daterange').datepicker({
+        format: 'd M yyyy',
+        multidate: true,
+        calendarWeeks: false,
+        autoclose: true,
+        todayHighlight: true
+    });
 });
 
 </script>
@@ -149,7 +163,7 @@ $(function() {
 
 {% block content %}
   <div class="container main-header">
-    <div class="col-xs-9 no-padding-left">
+    <div class="col-xs-8 no-padding-left">
       <h1>
         <span style="font-weight: 700;">{{ object.name }} {{ object.get_type_display }}</span><br />
          Summary Feedback Report
@@ -160,11 +174,23 @@ $(function() {
       NSHIP PBF staff. The following data was collected through SMS surveys of
       patients in 11 {{ object.name }} {{ object.get_type_display }} PBF
       Integrated Clinics and some additional community members.</div>
-    </div>  
+    </div>
+    <div class="col-xs-4 no-padding-left web-only" style="margin-top: 15px;">
+      <!-- Bootstrap Datepicker: -->
+      <div class="input-daterange input-group" id="datepicker">
+        <input type="text" name="start" value='{{ min_date|date:"j M Y" }}' />
+        <span class="input-group-addon">&dash;</span>
+        <input type="text" name="end" value='{{ max_date|date:"j M Y" }}' />
+        <button id="refresh-feedback">
+          <span class="glyphicon glyphicon-play"></span>
+        </button>
+      </div>
+    </div>
   </div><!-- /.container -->
 
   
   <div id="feedback-on-services" class="container">
+    {% comment %}
     <div class="col-xs-12 no-padding-left web-only">
       <h1>
       <div class="styled-select full-width">
@@ -178,6 +204,8 @@ $(function() {
       </div>
       </h1>
     </div>
+    {% endcomment %}
+
     <div class="col-xs-12 section-heading web-only">
       <h2>FEEDBACK ON SERVICES</h2>
     </div>
@@ -187,36 +215,36 @@ $(function() {
       <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK ON SERVICES</h2>
     </div>
 
-
     <div>
-    <p>Number of patients with this service who reported this feedback.</p>
-
-    <table id="services-table" class="table table-bordered table-striped">
-      <thead>
-        <tr>
-          <th class="special-th weeks_filter">Services {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
-          {% for heading in service_labels %}
-            <th>{{ heading }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      
-      <tbody>
-        {% for service, service_data in feedback_by_service %}
-        <tr id="service{{ service.id }}">
-            <td id="service_name">{{ service.name }}</td>
-            {% for label, result, total_respondents in service_data %}
-              {% if result == None %}
-                <td class="{{ label }}">N/A (0)</td>
-              {% else %}
-                <td class="{{ label }}">{{ result }} ({{ total_respondents }})</td>
-              {% endif %}
+      <p>Number of patients with this service who reported this feedback.</p>
+      {% include 'clinics/by_service.html' %}
+      {% comment %}
+      <table id="services-table" class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th class="special-th weeks_filter">Services {{ min_date|date:"F j, Y" }} - {{ max_date|date:"F j, Y" }}</th>
+            {% for heading in service_labels %}
+              <th>{{ heading }}</th>
             {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-</div>
+          </tr>
+        </thead>
+        <tbody>
+          {% for service, service_data in feedback_by_service %}
+          <tr id="service{{ service.id }}">
+              <td id="service_name">{{ service.name }}</td>
+              {% for label, result, total_respondents in service_data %}
+                {% if result == None %}
+                  <td class="{{ label }}">N/A (0)</td>
+                {% else %}
+                  <td class="{{ label }}">{{ result }} ({{ total_respondents }})</td>
+                {% endif %}
+              {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endcomment %}
+  </div>
   </div><!-- / #feedback-on-services .container -->
 
 
@@ -231,8 +259,7 @@ $(function() {
       <h2 style="position: absolute; top: 7px; left: 15px;">LGA-WIDE PATIENT FEEDBACK</h2>
     </div>
 
-  
-        <p>Summary of patients reports on {{ lga.name }} facility experience.</p>
+     <p>Summary of patients reports on {{ lga.name }} facility experience.</p>
      <div id="patient-feedback">
       <div id="feedback-chart-container" class="two-col-div">
           <canvas id="feedback-chart" width=350 height=210></canvas>
@@ -269,10 +296,8 @@ $(function() {
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
       <h2 style="position: absolute; top: 7px; left: 15px;">FEEDBACK REPORTED BY FACILITY</h2>
     </div>
-      
-
-    <p>  </p>
-
+    {% include 'clinics/by_clinic.html' %}
+    {% comment %}
     <table id="facilities-table" class="table table-bordered table-striped">
       <thead>
         <tr>
@@ -306,20 +331,18 @@ $(function() {
             {% endfor %}
         </tr>
       {% endfor %}
-
       </tbody>
     </table>
-
-
+    {% endcomment %}
   </div><!-- / #feedback-facility .container -->
 
   <!-- .container#facility-chart -->
 
   <div id="feedback-chart" class="container">
-      <div class="col-xs-12 section-heading web-only">
-          <h2>PARTICIPATION BY FACILITY</h2>
-      </div>
-      <p>Number of patients who received, started, and completed surveys across Wamba LGA.</p>
+    <div class="col-xs-12 section-heading web-only">
+        <h2>PARTICIPATION BY FACILITY</h2>
+    </div>
+    <p>Number of patients who received, started, and completed surveys across Wamba LGA.</p>
 
     <div class="col-xs-12 section-heading print-only" style="padding: 0px">
       <img src="{% static 'img/lt-grey-img.jpg' %}" style="width: 100%; height: 30px; padding:0px">
@@ -345,23 +368,27 @@ $(function() {
 
  $(document).ready( function () {
 
-    $("#weeks_filter").change( function() {
+    //$("#weeks_filter").change( function() {
+    $("#refresh-feedback").click( function() {
+      $(this).blur();
       do_async();
       //filter_feedback_on_services_table();
       //filter_feedback_on_clinics_table();
 
       // Update the Values within the Charts to the Select Value
-      $( ".weeks_filter" ).each(function( index ) {
+      /*$( ".weeks_filter" ).each(function( index ) {
         $( this ).text($("#weeks_filter").val());
-      });
+      });*/
     });
 });
 
   function do_async() {
 
     // Completion Rate Table - Get Dates from Selected option.
-    var start_date = $("#weeks_filter").val().split(" - ")[0];
-    var end_date = $("#weeks_filter").val().split(" - ")[1];
+    //var start_date = $("#weeks_filter").val().split(" - ")[0];
+    //var end_date = $("#weeks_filter").val().split(" - ")[1];
+    var start_date = $('.input-daterange [name=start]').val();
+    var end_date = $('.input-daterange [name=end]').val();
 
     // Send dates and lga.pk via Ajax to our Filter and 
     $.get("/lga_async", {"start_date":start_date, "end_date":end_date, "lga": {{ lga.pk }} }, function(data,status){
