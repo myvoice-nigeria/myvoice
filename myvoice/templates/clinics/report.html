@@ -96,7 +96,7 @@ $(function() {
     var max_val = Math.ceil({{ max_chart_value }}/100)*100;
     var labels = [
         {% for label in feedback_clinics %}
-            "{{ label }}"{% if not forloop.last %}, {% endif %}
+            "{{ label|escapejs }}"{% if not forloop.last %}, {% endif %}
         {% endfor %}
     ];
     var sent = [
