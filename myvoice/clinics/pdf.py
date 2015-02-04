@@ -1,14 +1,13 @@
 from django.conf import settings
 from reportlab.graphics.charts.barcharts import HorizontalBarChart
 from reportlab.graphics.charts.legends import Legend
-from reportlab.graphics.charts.textlabels import Label
-from reportlab.graphics.shapes import Drawing, String
+from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch, mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import *
+from reportlab.platypus import PageBreak, Paragraph, KeepTogether, Table, TableStyle
 from reportlab.platypus.doctemplate import SimpleDocTemplate
 from itertools import groupby
 import os
@@ -104,7 +103,7 @@ class FacilityChart(Drawing):
 
 
 class FacilityReportPdf(object):
-    
+
     def summary(self, clinic, sent, started, completed):
         """Renders the Facility Report Summary section."""
         p_started = (float(started) / sent) * 100
@@ -127,9 +126,9 @@ class FacilityReportPdf(object):
         tbl = Table([
             (p('<font size=14><b>%s</b> Facility Report</font>' % clinic.name), ''),
             (p("""The following document was generated through the
-    ICT4SA program, intended to provide trial period 
-    reporting to selected %s Clinic Staff. The following 
-    data was collected through SMS surveys of patients at 
+    ICT4SA program, intended to provide trial period
+    reporting to selected %s Clinic Staff. The following
+    data was collected through SMS surveys of patients at
     %s.""" % (clinic.lga, clinic.name)), summary_tbl)
         ], colWidths=[3.8*inch, 2.6*inch])
         tbl.setStyle(TableStyle([
@@ -142,12 +141,13 @@ class FacilityReportPdf(object):
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ]))
         return tbl
-    
+
     def facility_chart(self, clinic, stats, clinics):
         """Renders the Facility Participation Chart."""
         flowables = []
         flowables.append(heading('Participation By Facility'))
-        flowables.append(p('Number of patients who received, started, and completed surveys across %s.' % clinic.name))
+        flowables.append(p("""Number of patients who received, started,
+                           and completed surveys across %s.""" % clinic.name))
         d = FacilityChart()
         # categories = ['\n'.join(x.split()) for x in clinics]
         data = [stats['completed'], stats['started'], stats['sent']]
@@ -161,8 +161,10 @@ class FacilityReportPdf(object):
         cellBgColor = colors.grey.clone(alpha=0.2)
         flowables = []
         flowables.append(heading('Patient Feedback Responses'))
-        flowables.append(p('<para spaceafter=12>Summary of patient feedback responses compared to LGA-wide averages.</para>'))
-        rows = [('Patients from %s said:' % clinic.name, '', '', 'Patients from other facilities said:', '', '')]
+        flowables.append(p("""<para spaceafter=12>Summary of patient feedback responses
+                           compared to LGA-wide averages.</para>"""))
+        rows = [('Patients from %s said:' % clinic.name, '', '',
+                 'Patients from other facilities said:', '', '')]
         for r in responses:
             if r[3] >= 10:
                 symbol = u'\ue013'
@@ -222,7 +224,8 @@ class FacilityReportPdf(object):
         """Renders the Feedback on Services section."""
         flowables = []
         flowables.append(heading('Feedback On Services'))
-        flowables.append(p('<para spaceafter=12>Number of patients with this service, who reported this feedback.</para>'))
+        flowables.append(p("""<para spaceafter=12>Number of patients with this service,
+                           who reported this feedback.</para>"""))
         if data:
             service, feedback = data[0]
             rows = [['%s to %s' % (min_date.strftime('%B %d, %Y'), max_date.strftime('%B %d, %Y'))
@@ -283,10 +286,13 @@ class FacilityReportPdf(object):
     def render_to_list(self, ctx):
         """Renders all report sections, returning them as a list of flowables."""
         elements = []
-        elements.append(self.summary(ctx['clinic'], ctx['num_registered'], ctx['num_started'], ctx['num_completed']))
-        elements.append(self.facility_chart(ctx['clinic'], ctx['feedback_stats'], ctx['feedback_clinics']))
+        elements.append(self.summary(
+            ctx['clinic'], ctx['num_registered'], ctx['num_started'], ctx['num_completed']))
+        elements.append(self.facility_chart(
+            ctx['clinic'], ctx['feedback_stats'], ctx['feedback_clinics']))
         elements.append(self.feedback_responses(ctx['clinic'], ctx['response_stats']))
-        elements.append(self.feedback_on_servies(ctx['min_date'], ctx['max_date'], ctx['feedback_by_service']))
+        elements.append(self.feedback_on_servies(
+            ctx['min_date'], ctx['max_date'], ctx['feedback_by_service']))
         elements.extend(self.detailed_comments(ctx['detailed_comments']))
         elements.append(page_break())
         return elements
@@ -295,166 +301,3 @@ class FacilityReportPdf(object):
         """Renders a list of flowables as a PDF to the specified `outfile`."""
         doc = SimpleDocTemplate(outfile)
         doc.build(flowables, onFirstPage=add_page_number, onLaterPages=add_page_number)
-
-
-def render_test_pdf():
-    """Renders a sample PDF report."""
-    from datetime import datetime
-    from pytz import UTC
-    
-    stats = {'completed': [8, 20, 8, 2, 7, 6, 55, 24, 8, 22, 0],
-             'sent': [256, 329, 84, 210, 115, 94, 1653, 934, 135, 108, 39],
-             'started': [37, 33, 13, 17, 15, 14, 128, 56, 20, 43, 0]}
-    categories = [
-        'Arum Chugbu PHC',
-        'Gwagi PHC',
-        'Kwabe PHC',
-        'Kwarra PHC',
-        'Mararaba Gongon PHC',
-        'Nakere PHC',
-        'Wamba General Hospital',
-        'Wamba Model Clinic',
-        'Wayo Matti PHC',
-        'Yashi Madaki PHC',
-        'Zalli PHC']
-    responses = [
-        ('Open Facility',
-        (29, 88.0),
-        (294, 86.0),
-        2.0),
-       ('Respectful Staff Treatment',
-        (22, 92.0),
-        (200, 82.0),
-        10.0),
-       ('Clean Hospital Materials',
-        (23, 100.0),
-        (169, 91.0),
-        9.0),
-       ('Charged Fairly',
-        (17, 77.0),
-        (104, 62.0),
-        15.0),
-       ('Wait Time',
-        (20, 100.0),
-        (128, 91.0),
-        9.0)]
-    svc_feedback = [
-       ('ANC',
-        [(u'Open Facility', 2, '100.0%'),
-         (u'Respectful Staff Treatment', 1, '100.0%'),
-         (u'Treatment Explanation', 1, '100.0%'),
-         (u'Charged Fairly', 1, '100.0%'),
-         ('Wait Time', u'<1 hr', 1)]),
-       ('Normal Delivery',
-        [(u'Open Facility', 0, None),
-         (u'Respectful Staff Treatment', 0, None),
-         (u'Treatment Explanation', 0, None),
-         (u'Charged Fairly', 0, None),
-         ('Wait Time', None, 0)]),
-       ('Immunization/Vaccination',
-        [(u'Open Facility', 1, '100.0%'),
-         (u'Respectful Staff Treatment', 0, None),
-         (u'Treatment Explanation', 0, None),
-         (u'Charged Fairly', 0, None),
-         ('Wait Time', None, 0)]),
-       ('OPD',
-        [(u'Open Facility', 25, '86.0%'),
-         (u'Respectful Staff Treatment', 20, '91.0%'),
-         (u'Treatment Explanation', 21, '100.0%'),
-         (u'Charged Fairly', 15, '75.0%'),
-         ('Wait Time', u'<1 hr', 4)]),
-       ('Family Planning',
-        [(u'Open Facility', 1, '100.0%'),
-         (u'Respectful Staff Treatment', 1, '100.0%'),
-         (u'Treatment Explanation', 1, '100.0%'),
-         (u'Charged Fairly', 1, '100.0%'),
-         ('Wait Time', None, 0)])]
-
-    max_date = datetime(2015, 2, 2, 0, 16, 47, 52361, tzinfo=UTC)
-    min_date = datetime(2014, 7, 7, 0, 0, tzinfo=UTC)
-
-    comments = [
-        {'datetime': datetime(2014, 7, 24, 16, 33, 18, 32000, tzinfo=UTC),
-        'question': u'Charge for Services',
-        'response': u'Ipaid for malaria drugs'},
-       {'datetime': datetime(2014, 9, 2, 2, 38, 5, 782000, tzinfo=UTC),
-        'question': u'Charge for Services',
-        'response': u'I PAY  FOR DELIVERING  500N'},
-       {'datetime': datetime(2014, 10, 31, 15, 49, 29, 597000, tzinfo=UTC),
-        'question': u'Charge for Services',
-        'response': u'700'},
-       {'datetime': datetime(2014, 10, 2, 11, 15, 35, 216000, tzinfo=UTC),
-        'question': u'Facility Availability',
-        'response': u'Sorry i mean 1'},
-       {'datetime': datetime(2014, 7, 31, 12, 17, 30, 991000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'The improvement in the hospital is beyond expectation. '},
-       {'datetime': datetime(2014, 8, 16, 10, 43, 23, 676000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'They staff in the hospital are trying their best. But i am  appealing to goverment should upgrade gwagi PHC. May God see us through nd i really appreciate this focus by the health organization. '},
-       {'datetime': datetime(2014, 8, 20, 21, 47, 48, 215640, tzinfo=UTC),
-        'question': 'General Feedback',
-        'response': u'THE H0SP ARE DOING WILL T0 US, IN WAMBA WEST'},
-       {'datetime': datetime(2014, 8, 22, 13, 50, 41, 547273, tzinfo=UTC),
-        'question': 'General Feedback',
-        'response': u'Effective  activities  is  on  in  the  clinic. The imminazation exercise was well orgainase by the clinic staff.'},
-       {'datetime': datetime(2014, 8, 26, 9, 54, 0, 848560, tzinfo=UTC),
-        'question': 'General Feedback',
-        'response': u'The hospital has now change  because the staffs are always available unlike before .Tank you for hearing my voice'},
-       {'datetime': datetime(2014, 8, 27, 5, 22, 36, 596000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'The staff are seriously doing their best nd i wish to solicit to u My voice should provide all hospital and PHC with all health equipments.'},
-       {'datetime': datetime(2014, 8, 28, 8, 47, 47, 669000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'Infact we reconment d service dat d hospital give to us'},
-       {'datetime': datetime(2014, 8, 29, 16, 48, 43, 661081, tzinfo=UTC),
-        'question': 'General Feedback',
-        'response': u'The comment about gwagi phc  the  should  try & be punctual on there duties  specially night duty, the bee eccouragy  pregnt women with some gift if the are their for check up, the are trying but the should put more effort. I wish  them well, & may God help them!'},
-       {'datetime': datetime(2014, 8, 30, 20, 0, 17, 267000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'infact d hospital are trying there b est'},
-       {'datetime': datetime(2014, 8, 31, 11, 34, 13, 143000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'Very excellent nd well to do hospital.'},
-       {'datetime': datetime(2014, 9, 1, 21, 45, 29, 168916, tzinfo=UTC),
-        'question': 'General Feedback',
-        'response': u'gwagi hospital are doing gud and the did not have a problem seriously.  they are trying there best. Tnx '},
-       {'datetime': datetime(2014, 9, 2, 3, 40, 57, 947000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'COMPALEN SOME OFTHE STAFFS AER NOT ALLWAST FURND ON SONDAY IN  PHC     PRAIST THE  INCAEG SHE ALLWAYS BUESY  AND THE  PHC IT IS ALLWAYS  CAELING .'},
-       {'datetime': datetime(2014, 9, 10, 8, 54, 32, 607000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'did have trai no eny complain'},
-       {'datetime': datetime(2014, 10, 2, 11, 32, 36, 197000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'D hospital was quite okey and i think u should add more hospital materials.'},
-       {'datetime': datetime(2014, 10, 6, 15, 8, 22, 646000, tzinfo=UTC),
-        'question': u'General Feedback',
-        'response': u'D hospital was well organised,clean n healthy'},
-       {'datetime': datetime(2014, 10, 20, 8, 34, 41, 551583, tzinfo=UTC),
-        'question': 'General Feedback',
-        'response': u'PHC NAKERE WAMBA LGC 2 For NO'}]
-
-    class Clinic(object):
-        def __init__(self):
-            self.name = 'Gwagi PHC'
-            self.lga = 'Wamba'
-    
-    context = {
-        'clinic': Clinic(),
-        'response_stats': responses,
-        'feedback_by_service': svc_feedback,
-        'detailed_comments': comments,
-        'feedback_stats': stats,
-        'feedback_clinics': categories,
-        'num_registered': 329,
-        'num_started': 33,
-        'num_completed': 20,
-        'min_date': min_date,
-        'max_date': max_date,
-    }
-
-    report = FacilityReportPdf()
-    flowables = report.render_to_list(context)
-    with open('sample.pdf', 'w') as outfile:
-        report.render(flowables, outfile)
