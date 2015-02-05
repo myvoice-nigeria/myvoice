@@ -7,7 +7,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch, mm
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import PageBreak, Paragraph, KeepTogether, Table, TableStyle
+from reportlab.platypus import Flowable, PageBreak, Paragraph, KeepTogether, Table, TableStyle
 from reportlab.platypus.doctemplate import SimpleDocTemplate
 from itertools import groupby
 import os
@@ -102,7 +102,22 @@ class FacilityChart(Drawing):
         self.legend.strokeWidth = 0
 
 
-class FacilityReportPdf(object):
+class Bookmark(Flowable):
+
+    def __init__(self, title):
+        self.title = title
+        Flowable.__init__(self)
+
+    def wrap(self, availWidth, availHeight):
+        return (0, 0)
+
+    def draw(self):
+        self.canv.bookmarkPage(self.title)
+        self.canv.addOutlineEntry(
+            self.title, self.title, 0, 0)
+
+
+class ReportPdfRenderer(object):
 
     def summary(self, clinic, sent, started, completed):
         """Renders the Facility Report Summary section."""
@@ -110,9 +125,9 @@ class FacilityReportPdf(object):
         p_completed = (float(completed) / sent) * 100
         summary_tbl = Table([
             (p('<b>SURVEY PARTICIPATION</b>'), '', ''),
-            (p('<font color=0x8AC43F><b>%s</b></font>' % sent),
-             p('<font color=0x8AC43F><b>%s</b> (%.0f%%)</font>' % (started, p_started)),
-             p('<font color=0x8AC43F><b>%s</b> (%.0f%%)</font>' % (completed, p_completed))),
+            (p('%s' % sent),
+             p('%s (%.0f%%)' % (started, p_started)),
+             p('%s (%.0f%%)' % (completed, p_completed))),
             ('Sent', 'Started', 'Completed')
         ], colWidths=[0.8*inch, 0.8*inch, 0.8*inch])
         summary_tbl.setStyle(TableStyle([
@@ -137,7 +152,7 @@ class FacilityReportPdf(object):
             ('RIGHTPADDING', (0, -1), (0, -1), 10),
             ('RIGHTPADDING', (-1, -1), (-1, -1), 10),
             ('LEFTPADDING', (-1, -1), (-1, -1), 10),
-            ('BACKGROUND', (-1, -1), (-1, -1), colors.grey.clone(alpha=0.2)),
+            ('BACKGROUND', (-1, -1), (-1, -1), colors.grey.clone(alpha=0.1)),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ]))
         return tbl
@@ -228,8 +243,12 @@ class FacilityReportPdf(object):
                            who reported this feedback.</para>"""))
         if data:
             service, feedback = data[0]
-            rows = [['%s to %s' % (min_date.strftime('%B %d, %Y'), max_date.strftime('%B %d, %Y'))
-                     ] + ['\n'.join(x[0].split()) for x in feedback]]
+            if min_date and max_date:
+                rows = [['%s to %s' % (min_date.strftime('%B %d, %Y'),
+                                       max_date.strftime('%B %d, %Y'))
+                         ] + ['\n'.join(x[0].split()) for x in feedback]]
+            else:
+                rows = [[''] + ['\n'.join(x[0].split()) for x in feedback]]
             for service, feedback in data:
                 row = [service] + ['%s (%s)' % ('N/A' if not x else x, 0 if y is None else y)
                                    for _, x, y in feedback]
@@ -286,6 +305,7 @@ class FacilityReportPdf(object):
     def render_to_list(self, ctx):
         """Renders all report sections, returning them as a list of flowables."""
         elements = []
+        elements.append(Bookmark(str(ctx['clinic'])))
         elements.append(self.summary(
             ctx['clinic'], ctx['num_registered'], ctx['num_started'], ctx['num_completed']))
         elements.append(self.facility_chart(
@@ -301,3 +321,4 @@ class FacilityReportPdf(object):
         """Renders a list of flowables as a PDF to the specified `outfile`."""
         doc = SimpleDocTemplate(outfile)
         doc.build(flowables, onFirstPage=add_page_number, onLaterPages=add_page_number)
+        return outfile

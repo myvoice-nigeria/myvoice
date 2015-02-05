@@ -22,6 +22,7 @@ from myvoice.clinics.models import Clinic, Service, Visit, GenericFeedback
 
 from . import forms
 from . import models
+from . import pdf
 
 
 logger = logging.getLogger(__name__)
@@ -611,7 +612,7 @@ class ParticipationCharts(View):
             json.dumps(feedback, cls=DjangoJSONEncoder), content_type='text/json')
 
 
-class ClinicReportFilterByWeek(ReportMixin, DetailView):
+class ClinicReportFilterByWeek(View):
 
     def get_feedback_data(self, start_date, end_date, clinic_id):
         report = ClinicReport()
@@ -751,6 +752,44 @@ class ClinicReportFilterByWeek(ReportMixin, DetailView):
 
         return HttpResponse(
             json.dumps(clinic_data, cls=DjangoJSONEncoder), content_type='text/json')
+
+
+class LGAClinicsReport(DetailView):
+    model = models.LGA
+
+    def get_filename(self, start_date, end_date):
+        filename = 'all-facilities'
+        if start_date and end_date:
+            filename = '%s (%s to %s)' % (
+                filename,
+                start_date.strftime('%d-%b-%Y'),
+                (end_date - timedelta(1)).strftime('%d-%b-%Y'))
+        return filename
+
+    def render_facility_reports(self, start_date, end_date, out):
+        elements = []
+        renderer = pdf.ReportPdfRenderer()
+        lga = self.get_object()
+        # TODO: Please make me better Stan...PLEASE.
+        for clinic in lga.clinic_set.all():
+            report = ClinicReport()
+            report.start_date = start_date
+            report.end_date = end_date
+            report.kwargs = {'pk': clinic.pk}
+            report.object = report.get_object()
+            context = report.get_context_data()
+            elements.extend(renderer.render_to_list(context))
+        renderer.render_to_response(elements, out)
+
+    def get(self, request, *args, **kwargs):
+        start_date = get_date(request.GET['start_date']) if 'start_date' in request.GET else None
+        end_date = (get_date(request.GET['end_date']) + timedelta(1)
+                    ) if 'end_date' in request.GET else None
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename=%s.pdf' % (
+            self.get_filename(start_date, end_date))
+        self.render_facility_reports(start_date, end_date, response)
+        return response
 
 
 class LGAReport(ReportMixin, DetailView):
