@@ -50,13 +50,6 @@ var buildChart = function(labels, data1, data2, data3, max_val, canvas_id){
         labels: labels,
         datasets: [
           {
-            //fillColor: "#ffffff",
-            //legendFillColor: "black",
-            strokeColor: '#6d6e71',
-            data: data1,
-            title: 'Sent from Clinic',
-          },
-          {
             //fillColor: '#6d6e71',
             //fillColor: '#e6e6e6',
             fillColor: "#d6ebff",
@@ -65,10 +58,17 @@ var buildChart = function(labels, data1, data2, data3, max_val, canvas_id){
             title: 'Started from Clinic',
           },
           {
+            //fillColor: "#ffffff",
+            //legendFillColor: "black",
+            strokeColor: '#6d6e71',
+            data: data1,
+            title: 'Sent from Clinic',
+          },
+          {
             fillColor: '#ffcccc',
             strokeColor: '#ff9999',
             data: data3,
-            title: 'Sent from Community',
+            title: 'Community surveys submitted',
           }
         ]
       };
