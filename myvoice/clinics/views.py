@@ -465,16 +465,29 @@ class AnalystSummary(TemplateView, ReportMixin):
         kwargs = start_date, end_date, service"""
         stats = self.get_feedback_statistics(clinics, **kwargs)
         sent, started, completed = stats['sent'], stats['started'], stats['completed']
-
         manual_reg = self.get_manual_registrations(clinics, **kwargs)
-        sent.append(sum(sent))
-        started.append(sum(started))
-        completed.append(sum(completed))
+
+        sum_manual_reg = sum(manual_reg)
+        avg_manual_reg = sum(manual_reg)/len(manual_reg)
+
+        sum_sent = sum(sent)
+        avg_sent = sum(sent)/len(sent)
+
+        sum_started = sum(started)
+        avg_started = sum(started)/len(started)
+
+        sum_completed = sum(completed)
+        avg_completed = sum(completed)/len(completed)
+
+        manual_reg.extend([sum_manual_reg, avg_manual_reg])
+        sent.extend([sum_sent, avg_sent])
+        started.extend([sum_started, avg_started])
+        completed.extend([sum_completed, avg_completed])
 
         manual_perc = [make_percentage(num, den) for num, den in zip(sent, manual_reg)]
         start_perc = [make_percentage(num, den) for num, den in zip(started, sent)]
         comp_perc = [make_percentage(num, den) for num, den in zip(completed, sent)]
-        names = [clinic.name for clinic in clinics] + ['Total']
+        names = [clinic.name for clinic in clinics] + ['Total', 'Avg']
 
         return zip(names, manual_perc, sent, started, start_perc, completed, comp_perc)
 
