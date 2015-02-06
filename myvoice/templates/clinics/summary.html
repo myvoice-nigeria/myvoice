@@ -109,7 +109,7 @@ var buildFacilityChart = function(labels, sent, started, completed, max_val){
 $(function() {
     var labels = [
     {% for label in question_labels %}
-      "{{ label }}"{% if not forloop.last %}, {% endif %}
+      "{{ label|escapejs }}"{% if not forloop.last %}, {% endif %}
     {% endfor %}
     ];
     var data = [
@@ -123,7 +123,7 @@ $(function() {
     var max_val = Math.ceil({{ max_chart_value }}/100)*100;
     var labels = [
         {% for label in feedback_clinics %}
-            "{{ label }}"{% if not forloop.last %}, {% endif %}
+            "{{ label|escapejs }}"{% if not forloop.last %}, {% endif %}
         {% endfor %}
     ];
     var sent = [

@@ -124,7 +124,6 @@
                   <img src="{% static 'img/print-icon.png' %}">print</a>
               </li>
               <li>
-
                 {% if request.user.is_authenticated %}
                   <a href="{% url 'logout' %}">logout</a>
                 {% else %}
