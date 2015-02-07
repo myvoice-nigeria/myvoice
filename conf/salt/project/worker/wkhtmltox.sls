@@ -15,7 +15,7 @@ gdebi-core:
 
 /tmp/wkhtmltox-{{ wk_version }}_linux-precise-{{ wk_arch }}.deb:
   file.managed:
-    - source: http://superb-dca3.dl.sourceforge.net/project/wkhtmltopdf/{{ wk_version }}/wkhtmltox-{{ wk_version }}_linux-precise-{{ wk_arch }}.deb
+    - source: http://liquidtelecom.dl.sourceforge.net/project/wkhtmltopdf/archive/{{ wk_version }}/wkhtmltox-{{ wk_version }}_linux-precise-{{ wk_arch }}.deb
     - source_hash: md5={{ wk_md5sum }}
 
 wkhtmltopdf:
