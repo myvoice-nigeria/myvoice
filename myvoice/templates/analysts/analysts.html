@@ -4,6 +4,19 @@
 
 {% load rates_data %}
 
+{% block extra-css %}
+<link rel="stylesheet" href="{% static 'lib/bootstrap-datepicker-1.3.1/css/datepicker3.css' %}" />
+<style>
+.input-daterange {
+    border: none;
+    margin: 0;
+}
+.input-daterange input {
+    background: transparent;
+}
+</style>
+{% endblock extra-css %}
+
 {% block title %}{{ object.name }} {{ object.get_type_display }} Summary Feedback Report{% endblock title %}
 
 {% block extra-header-js %}
@@ -13,7 +26,19 @@
 
 {% block extra-js %}
 <script src="{% static 'lib/chartnew/ChartNew.js' %}"></script>
+    <script src="{% static 'lib/bootstrap-datepicker-1.3.1/js/bootstrap-datepicker.js' %}"></script>
 <script>
+var getCeiling = function(num) {
+    var max_val = 0;
+    if (num < 100)
+        max_val = Math.ceil(num/10)*10;
+    else
+        max_val = Math.ceil(num/100)*100;
+    if (max_val <= num)
+        max_val += 10;
+    return max_val;
+};
+
   var lineOptions = {
         //barShowStroke: true,
         // scale
@@ -114,7 +139,17 @@ $(function() {
       "{{ item }}"{% if not forloop.last %}, {% endif %}
     {% endfor %}
     ];
-    buildChart(labels, sent_data, started_data, generic_data, {{ max_val }}, "#chart-generic-sent");
+    var max_val = {{ max_val }};
+    max_val = getCeiling(max_val);
+
+    buildChart(labels, sent_data, started_data, generic_data, max_val, "#chart-generic-sent");
+    $('.input-daterange').datepicker({
+        format: 'd M yyyy',
+        multidate: true,
+        calendarWeeks: false,
+        autoclose: true,
+        todayHighlight: true
+    });
 
     return;
 
@@ -149,14 +184,12 @@ $(function() {
             </tr>
             <tr>
                 <td>
-                   <select id="crt_start_date">
-                     <option value="">Start Date</option>
-                     {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-                   </select>
-                   <select id="crt_end_date">
-                     <option value="">End Date</option>
-                     {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-                   </select>
+
+      <div class="input-daterange input-group" id="datepicker" style="margin: none;">
+        <input type="text" name="crt_start" value='{{ min_date|date:"j M Y" }}' />
+        <span class="input-group-addon">&dash;</span>
+        <input type="text" name="crt_end" value='{{ max_date|date:"j M Y" }}' />
+      </div>
                 </td>
                 <td>
                    <select id="crt_service"><option value="">Service</option>
@@ -195,15 +228,11 @@ $(function() {
             </tr>
             <tr>
                 <td>
-                  <select id="frt_start_date">
-                    <option value="">Start Date</option>
-                    {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-                  </select>
-                  <select id="frt_end_date">
-                    <option value="">End Date</option>
-                    {% for a_date in date_range %}<option>{{ a_date }}</option>{% endfor %}
-                  </select>
-                </td>
+      <div class="input-daterange input-group" id="datepicker" style="margin: none;">
+        <input type="text" name="frt_start" value='{{ min_date|date:"j M Y" }}' />
+        <span class="input-group-addon">&dash;</span>
+        <input type="text" name="frt_end" value='{{ max_date|date:"j M Y" }}' />
+      </div>
                 <td align="right">
                   <select id="frt_service"><option value="">Service</option>
                     {% for service in services %} <option>{{ service.name }}</option> {% endfor %}
@@ -252,16 +281,9 @@ $(function() {
 
         <script type="text/javascript">
 
-          var getCeiling = function(num) {
-              if (num < 10)
-                  return Math.ceil(num/10)*10;
-              else
-                  return Math.ceil(num/100)*100;
-          }
-
           var updateFacilityTable = function() {
-              var start_date = $("#crt_start_date").val();
-              var end_date = $("#crt_end_date").val();
+              var start_date = $("[name=crt_start]").val();
+              var end_date = $("[name=crt_end]").val();
               var service = $("#crt_service").val();
 
               $.get("/participation_async/", {"service": service, "start_date": start_date, "end_date": end_date}, function(data, status) {
@@ -269,8 +291,8 @@ $(function() {
               });
           }
           var updateCharts = function() {
-              var start_date = $("#frt_start_date").val();
-              var end_date = $("#frt_end_date").val();
+              var start_date = $("[name=frt_start]").val();
+              var end_date = $("[name=frt_end]").val();
               var clinic = $("#frt_clinic").val();
               var service = $("#frt_service").val();
 

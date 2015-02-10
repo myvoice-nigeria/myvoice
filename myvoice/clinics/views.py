@@ -556,10 +556,12 @@ class AnalystSummary(TemplateView, ReportMixin):
 
         kwargs are clinics, service, start_date, end_date
         max_length is the maximum number of elements in each list returned."""
-        today = timezone.now()
-        week_ago = today - timedelta(6)
-        end_date = kwargs.get('end_date', today).date()
-        start_date = kwargs.get('start_date', week_ago).date()
+        end_date = kwargs['end_date']
+        start_date = kwargs['start_date']
+        if isinstance(start_date, timezone.datetime):
+            start_date = start_date.date()
+        if isinstance(end_date, timezone.datetime):
+            end_date = end_date.date()
         date_range = [
             (start_date + timedelta(idx))
             for idx in range((end_date-start_date).days + 1)]
@@ -628,15 +630,24 @@ class AnalystSummary(TemplateView, ReportMixin):
 
         # FIXME: Need to filter by LGA
         clinics = Clinic.objects.all()
-        context['participation'] = self.get_facility_participation(clinics)
+        # Use last week for default date range
+        today = timezone.now()
+        end_date = today.date()
+        start_date = end_date - timedelta(6)
 
-        [context.update({k: v}) for k, v in self.get_feedback_by_date().iteritems()]
+        context['participation'] = self.get_facility_participation(
+            clinics, start_date=start_date, end_date=end_date)
+
+        [context.update({k: v}) for k, v in self.get_feedback_by_date(
+            start_date=start_date, end_date=end_date).iteritems()]
 
         # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
         first_date = Visit.objects.aggregate(Min('visit_time'))['visit_time__min'].date()
         last_date = Visit.objects.aggregate(Max('visit_time'))['visit_time__max'].date()
         context['date_range'] = self.get_date_range(first_date, last_date)
+        context['min_date'] = start_date
+        context['max_date'] = end_date
         context['clinics'] = clinics
         context['gfb_count'] = GenericFeedback.objects.all().count()
         return context
@@ -668,6 +679,7 @@ class ParticipationCharts(View):
     def get(self, request):
 
         summary = AnalystSummary()
+        #import pdb;pdb.set_trace()
         params = summary.extract_request_params(request)
         feedback = summary.get_feedback_by_date(**params)
 
