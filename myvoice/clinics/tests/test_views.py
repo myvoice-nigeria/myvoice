@@ -894,7 +894,7 @@ class TestReportMixin(TestCase):
         stats = mixin.get_response_statistics([clinic], questions, time1, time2)
 
         self.assertEqual(0, stats[0][0])
-        self.assertIsNone(stats[0][1])
+        self.assertEqual(0, stats[0][1])
         self.assertEqual(1, stats[1][0])
         self.assertEqual(50, stats[1][1])
 
@@ -1039,62 +1039,6 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
 
-    def test_get_feedback_by_week(self):
-        """Test that get_feedback_by_week works."""
-        clinic = factories.Clinic.create(code=7)
-
-        v1 = factories.Visit.create(
-            service=factories.Service.create(code=2),
-            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 25), timezone.utc),
-            survey_sent=timezone.make_aware(timezone.datetime(2014, 7, 25), timezone.utc),
-            patient=factories.Patient.create(clinic=clinic, serial=221))
-        v2 = factories.Visit.create(
-            service=factories.Service.create(code=3),
-            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
-            survey_sent=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
-            patient=factories.Patient.create(clinic=clinic, serial=111))
-        v3 = factories.Visit.create(
-            service=factories.Service.create(code=4),
-            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
-            survey_sent=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
-            patient=factories.Patient.create(clinic=clinic, serial=121))
-
-        factories.SurveyQuestionResponse.create(
-            question=self.open_facility,
-            response='Open',
-            datetime=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
-            visit=v1,
-            clinic=clinic)
-        factories.SurveyQuestionResponse.create(
-            question=self.open_facility,
-            response='Closed',
-            datetime=timezone.make_aware(timezone.datetime(2014, 7, 27), timezone.utc),
-            visit=v2,
-            clinic=clinic)
-        factories.SurveyQuestionResponse.create(
-            question=self.open_facility,
-            response='Open',
-            datetime=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
-            visit=v3,
-            clinic=clinic)
-        factories.SurveyQuestionResponse.create(
-            question=self.respect,
-            response='Yes',
-            datetime=timezone.make_aware(timezone.datetime(2014, 7, 30), timezone.utc),
-            visit=v3,
-            clinic=clinic)
-
-        report = clinics.ClinicReport(kwargs={'slug': clinic.slug})
-
-        report.get_object()
-        feedback = report.get_feedback_by_week()
-
-        # More checks
-        self.assertEqual(2, feedback[0]['survey_num'])
-        self.assertEqual(None, feedback[0]['patient_satisfaction'])
-        self.assertEqual(1, feedback[1]['survey_num'])
-        self.assertEqual(100, feedback[1]['patient_satisfaction'])
-
     def test_hide_invalid_feedback(self):
         question = factories.SurveyQuestion(
             label='General', survey=self.survey,
@@ -1175,67 +1119,6 @@ class TestClinicReportFilterByWeek(TestCase):
             'clinic_id': self.clinic.id}
         response = self.make_request(data)
         self.assertEqual(response.status_code, 200)
-
-    def test_get_feedback_data(self):
-        service1 = factories.Service.create(code=1)
-        service2 = factories.Service.create(code=2)
-
-        v1 = factories.Visit.create(
-            service=service1,
-            visit_time=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
-            survey_sent=timezone.now(),
-            patient=factories.Patient.create(clinic=self.clinic, serial=221)
-        )
-        v2 = factories.Visit.create(
-            service=service2,
-            visit_time=timezone.make_aware(timezone.datetime(2014, 8, 6), timezone.utc),
-            survey_sent=timezone.now(),
-            patient=factories.Patient.create(clinic=self.clinic, serial=111)
-        )
-
-        factories.SurveyQuestionResponse.create(
-            question=self.respect,
-            datetime=timezone.make_aware(timezone.datetime(2014, 7, 26), timezone.utc),
-            visit=v1,
-            clinic=self.clinic, response='Yes')
-
-        factories.SurveyQuestionResponse.create(
-            question=self.facility,
-            datetime=timezone.make_aware(timezone.datetime(2014, 8, 8), timezone.utc),
-            visit=v1,
-            clinic=self.clinic, response='Yes')
-
-        factories.SurveyQuestionResponse.create(
-            question=self.respect,
-            datetime=timezone.make_aware(timezone.datetime(2014, 8, 6), timezone.utc),
-            visit=v2,
-            clinic=self.clinic, response='Yes')
-
-        self.wait_response = factories.SurveyQuestionResponse.create(
-            question=self.wait,
-            datetime=timezone.make_aware(timezone.datetime(2014, 8, 3), timezone.utc),
-            visit=v2,
-            clinic=self.clinic, response='<1 hour')
-
-        start_date = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
-        end_date = timezone.make_aware(timezone.datetime(2014, 8, 7), timezone.utc)
-        report = clinics.ClinicReportFilterByWeek()
-        data = report.get_feedback_data(start_date, end_date, self.clinic)
-        data_dict = dict([(i[0], i[1]) for i in data['fos']])
-
-        self.assertEqual(2, len(data['fos']))
-        self.assertEqual(
-            [
-                (u'Open Facility', 0, '0.0%'),
-                (u'Respectful Staff Treatment', 0, None),
-                (u'Wait Time', None, 0)
-                ], data_dict[service1.name])
-        self.assertEqual(
-            [
-                (u'Open Facility', 0, None),
-                (u'Respectful Staff Treatment', 1, '100.0%'),
-                (u'Wait Time', '<1 hr', 1)
-                ], data_dict[service2.name])
 
 
 class TestParticipationAnalysisView(TestCase):
@@ -1828,7 +1711,7 @@ class TestLGAReportView(TestCase):
         self.assertEqual(('Open Facility', 100, 1), indices[0])
         self.assertEqual(('Respectful Staff Treatment', 0, 0), indices[1])
         self.assertEqual(('Clean Hospital Materials', 50, 1), indices[2])
-        self.assertEqual(('Charged Fairly', None, 0), indices[3])
+        self.assertEqual(('Charged Fairly', 0, 0), indices[3])
 
     def test_get_wait_time_mode(self):
         """Get the most frequent wait time."""

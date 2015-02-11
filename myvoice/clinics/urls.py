@@ -7,6 +7,9 @@ from . import views
 urlpatterns = [
     url(r'^clinics/patient/$', views.VisitView.as_view(), name='visit'),
 
+    url(r'^reports/region/(?P<pk>\d+)/pdf/$',
+        login_required(views.LGAClinicsReport.as_view()),
+        name='all_facilities_pdf'),
     url(r'^reports/region/(?P<pk>\d+)/$',
         login_required(views.LGAReport.as_view()),
         name='region_report'),
