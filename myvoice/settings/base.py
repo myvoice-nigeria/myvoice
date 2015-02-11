@@ -2,6 +2,7 @@ import datetime
 import os
 
 from celery.schedules import crontab
+import djcelery
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -243,7 +244,6 @@ RAPIDSMS_HANDLERS = (
     'rapidsms.contrib.echo.handlers.ping.PingHandler',
 )
 
-import djcelery
 djcelery.setup_loader()
 
 CELERYBEAT_SCHEDULE = {
