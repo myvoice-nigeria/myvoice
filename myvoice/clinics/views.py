@@ -191,8 +191,10 @@ class ReportMixin(object):
         kwargs are service, start_date, end_date."""
         visits = models.Visit.objects.filter(patient__clinic__in=clinics)
         if kwargs.get('start_date') and kwargs.get('end_date'):
+            end_date = kwargs['end_date'] + timedelta(1)
             visits = visits.filter(
-                visit_time__range=(kwargs['start_date'], kwargs['end_date']))
+                visit_time__gte=kwargs['start_date'],
+                visit_time__lt=end_date)
         if 'service' in kwargs:
             visits = visits.filter(service=kwargs['service'])
 
