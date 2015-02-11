@@ -679,7 +679,6 @@ class ParticipationCharts(View):
     def get(self, request):
 
         summary = AnalystSummary()
-        #import pdb;pdb.set_trace()
         params = summary.extract_request_params(request)
         feedback = summary.get_feedback_by_date(**params)
 
