@@ -669,6 +669,63 @@ class TestReportMixin(TestCase):
         self.assertEqual([2, 1], stats['started'])
         self.assertEqual([1, 1], stats['completed'])
 
+    def test_get_feedback_statistics_sameday(self):
+        """Test get_feedback_statistics will include stats when start_date == end_date.
+        """
+        lga = factories.LGA.create(name='one')
+        cl1 = factories.Clinic.create(code=1, lga=lga)
+
+        p1 = factories.Patient.create(clinic=cl1, serial=444)
+        p2 = factories.Patient.create(clinic=cl1, serial=944)
+
+        dt1 = timezone.make_aware(timezone.datetime(2014, 12, 1, 6, 7, 12), timezone.utc)
+        dt2 = timezone.make_aware(timezone.datetime(2014, 12, 1), timezone.utc)
+        dt3 = timezone.make_aware(timezone.datetime(2014, 12, 1, 11, 9, 12), timezone.utc)
+
+        sent = timezone.make_aware(timezone.datetime(2014, 8, 1), timezone.utc)
+        factories.Visit.create(
+            service=self.s1,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=dt1)
+        factories.Visit.create(
+            service=self.s2,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=False,
+            visit_time=dt2)
+        factories.Visit.create(
+            service=self.s3,
+            patient=p1,
+            survey_sent=sent,
+            survey_started=True,
+            survey_completed=True,
+            visit_time=dt3)
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            survey_sent=sent,
+            survey_started=False,
+            survey_completed=False,
+            visit_time=dt1)
+        factories.Visit.create(
+            service=self.s2,
+            patient=p2,
+            visit_time=dt2)
+
+        mixin = clinics.ReportMixin()
+        start = timezone.datetime(2014, 12, 1).date()
+        end = timezone.datetime(2014, 12, 1).date()
+        stats = mixin.get_feedback_statistics([cl1], start_date=start, end_date=end)
+
+        self.assertEqual(3, len(stats))
+        self.assertEqual([4], stats['sent'])
+        self.assertEqual([3], stats['started'])
+        self.assertEqual([2], stats['completed'])
+
     def test_get_feedback_statistics_no_dates(self):
         """Test get_feedback_statistics with no start/end dates passed in takes all the visits
         """
