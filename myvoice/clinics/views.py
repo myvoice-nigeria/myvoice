@@ -499,7 +499,7 @@ class AnalystSummary(TemplateView, ReportMixin):
         datetime_fld is the datetime field in the obj to use in aggregating.
         """
         counted = Counter(tm.date() for tm in qset.values_list(datetime_fld, flat=True))
-        return [counted.get(dt, 0) for dt in dates]
+        return [counted.get(dt.date(), 0) for dt in dates]
 
     def get_feedback_by_date(self, max_length=10, **kwargs):
         """Returns dict of surveys sent, surveys started, generic feedback by date.
@@ -508,8 +508,10 @@ class AnalystSummary(TemplateView, ReportMixin):
         max_length is the maximum number of elements in each list returned."""
         today = timezone.now()
         week_ago = today - timedelta(6)
-        end_date = kwargs.get('end_date', today).date()
-        start_date = kwargs.get('start_date', week_ago).date()
+        end_date = kwargs.get('end_date', today).replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        start_date = kwargs.get('start_date', week_ago).replace(
+            hour=0, minute=0, second=0, microsecond=0)
         date_range = [
             (start_date + timedelta(idx))
             for idx in range((end_date-start_date).days + 1)]
@@ -527,8 +529,8 @@ class AnalystSummary(TemplateView, ReportMixin):
             visits = visits.filter(service__name=kwargs['service'])
 
         visits = visits.filter(visit_time__gte=start_date, visit_time__lt=end_plus)
-        generic_feedback = generic_feedback.filter(
-            message_date__gte=start_date, message_date__lt=end_plus)
+        # generic_feedback = generic_feedback.filter(
+        #    message_date__gte=start_date, message_date__lt=end_plus)
         started_visits = visits.filter(survey_started=True)
 
         _dates = compress_list(
