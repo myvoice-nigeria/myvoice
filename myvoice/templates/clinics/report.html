@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load compress %}
+{% load clinic_tags %}
 {% load static from staticfiles %}
 
 {% block title %}{{ object.name }} Facility Report{% endblock title %}
@@ -49,25 +50,55 @@
   var getChartHeight = function(item_count) {
       return item_count * 45;
   };
+  
+  var currDataIndex = {{ feedback_clinics|get_index:clinic.name }};
+  
+  var getBarColor = function (area, ctx, data, seriesIdx, posi, posj, othervars) {
+    /*console.log(ctx);
+    console.log(data);
+    console.log(seriesIdx);
+    console.log('posi :=', posi, '; posj :=', posj);
+    console.log(othervars);
+    console.log('\n');
+    */
+    if (posi == currDataIndex) {
+      if (seriesIdx == 0) {
+        return '#6e8f37';
+      } else if (seriesIdx == 1) {
+        return '#92bd4b';
+      } else {
+        return '#afe25b';
+      }
+    } else {
+      if (seriesIdx == 0) {
+        return '#6d6e71';
+      } else if (seriesIdx == 1) {
+        return '#929497';
+      } else {
+        return '#a6a8ab';
+      }
+    }
+  };
+  
   var prepareChartData = function(labels, sentData, startedData, completedData){
       var barData = {
         labels: labels,
         datasets: [
           {
-            fillColor: '#6d6e71',
-            strokeColor: '#6d6e71',
+            fillColor: getBarColor,
+            strokeColor: getBarColor,
             data: sentData,
             title: 'Surveys sent'
           },
           {
-            fillColor: '#929497',
-            strokeColor: '#929497',
+            fillColor: getBarColor,
+            strokeColor: getBarColor,
             data: startedData,
             title: 'Surveys started'
           },
           {
-            fillColor: '#a6a8ab',
-            strokeColor: '#a6a8ab',
+            fillColor: getBarColor,
+            strokeColor: getBarColor,
             data: completedData,
             title: 'Surveys completed'
           }
