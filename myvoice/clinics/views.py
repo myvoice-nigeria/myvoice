@@ -9,16 +9,16 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 from django.utils import timezone
-from django.db.models.aggregates import Max, Min, Sum
+from django.db.models.aggregates import Min, Sum
 from django.template.loader import get_template
 from django.template import Context
 from django.core.serializers.json import DjangoJSONEncoder
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.core.utils import get_date, hour_to_hr, compress_list
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
-from myvoice.clinics.models import Clinic, Service, Visit, GenericFeedback
+from myvoice.clinics.models import Clinic, Service, GenericFeedback
 
 from . import forms
 from . import models
