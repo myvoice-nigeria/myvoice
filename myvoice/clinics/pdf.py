@@ -3,6 +3,7 @@ from reportlab.graphics.charts.barcharts import HorizontalBarChart
 from reportlab.graphics.charts.legends import Legend
 from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
+from reportlab.lib.colors import HexColor
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch, mm
 from reportlab.pdfbase import pdfmetrics
@@ -164,10 +165,14 @@ class ReportPdfRenderer(object):
         flowables.append(p("""Number of patients who received, started,
                            and completed surveys across %s.""" % clinic.name))
         d = FacilityChart()
-        # categories = ['\n'.join(x.split()) for x in clinics]
         data = [stats['completed'], stats['started'], stats['sent']]
         d.chart.data = data
         d.chart.categoryAxis.categoryNames = clinics
+        # Highlight the current facility:
+        ndx = clinics.index('\n'.join(clinic.name.split()))
+        d.chart.bars[(0, ndx)].fillColor = HexColor('#afe25b')
+        d.chart.bars[(1, ndx)].fillColor = HexColor('#92bd4b')
+        d.chart.bars[(2, ndx)].fillColor = HexColor('#6e8f37')
         flowables.append(d)
         return KeepTogether(flowables)
 
