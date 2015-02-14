@@ -93,7 +93,8 @@ class Visit(factory.django.DjangoModelFactory):
 
     patient = factory.SubFactory('myvoice.core.tests.factories.Patient')
     service = factory.SubFactory('myvoice.core.tests.factories.Service')
-    visit_time = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
+    visit_time = factory.fuzzy.FuzzyDateTime(
+        timezone.make_aware(timezone.datetime(2014, 1, 1), timezone.utc))
 
 
 class ManualRegistration(factory.django.DjangoModelFactory):
@@ -110,7 +111,7 @@ class GenericFeedback(factory.django.DjangoModelFactory):
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
     sender = factory.fuzzy.FuzzyText()
     message_date = factory.fuzzy.FuzzyDateTime(
-        datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
+        timezone.make_aware(timezone.datetime(2014, 1, 1), timezone.utc))
 
 
 class ClinicScore(factory.django.DjangoModelFactory):
@@ -119,8 +120,10 @@ class ClinicScore(factory.django.DjangoModelFactory):
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')
     quality = factory.fuzzy.FuzzyDecimal(0.0, high=100.0)
     quantity = factory.fuzzy.FuzzyInteger(0)
-    start_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
-    end_date = factory.fuzzy.FuzzyDateTime(datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
+    start_date = factory.fuzzy.FuzzyDateTime(
+        timezone.make_aware(timezone.datetime(2014, 1, 1), timezone.utc))
+    end_date = factory.fuzzy.FuzzyDateTime(
+        timezone.make_aware(timezone.datetime(2014, 1, 1), timezone.utc))
 
 
 class Survey(factory.django.DjangoModelFactory):
@@ -158,5 +161,5 @@ class SurveyQuestionResponse(factory.django.DjangoModelFactory):
     question = factory.SubFactory('myvoice.core.tests.factories.SurveyQuestion')
     response = factory.fuzzy.FuzzyText()
     datetime = factory.fuzzy.FuzzyDateTime(
-        datetime.datetime(2014, 1, 1, tzinfo=timezone.utc))
+        timezone.make_aware(timezone.datetime(2014, 1, 1), timezone.utc))
     clinic = factory.SubFactory('myvoice.core.tests.factories.Clinic')

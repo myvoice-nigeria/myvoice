@@ -16,6 +16,6 @@ BeautifulSoup4==4.3.2
 
 reportlab==3.1.44
 
-#-e git+https://github.com/caktus/rapidsms-groups.git@rapidsms-upgrade#egg=rapidsms-groups
-#-e git+https://github.com/caktus/rapidsms-broadcast.git@rapidsms-upgrade#egg=rapidsms-broadcast
-#-e git+https://github.com/caktus/rapidsms-decisiontree-app.git#egg=rapidsms-decisiontree-app
+-e git+https://github.com/caktus/rapidsms-groups.git@rapidsms-upgrade#egg=rapidsms-groups
+-e git+https://github.com/caktus/rapidsms-broadcast.git@rapidsms-upgrade#egg=rapidsms-broadcast
+-e git+https://github.com/caktus/rapidsms-decisiontree-app.git@develop#egg=rapidsms-decisiontree-app

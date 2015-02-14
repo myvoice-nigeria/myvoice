@@ -389,6 +389,11 @@ $(function() {
     //var end_date = $("#weeks_filter").val().split(" - ")[1];
     var start_date = $('.input-daterange [name=start]').val();
     var end_date = $('.input-daterange [name=end]').val();
+    
+    // Update "Print all facilities" link with selected date filter:
+    var urlbits = [location.href, 'pdf/?start_date=', start_date,
+                   '&end_date=', end_date];
+    $('.print-action a.all-facilities').attr('href', urlbits.join(''));
 
     // Send dates and lga.pk via Ajax to our Filter and 
     $.get("/lga_async", {"start_date":start_date, "end_date":end_date, "lga": {{ lga.pk }} }, function(data,status){
