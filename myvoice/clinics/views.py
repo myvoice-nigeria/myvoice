@@ -9,16 +9,16 @@ from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DetailView, View, FormView, TemplateView
 from django.utils import timezone
-from django.db.models.aggregates import Max, Min, Sum
+from django.db.models.aggregates import Min, Sum
 from django.template.loader import get_template
 from django.template import Context
 from django.core.serializers.json import DjangoJSONEncoder
 
-from myvoice.core.utils import get_week_start, get_week_end, make_percentage, daterange
+from myvoice.core.utils import get_week_start, get_week_end, make_percentage
 from myvoice.core.utils import get_date, hour_to_hr, compress_list
 from myvoice.survey import utils as survey_utils
 from myvoice.survey.models import Survey, SurveyQuestion, SurveyQuestionResponse
-from myvoice.clinics.models import Clinic, Service, Visit, GenericFeedback
+from myvoice.clinics.models import Clinic, Service, GenericFeedback
 
 from . import forms
 from . import models
@@ -191,8 +191,10 @@ class ReportMixin(object):
         kwargs are service, start_date, end_date."""
         visits = models.Visit.objects.filter(patient__clinic__in=clinics)
         if kwargs.get('start_date') and kwargs.get('end_date'):
+            end_date = kwargs['end_date'] + timedelta(1)
             visits = visits.filter(
-                visit_time__range=(kwargs['start_date'], kwargs['end_date']))
+                visit_time__gte=kwargs['start_date'],
+                visit_time__lt=end_date)
         if 'service' in kwargs:
             visits = visits.filter(service=kwargs['service'])
 
@@ -506,10 +508,16 @@ class AnalystSummary(TemplateView, ReportMixin):
 
         kwargs are clinics, service, start_date, end_date
         max_length is the maximum number of elements in each list returned."""
-        today = timezone.now()
-        week_ago = today - timedelta(6)
-        end_date = kwargs.get('end_date', today).date()
-        start_date = kwargs.get('start_date', week_ago).date()
+        default_end = timezone.now().date()
+        default_start = default_end - timedelta(6)
+        end_date = kwargs.get('end_date', default_end)
+        start_date = kwargs.get('start_date', default_start)
+
+        # We want dates not datetimes
+        if isinstance(start_date, timezone.datetime):
+            start_date = start_date.date()
+        if isinstance(end_date, timezone.datetime):
+            end_date = end_date.date()
         date_range = [
             (start_date + timedelta(idx))
             for idx in range((end_date-start_date).days + 1)]
@@ -561,32 +569,27 @@ class AnalystSummary(TemplateView, ReportMixin):
                 out.update({param: val})
         return out
 
-    # Returns a list of Datetime Days between two dates
-    def get_date_range(self, start_date, end_date):
-        return_dates = []
-        if isinstance(start_date, basestring):
-            start_date = parse(start_date)
-        if isinstance(end_date, basestring):
-            end_date = parse(end_date)
-        for single_date in daterange(start_date, end_date):
-            return_dates.append(single_date)
-        return return_dates
-
     def get_context_data(self, **kwargs):
 
         context = super(AnalystSummary, self).get_context_data(**kwargs)
 
         # FIXME: Need to filter by LGA
         clinics = Clinic.objects.all()
-        context['participation'] = self.get_facility_participation(clinics)
+        # Use last week for default date range
+        today = timezone.now()
+        end_date = today.date()
+        start_date = end_date - timedelta(6)
 
-        [context.update({k: v}) for k, v in self.get_feedback_by_date().iteritems()]
+        context['participation'] = self.get_facility_participation(
+            clinics, start_date=start_date, end_date=end_date)
+
+        [context.update({k: v}) for k, v in self.get_feedback_by_date(
+            start_date=start_date, end_date=end_date).iteritems()]
 
         # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
-        first_date = Visit.objects.aggregate(Min('visit_time'))['visit_time__min'].date()
-        last_date = Visit.objects.aggregate(Max('visit_time'))['visit_time__max'].date()
-        context['date_range'] = self.get_date_range(first_date, last_date)
+        context['min_date'] = start_date
+        context['max_date'] = end_date
         context['clinics'] = clinics
         context['gfb_count'] = GenericFeedback.objects.all().count()
         return context
