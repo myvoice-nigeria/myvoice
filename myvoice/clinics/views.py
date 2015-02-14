@@ -508,8 +508,12 @@ class AnalystSummary(TemplateView, ReportMixin):
 
         kwargs are clinics, service, start_date, end_date
         max_length is the maximum number of elements in each list returned."""
-        end_date = kwargs['end_date']
-        start_date = kwargs['start_date']
+        default_end = timezone.now().date()
+        default_start = default_end - timedelta(6)
+        end_date = kwargs.get('end_date', default_end)
+        start_date = kwargs.get('start_date', default_start)
+
+        # We want dates not datetimes
         if isinstance(start_date, timezone.datetime):
             start_date = start_date.date()
         if isinstance(end_date, timezone.datetime):
@@ -565,17 +569,6 @@ class AnalystSummary(TemplateView, ReportMixin):
                 out.update({param: val})
         return out
 
-    # Returns a list of Datetime Days between two dates
-    def get_date_range(self, start_date, end_date):
-        return_dates = []
-        if isinstance(start_date, basestring):
-            start_date = parse(start_date)
-        if isinstance(end_date, basestring):
-            end_date = parse(end_date)
-        for single_date in daterange(start_date, end_date):
-            return_dates.append(single_date)
-        return return_dates
-
     def get_context_data(self, **kwargs):
 
         context = super(AnalystSummary, self).get_context_data(**kwargs)
@@ -595,9 +588,6 @@ class AnalystSummary(TemplateView, ReportMixin):
 
         # Needed for to populate the Dropdowns (Selects)
         context['services'] = Service.objects.all()
-        first_date = Visit.objects.aggregate(Min('visit_time'))['visit_time__min'].date()
-        last_date = Visit.objects.aggregate(Max('visit_time'))['visit_time__max'].date()
-        context['date_range'] = self.get_date_range(first_date, last_date)
         context['min_date'] = start_date
         context['max_date'] = end_date
         context['clinics'] = clinics
