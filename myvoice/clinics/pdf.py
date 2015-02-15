@@ -168,7 +168,7 @@ class ReportPdfRenderer(object):
         data = [stats['completed'], stats['started'], stats['sent']]
         d.chart.data = data
         d.chart.categoryAxis.categoryNames = clinics
-        # Highlight the current facility:
+        # Highlight the current facility (better usability):
         ndx = clinics.index('\n'.join(clinic.name.split()))
         d.chart.bars[(0, ndx)].fillColor = HexColor('#afe25b')
         d.chart.bars[(1, ndx)].fillColor = HexColor('#92bd4b')
