@@ -3,6 +3,7 @@ from reportlab.graphics.charts.barcharts import HorizontalBarChart
 from reportlab.graphics.charts.legends import Legend
 from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
+from reportlab.lib.colors import HexColor
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch, mm
 from reportlab.pdfbase import pdfmetrics
@@ -121,8 +122,8 @@ class ReportPdfRenderer(object):
 
     def summary(self, clinic, sent, started, completed):
         """Renders the Facility Report Summary section."""
-        p_started = (float(started) / sent) * 100
-        p_completed = (float(completed) / sent) * 100
+        p_started = ((float(started) / sent) * 100) if sent else 0
+        p_completed = ((float(completed) / sent) * 100) if sent else 0
         summary_tbl = Table([
             (p('<b>SURVEY PARTICIPATION</b>'), '', ''),
             (p('%s' % sent),
@@ -164,10 +165,14 @@ class ReportPdfRenderer(object):
         flowables.append(p("""Number of patients who received, started,
                            and completed surveys across %s.""" % clinic.name))
         d = FacilityChart()
-        # categories = ['\n'.join(x.split()) for x in clinics]
         data = [stats['completed'], stats['started'], stats['sent']]
         d.chart.data = data
         d.chart.categoryAxis.categoryNames = clinics
+        # Highlight the current facility (better usability):
+        ndx = clinics.index('\n'.join(clinic.name.split()))
+        d.chart.bars[(0, ndx)].fillColor = HexColor('#afe25b')
+        d.chart.bars[(1, ndx)].fillColor = HexColor('#92bd4b')
+        d.chart.bars[(2, ndx)].fillColor = HexColor('#6e8f37')
         flowables.append(d)
         return KeepTogether(flowables)
 
@@ -250,8 +255,10 @@ class ReportPdfRenderer(object):
             else:
                 rows = [[''] + ['\n'.join(x[0].split()) for x in feedback]]
             for service, feedback in data:
-                row = [service] + ['%s (%s)' % ('N/A' if not x else x, 0 if y is None else y)
-                                   for _, x, y in feedback]
+                row = [service] + ['%s (%s)' % ('0' if not x else x, 0 if y is None else y)
+                                   for _, x, y in feedback[:-1]] + [
+                    '%s (%s)' % ('N/A' if not x else x, 0 if y is None else y)
+                    for _, x, y in feedback[-1:]]
                 rows.append(row)
             width = 4.6 / (len(rows[0]) - 1)
             tbl = Table(rows, colWidths=[1.8*inch] + [width*inch] * (len(rows[0]) - 1))
@@ -268,7 +275,7 @@ class ReportPdfRenderer(object):
             flowables.append(tbl)
         return KeepTogether(flowables)
 
-    def detailed_comments(self, data):
+    def detailed_comments(self, min_date, max_date, data):
         """Renders the Detailed Comments section."""
         flowables = []
         flowables.append(heading('Detailed Comments'))
@@ -293,6 +300,9 @@ class ReportPdfRenderer(object):
             ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
         ]))
         flowables.append(tbl)
+        if min_date and max_date:
+            # Filter out comments outside the displayed date range:
+            data = (x for x in data if min_date <= x['datetime'] <= max_date)
         grouped_comments = groupby(data, lambda x: x['question'])
         for question, comments in grouped_comments:
             tbl = Table([(p('<font color=white>%s</font>' % question.upper()), '')] + [
@@ -313,7 +323,8 @@ class ReportPdfRenderer(object):
         elements.append(self.feedback_responses(ctx['clinic'], ctx['response_stats']))
         elements.append(self.feedback_on_servies(
             ctx['min_date'], ctx['max_date'], ctx['feedback_by_service']))
-        elements.extend(self.detailed_comments(ctx['detailed_comments']))
+        elements.extend(self.detailed_comments(
+            ctx['min_date'], ctx['max_date'], ctx['detailed_comments']))
         elements.append(page_break())
         return elements
 

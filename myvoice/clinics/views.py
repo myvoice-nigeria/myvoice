@@ -405,13 +405,13 @@ class ClinicReport(ReportMixin, DetailView):
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['question_labels'] = [q.question_label for q in self.questions]
 
-        if self.responses:
+        if not (self.start_date and self.end_date) and self.responses:
             min_date = self.responses.aggregate(Min('datetime'))['datetime__min']
             kwargs['min_date'] = get_week_start(min_date)
             kwargs['max_date'] = timezone.now()
         else:
-            kwargs['min_date'] = None
-            kwargs['max_date'] = None
+            kwargs['min_date'] = self.start_date
+            kwargs['max_date'] = (self.end_date - timedelta(1)) if self.end_date else None
 
         # Feedback stats for chart
         feedback_stats = self.get_feedback_statistics(
@@ -535,8 +535,8 @@ class AnalystSummary(TemplateView, ReportMixin):
             visits = visits.filter(service__name=kwargs['service'])
 
         visits = visits.filter(visit_time__gte=start_date, visit_time__lt=end_plus)
-        generic_feedback = generic_feedback.filter(
-            message_date__gte=start_date, message_date__lt=end_plus)
+        # generic_feedback = generic_feedback.filter(
+        #    message_date__gte=start_date, message_date__lt=end_plus)
         started_visits = visits.filter(survey_started=True)
 
         _dates = compress_list(
