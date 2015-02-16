@@ -70,8 +70,8 @@ def import_survey(flow_id, role=None):
         possible_questions = [action['msg']
                               for action_set in action_sets
                               for action in action_set['actions']
-                              if action_set['destination'] == question_id
-                              and action['type'] == 'reply']
+                              if action_set['destination'] == question_id and
+                              action['type'] == 'reply']
         if possible_questions:
             q = possible_questions[0]
             if '?' in q:
