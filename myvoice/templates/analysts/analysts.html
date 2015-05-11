@@ -265,6 +265,12 @@ $(function() {
 
         <script type="text/javascript">
 
+          var bolden = function() {
+              // Make Avg and Total facility table rows bold
+              $('tr#Total').css('font-weight', 'bold');
+              $('tr#Avg').css('font-weight', 'bold');
+          }
+          bolden();
           var updateFacilityTable = function() {
               var start_date = $("[name=crt_start]").val();
               var end_date = $("[name=crt_end]").val();
@@ -272,6 +278,7 @@ $(function() {
 
               $.get("/participation_async/", {"service": service, "start_date": start_date, "end_date": end_date}, function(data, status) {
                   $("#facility-container").html(data);
+                  bolden();
               });
           }
           var updateCharts = function() {
