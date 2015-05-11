@@ -12,3 +12,8 @@ def get_index(list, value):
         return list.index(value)
     except ValueError:
         return -1
+
+
+@register.simple_tag
+def comment_display(comment_dict, label):
+    return comment_dict.get(label, '')

@@ -364,10 +364,13 @@ $(function() {
       </thead>
       <tbody>
         {% regroup detailed_comments by question as comments %}
+        {{ comment_questions }}
         {% for comment_group in comments %}
           <tr class="comment-head">
             <td colspan="6" class="special-table-row">
-              {{ comment_group.grouper|upper }}
+                {% with comment_display_label=comment_group.grouper %}
+                  {{ comment_display_label|upper }}: {% comment_display comment_questions comment_display_label %}
+                {% endwith %}
             </td>
           </tr>
           {% for comment in comment_group.list %}

@@ -1039,6 +1039,43 @@ class TestClinicReportView(TestCase):
         self.assertEqual('Feedback message', comments[1]['response'])
         self.assertEqual('First', comments[2]['response'])
 
+    def test_get_comments_questions(self):
+        '''Test that we can get the proper questions for detailed comments.'''
+        factories.SurveyQuestion.create(
+            label="Question 1",
+            survey=self.survey,
+            question_type=survey_models.SurveyQuestion.OPEN_ENDED,
+            question="Test Question 1")
+        factories.SurveyQuestion.create(
+            label="Question 2",
+            survey=self.survey,
+            question_type=survey_models.SurveyQuestion.OPEN_ENDED,
+            question="Test Question 2")
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report.get_object()
+        comment_questions = report.get_comments_questions()
+
+        # Check content
+        self.assertEqual('Test Question 1', comment_questions['Question 1'])
+        self.assertEqual('Test Question 2', comment_questions['Question 2'])
+
+    def test_get_comments_questions_generic_feedback(self):
+        '''Test that question for generic feedback is blank.
+
+        Makes sense cos there's no particular question.'''
+        factories.GenericFeedback.create(
+            clinic=self.clinic,
+            message='Feedback message',
+            message_date=timezone.now())
+
+        report = clinics.ClinicReport(kwargs={'slug': self.clinic.slug})
+        report.get_object()
+        comment_questions = report.get_comments_questions()
+
+        # Check content
+        self.assertEqual('', comment_questions['General Feedback'])
+
     def test_hide_invalid_feedback(self):
         question = factories.SurveyQuestion(
             label='General', survey=self.survey,

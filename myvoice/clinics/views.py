@@ -399,9 +399,20 @@ class ClinicReport(ReportMixin, DetailView):
 
         return sorted(comments, key=lambda item: (item['question'], item['datetime']))
 
+    def get_comments_questions(self):
+        """Get map of question_label: question_text for open-ended questions
+        used as detailed_comments."""
+        questions = dict(
+            (qtn.question_label, qtn.question) for qtn in
+            SurveyQuestion.objects.filter(question_type=SurveyQuestion.OPEN_ENDED)
+        )
+        questions[self.generic_feedback.model._meta.verbose_name] = ''
+        return questions
+
     def get_context_data(self, **kwargs):
         kwargs['responses'] = self.responses
         kwargs['detailed_comments'] = self.get_detailed_comments()
+        kwargs['comment_questions'] = self.get_comments_questions()
         kwargs['feedback_by_service'] = self.get_feedback_by_service()
         kwargs['question_labels'] = [q.question_label for q in self.questions]
 
